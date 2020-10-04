@@ -53,10 +53,10 @@ Global Poisson
 ```
 daily_cases ~ bs(date_shifted_100case, 5) + pm25 + C(dayofweek) + C(countyFIPS)
 ```
-prediction sample![](/images/image4.png)
+![](/images/image4.png)
 
 Poisson by county 
 ```
 daily_cases ~ bs(date_shifted_100case, 5) + pm25 + C(dayofweek)
 ```
-prediction sample![](/images/image5.png)
+![](/images/image5.png)
