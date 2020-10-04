@@ -1,0 +1,13 @@
+# Mac configuration files
+.DS_Store
+
+.webloc
+
+.ipynb_checkpoints
+
+.idea/ 
+
+/data/ 
+/trash/
+/researches/
+
