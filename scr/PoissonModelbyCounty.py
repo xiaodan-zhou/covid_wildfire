@@ -27,6 +27,9 @@ df = df[df.daily_cases >= 0] ## todo: check this
 # daycount = np.asarray(df.groupby("countyFIPS").agg({"date_shifted_1case": "count"})).ravel()
 # plt.hist(daycount)
 
+
+## v0
+# model_str1 = "daily_cases ~ bs(date_shifted_100case, 5) + pm25 + C(dayofweek)"
 nparam = 13
 name_param = ["Intercept",
               "C(dayofweek)[T.1]", "C(dayofweek)[T.2]",
@@ -36,11 +39,25 @@ name_param = ["Intercept",
               "bs(date_shifted_100case, 5)[2]", "bs(date_shifted_100case, 5)[3]",
               "bs(date_shifted_100case, 5)[4]",
               "pm25"]
+
+
+## v2
+model_str1 = "daily_cases ~ bs(date_shifted_100case, 8) + pm25 + C(dayofweek)"
+nparam = 16
+name_param = ["Intercept",
+              "C(dayofweek)[T.1]", "C(dayofweek)[T.2]",
+              "C(dayofweek)[T.3]", "C(dayofweek)[T.4]",
+              "C(dayofweek)[T.5]", "C(dayofweek)[T.6]",
+              "bs(date_shifted_100case, 8)[0]", "bs(date_shifted_100case, 8)[1]",
+              "bs(date_shifted_100case, 8)[2]", "bs(date_shifted_100case, 8)[3]",
+              "bs(date_shifted_100case, 8)[4]", "bs(date_shifted_100case, 8)[5]",
+              "bs(date_shifted_100case, 8)[6]", "bs(date_shifted_100case, 8)[7]",
+              "pm25"]
+
+
 coefs = {}
 for ii in range(nparam):
     coefs[ii] = []
-
-model_str1 = "daily_cases ~ bs(date_shifted_100case, 5) + pm25 + C(dayofweek)"
 
 for fips in df['countyFIPS'].unique():
     df_subset = df[df['countyFIPS']==fips]
@@ -60,11 +77,6 @@ for fips in df['countyFIPS'].unique():
 for ii in range(nparam):
     print(np.asarray(coefs[ii]).shape)
 
-
-
-
-
-
 for ii in range(nparam):
     one_coef = np.asarray(coefs[ii])
     one_coef = pd.DataFrame({"coef": one_coef[:, 0],
@@ -76,7 +88,7 @@ for ii in range(nparam):
 
 
 
-pdf = PdfPages(dir + "/results/PoissonModelbyCounty2.pdf")
+pdf = PdfPages(dir + "/results/PoissonModelbyCounty.pdf")
 
 for ii in range(nparam):
     one_coef = pd.read_csv(dir + "/results/PoissonModelbyCounty_" + name_param[ii] + ".csv")
@@ -89,7 +101,6 @@ for ii in range(nparam):
     plt.plot(np.arange(one_coef.shape[0]), one_coef["low"], label="low", alpha=.5)
     plt.plot(np.arange(one_coef.shape[0]), one_coef["high"], label="high", alpha=.5)
     plt.legend()
-    # plt.ylim((-.25, .25))
     plt.ylim((ymin, ymax))
     plt.hlines(xmin=0, xmax=one_coef.shape[0], y=0)
     plt.xlabel("counties")
