@@ -11,6 +11,7 @@ pm25                               0.0051   6.37e-05     80.256      0.000      
 ==================================================================================================
 ```
 
+
 v1
 ```
 daily_deaths ~ bs(date_shifted_100case, 5) + pm25 + C(dayofweek) + C(countyFIPS)
@@ -40,9 +41,22 @@ daily_cases ~ bs(date_shifted_100case, 5) + pm25 + C(dayofweek)
 ```
 ![](/images/image2.png)
 
-
 v2 (more coefficient visualization [here](/results/PoissonModelbyCounty_v2.pdf))
 ```
 daily_cases ~ bs(date_shifted_100case, 8) + pm25 + C(dayofweek)
 ```
 ![](/images/image3.png)
+
+
+### prediction sample 
+Global Poisson 
+```
+daily_cases ~ bs(date_shifted_100case, 5) + pm25 + C(dayofweek) + C(countyFIPS)
+```
+prediction sample![](/images/image4.png)
+
+Poisson by county 
+```
+daily_cases ~ bs(date_shifted_100case, 5) + pm25 + C(dayofweek)
+```
+prediction sample![](/images/image5.png)
