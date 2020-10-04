@@ -1,4 +1,4 @@
 # Global Poisson Model
-![test111](/images/test.png)
+![z](/image/test.png)
 
 # Global Poisson Model v1 
