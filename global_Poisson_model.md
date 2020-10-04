@@ -29,8 +29,14 @@ pm25                               0.0049   6.38e-05     77.225      0.000      
 ```
 
 ### Poisson Model by county 
+```
+daily_cases ~ bs(date_shifted_100case, 5) + pm25 + C(dayofweek)
+```
 ![](/images/image2.png)
 
 
 ### Poisson Model by county v2
+```
+daily_cases ~ bs(date_shifted_100case, 8) + pm25 + C(dayofweek)
+```
 ![](/images/image3.png)
