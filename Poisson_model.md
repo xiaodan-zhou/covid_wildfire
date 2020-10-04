@@ -1,5 +1,5 @@
 ### Global Poisson Model
-#### script [script](/scr/GlobalPoissonModel.py)
+#### [script](/scr/GlobalPoissonModel.py)
 
 v0
 ```
@@ -32,7 +32,7 @@ pm25                               0.0049   6.38e-05     77.225      0.000      
 ```
 
 ### Poisson Model by county
-#### script [script](/scr/PoissonModelbyCounty.py)
+#### [script](/scr/PoissonModelbyCounty.py)
 
 v0 (more coefficient visualization [here](/results/PoissonModelbyCounty.pdf))
 ```
