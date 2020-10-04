@@ -9,6 +9,7 @@
 
 
 /results/*.pickle 
+/results/*.csv
 
 
 /data/ 
