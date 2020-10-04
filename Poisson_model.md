@@ -1,4 +1,7 @@
 ### Global Poisson Model
+#### script [script](/scr/GlobalPoissonModel.py)
+
+v0
 ```
 daily_cases ~ bs(date_shifted_100case, 5) + pm25 + C(dayofweek) + C(countyFIPS)
 ==================================================================================================
@@ -8,7 +11,7 @@ pm25                               0.0051   6.37e-05     80.256      0.000      
 ==================================================================================================
 ```
 
-### Global Poisson Model v1
+v1
 ```
 daily_deaths ~ bs(date_shifted_100case, 5) + pm25 + C(dayofweek) + C(countyFIPS)
 ==================================================================================================
@@ -18,7 +21,7 @@ pm25                               0.0031      0.001      5.356      0.000      
 ==================================================================================================
 ```
 
-### Global Poisson Model v2
+v2
 ```
 daily_cases ~ bs(date_shifted_100case, 8) + pm25 + C(dayofweek) + C(countyFIPS)
 ==================================================================================================
@@ -28,7 +31,10 @@ pm25                               0.0049   6.38e-05     77.225      0.000      
 ==================================================================================================
 ```
 
-### Poisson Model by county 
+### Poisson Model by county
+#### script [script](/scr/PoissonModelbyCounty.py)
+
+v0
 more coefficient visualization [here](/results/PoissonModelbyCounty.pdf)
 ```
 daily_cases ~ bs(date_shifted_100case, 5) + pm25 + C(dayofweek)
@@ -36,7 +42,7 @@ daily_cases ~ bs(date_shifted_100case, 5) + pm25 + C(dayofweek)
 ![](/images/image2.png)
 
 
-### Poisson Model by county v2
+v2 
 more coefficient visualization [here](/results/PoissonModelbyCounty_v2.pdf)
 ```
 daily_cases ~ bs(date_shifted_100case, 8) + pm25 + C(dayofweek)
