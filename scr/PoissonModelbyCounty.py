@@ -37,7 +37,8 @@ for i in range(n_bs):
 name_param.append("pm25")
 
 
-####################################### model running #################################
+
+####################################### run model #################################
 coefs = {}
 for ii in range(nparam):
     coefs[ii] = []
@@ -104,7 +105,7 @@ pdf.close()
 
 
 
-####################################### visualize prediction of sampled couties #################################
+####################################### visualize prediction of sampled counties #################################
 pdf = PdfPages(dir + "/results/"+output_str+"_prediction.pdf")
 
 random.seed(0)
@@ -113,7 +114,7 @@ sampleFIPS = [random.randint(0, len(FIPS)) for i in range(20)]
 
 for fips in FIPS[sampleFIPS]:
     df_subset = df[df['countyFIPS']==fips]
-    pred_table= None
+    result= None
     try:
         model = sm.GLM.from_formula(model_str1, data=df_subset, family=sm.families.Poisson())
         result = model.fit()
@@ -135,7 +136,6 @@ for fips in FIPS[sampleFIPS]:
         plt.title(fips)
         pdf.savefig()
 pdf.close()
-
 
 
 
@@ -167,8 +167,6 @@ pdf.close()
 
 
 
-
-
 ####################################### summarize the coef for PM2.5 by state #################################
 def percentile(n):
     def percentile_(x):
@@ -185,3 +183,47 @@ file1 = open(dir+"/results/"+output_str+"_PMcoefbyState.txt", "w+")
 file1.readline()
 file1.write(coef_summary.to_string())
 file1.close()
+
+
+
+####################################### visualize prediction of sampled couties with fake PM #################################
+pdf = PdfPages(dir + "/results/"+output_str+"_prediction_fake2PM.pdf")
+
+random.seed(0)
+FIPS = df['countyFIPS'].unique()
+sampleFIPS = '36059' # [random.randint(0, len(FIPS)) for i in range(20)]
+fips = sampleFIPS
+PMs = [2, 12]
+
+for fips in FIPS[sampleFIPS]:
+    df_subset = df[df['countyFIPS']==fips]
+    result= None
+    try:
+        model = sm.GLM.from_formula(model_str1, data=df_subset, family=sm.families.Poisson())
+        result = model.fit()
+    except:
+        print(fips)
+
+    if result is not None:
+        plt.figure(figsize=(20, 8))
+        xx = df_subset.date_shifted_100case
+        plt.scatter(xx, df_subset[variateY], label="raw", color='black', s=2)
+
+        df_subset = df_subset.copy()
+        xx = df_subset.date_shifted_100case
+        plt.scatter(xx, df_subset[variateY], label="raw", color='black', s=2)
+
+        for ii in PMs:
+            df_subset.pm25 = ii
+            pred = result.get_prediction(df_subset)
+            pred_table = pred.summary_frame(alpha=0.05)
+            plt.plot(xx, pred_table["mean"], label="PM" + str(ii))
+            plt.plot(xx, pred_table["mean_ci_lower"], alpha=.5, color='red', linestyle="--")
+            plt.plot(xx, pred_table["mean_ci_upper"], alpha=.5, color='red', linestyle="--")
+            plt.legend()
+            plt.xlabel("time")
+            plt.ylabel("predicted")
+            plt.title(fips)
+
+        pdf.savefig()
+pdf.close()
