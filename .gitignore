@@ -7,7 +7,9 @@
 
 .idea/ 
 
-.pickle
+
+.pickle 
+
 
 /data/ 
 /trash/
