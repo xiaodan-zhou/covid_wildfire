@@ -43,6 +43,14 @@ result.save(dir+"/results/GlobalPoissonModel.pickle")
 # pred = result.predict(exog=df)
 # result.save(dir+"/results/GlobalPoissonModel_v1.pickle")
 
+## model v2
+# model_str1 = "daily_cases ~ bs(date_shifted_100case, 8) + pm25 + C(dayofweek) + C(countyFIPS)"
+# model = sm.GLM.from_formula(model_str1, data=df, family=sm.families.Poisson())
+# result = model.fit()
+# pred = result.predict(exog=df)
+# result.save(dir+"/results/GlobalPoissonModel_v2.pickle")
+
+
 
 ################################ save model results #################################
 file1 = open(dir+"/results/GlobalPoissonModel.txt", "w+")
@@ -59,10 +67,10 @@ df.reset_index(inplace=True)
 
 
 ################################ visualize model results #################################
-p = 21*7
+p = 25*7
 dp = df.iloc[0:p, :].copy()
-dp.date_shifted_100case = np.linspace(-30, 116, 147)
-dp.dayofweek = np.tile(np.arange(7), 21)
+dp.date_shifted_100case = np.linspace(-44, 130, 175)
+dp.dayofweek = np.tile(np.arange(7), 25)
 dp.countyFIPS = "9009"
 
 plt.clf()
