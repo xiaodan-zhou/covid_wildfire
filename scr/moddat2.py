@@ -11,7 +11,7 @@ df = pd.read_csv(dir + "/data/moddat2.csv")
 #        'date_shifted_10kth_rate', 'dayofweek', 'dayofweek_str']
 
 df['date'] = pd.to_datetime(df['date'])
-df['countyFIPS'] = df['countyFIPS'].astype(str)
+df['FIPS'] = df['FIPS'].astype(str)
 df.sort_values("date", inplace=True)
 df.reset_index()
 df.dropna(inplace=True)

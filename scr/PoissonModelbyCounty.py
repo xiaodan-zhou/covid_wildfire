@@ -101,7 +101,26 @@ for ii in range(nparam):
 pdf.close()
 
 
+### another way to visualize
+# one_coef = pd.read_csv(dir + "/results/"+output_str+"_" + name_param[-1] + ".csv")
+# plt.figure()
+# for ii in range(one_coef.shape[0]):
+#     plt.hlines(y=ii, xmin=one_coef["low"][ii], xmax=one_coef["high"][ii], colors='grey')
+# plt.scatter(x=one_coef["coef"], y=range(one_coef.shape[0]))
+# plt.xlabel("coef of PM")
+# plt.ylabel("county")
+# plt.xlim(-.20, .20)
+# plt.title(name_param[-1] + " coefficients by county (poisson model)")
 
+### hist of coef of PM
+# one_coef = pd.read_csv(dir + "/results/"+output_str+"_" + name_param[-1] + ".csv")
+# plt.figure()
+# plt.hist(one_coef["coef"], bins=500)
+# plt.vlines(x=np.mean(one_coef["coef"]), ymin=0, ymax=250, colors='')
+# plt.xlim(-.20, .20)
+# plt.xlabel("coef of PM")
+# plt.ylabel("count of county")
+# plt.title(name_param[-1] + " coefficients by county (poisson model)")
 
 
 
