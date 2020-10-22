@@ -62,6 +62,14 @@ df.to_csv(dir + "/data/moddat2.csv")
 
 
 ##################################### merge with climate data ###############################
+# https://developers.google.com/earth-engine/datasets/catalog/IDAHO_EPSCOR_TERRACLIMATE#bands
+# https://developers.google.com/earth-engine/datasets/catalog/IDAHO_EPSCOR_GRIDMET?hl=es#bands
+# Name	Units	Min	Max	Scale	Description
+# pr	mm	0*	7245*    Precipitation accumulation
+# srad	W/m^2	0*	5477*	Downward surface shortwave radiation
+# tmmx	°C	-670*	576*	Maximum temperature
+# rmax	%	1.05*	100*    Maximum relative humidity
+# sph	kg/kg	0*	0.02*   Specific humidity
 
 pr_ = pd.read_csv(dir + "/data/pr_county_2020.csv", sep=",")
 tmmx_ = pd.read_csv(dir + "/data/tmmx_county_2020.csv", sep=",")
@@ -78,5 +86,4 @@ df = pd.merge(df, climate, how='left', left_on=["date", "FIPS"], right_on=["date
 
 df.drop(columns=['Unnamed: 0_x', 'Unnamed: 0_y', 'fips'], inplace=True)
 df.to_csv(dir + "/data/moddat2.csv")
-
 
