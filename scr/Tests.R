@@ -25,3 +25,12 @@ print(dt.out)
 nlag = 0:4
 dt.out = add.lag(df=dt, value="value", group="group", lags=nlag)
 print(dt.out)
+
+
+### NA handling
+dt$value[3] = NA
+
+### Test4
+nlag = 0:4
+dt.out = add.lag(df=dt, value="value", group="group", lags=nlag)
+print(dt.out)

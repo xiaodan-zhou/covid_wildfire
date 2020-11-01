@@ -1,0 +1,16 @@
+Name	      Units	    Min	  Max	    Description
+cases       people                  Confirmed COVID cases            
+deaths      people                  Deaths of COVID
+population  people
+pm25        ug/m^3
+date        
+dayofweek
+
+# https://developers.google.com/earth-engine/datasets/catalog/IDAHO_EPSCOR_TERRACLIMATE#bands
+# https://developers.google.com/earth-engine/datasets/catalog/IDAHO_EPSCOR_GRIDMET?hl=es#bands
+Name	Units	Min	  Max	    Description
+pr	  mm	  0*	  7245*   Precipitation accumulation
+srad	W/m^2 0*	  5477*	  Downward surface shortwave radiation
+tmmx	??C	  -670*	576*	  Maximum temperature
+rmax	%	    1.05*	100*    Maximum relative humidity
+sph	  kg/kg	0*	  0.02*   Specific humidity

@@ -8,19 +8,20 @@
 
 
 # testing set up 
-# setwd("/Users/mac/Documents/GitHub/covid_wildfire")
-# source("scr/Utilities.R")
-# df = load.data()
-# df.date=4
-# df.tmmx=1
-# df.sph=1
-# lags=0
-
-
-library(stats)
+setwd("/Users/mac/Documents/GitHub/covid_wildfire")
+source("scr/Utilities.R")
+dff = load.data.xz1()
+df.date=4
+df.tmmx=1
+df.rmax=1
+lags=0:3
+smooth = "ns"
+library(stats, pos = "package:base")
 library(splines)
         
-global.model = function(df, smooth = "ns", df.date=8, df.tmmx=3, df.rmax=3, lags=0) {
+# options(na.action = "na.exclude") 
+
+global.model = function(dff, smooth = "ns", df.date=8, df.tmmx=3, df.rmax=3, lags=0) {
   ### parameter set up 
   cause = "cases"
   pollutant = "pm25"
@@ -28,7 +29,7 @@ global.model = function(df, smooth = "ns", df.date=8, df.tmmx=3, df.rmax=3, lags
   control = glm.control(epsilon = 1e-10, maxit = 1000)
   
   ### create lags of pollutant
-  lag.out = add.lag(df=df, value=pollutant, group=group, lags=lags)
+  lag.out = add.lag(dff=dff, value=pollutant, group=group, lags=lags)
   lag.data = as.matrix(lag.out[[1]])
   lag.data.name = "lag.data" # import function
   # if run interactively, lag.data.name = as.name(substitute(lag.data)) why???
@@ -44,7 +45,7 @@ global.model = function(df, smooth = "ns", df.date=8, df.tmmx=3, df.rmax=3, lags
     } }
 
   ### initialize model
-  df.name = as.name(substitute(df))
+  df.name = as.name(substitute(dff))
 
   f = substitute(~ smooth(date, df.date) + smooth(tmmx, df.tmmx) + 
                    smooth(rmax, df.rmax) + dayofweek + log(population),
@@ -63,11 +64,16 @@ global.model = function(df, smooth = "ns", df.date=8, df.tmmx=3, df.rmax=3, lags
   modelFormula = as.formula(paste(cause, paste(rhs, collapse = "")))
   
   ### fit quasipoisson model
-  call = substitute(glm(modelFormula, family = quasipoisson, data = df, 
+  call = substitute(glm(modelFormula, family = quasipoisson, data = dff, 
                         control = control, na.action = na.exclude),
                     list(modelFormula = modelFormula, data = df.name, 
                          lag.name = lag.data, control = substitute(control))) 
   
+  # test 
+  # glm("cases ~ ns(date, 4) + ns(tmmx, 1) + ns(rmax, 1) + dayofweek + log(population) + lag.data",
+  #     family = quasipoisson, data = dff,
+  #     control = control, na.action = na.exclude)
+
   ### if hit any problems in modelling, returns -1 
   fit = try(eval.parent(call), silent=TRUE)
   if('try-error' %in% class(fit)){
@@ -78,7 +84,7 @@ global.model = function(df, smooth = "ns", df.date=8, df.tmmx=3, df.rmax=3, lags
     return(-1) }
   
   ### save and returns the results
-  var.out = c("coef", "ci.low", "ci.high", "ilag", "name", "smooth", "df.date", "df.tmmx", "df.rmax")
+  var.out = c("coef", "std", "ci.low", "ci.high", "ilag", "name", "smooth", "df.date", "df.tmmx", "df.rmax")
   result = data.frame(matrix(ncol = length(var.out), nrow = length(lags)))
   colnames(result) = var.out
   
@@ -86,6 +92,7 @@ global.model = function(df, smooth = "ns", df.date=8, df.tmmx=3, df.rmax=3, lags
     var.name = lag.names[ilag]
     ci.value = fit.CI[var.name,]
     result[ilag,] = c(fit$coefficients[var.name],
+                      summary(fit)$coef[var.name,"Std. Error"],
                       ci.value[1],
                       ci.value[2],
                       lags[ilag],
@@ -95,5 +102,7 @@ global.model = function(df, smooth = "ns", df.date=8, df.tmmx=3, df.rmax=3, lags
                       df.tmmx, 
                       df.rmax)
   }
+  # return(list("fit" = fit, "fit.CI" = fit.CI, 
+  #             "modelFormula.vis" = modelFormula.vis, "result" = result))
   return(list(fit, fit.CI, modelFormula.vis, result))
 }

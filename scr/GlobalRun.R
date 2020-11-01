@@ -6,28 +6,34 @@ library(gridExtra)
 setwd("/Users/mac/Documents/GitHub/covid_wildfire")
 source("scr/Utilities.R")
 source("scr/GlobalModel.R")
-df = load.data()
-
-
+df = load.data.xz1()
 ### set up 
 lags.to.run = 0:3
 smooth = "ns"
-file.name = paste0("GlobalModel/lag", paste0(lags.to.run, collapse=""), ".", smooth, "humidity.updated.pdf")
+df.date=8
+df.tmmx=3
+df.rmax=3
+
+file.name = paste0("GlobalModel/lag", paste0(lags.to.run, collapse=""), ".", smooth, "_xd1+Test.pdf")
+file.csv = paste0("GlobalModel/lag", paste0(lags.to.run, collapse=""), ".", smooth, "_xd1+Test.csv")
 pdf(file.name, width = 12, height = 5)
 plot.out = list()
 
 ##################### run global model for lag 0-3 using natural spline separately #####################
 result.rbind = c()
 for (ilag in lags.to.run) {
-  gm = global.model(df=df, smooth=smooth, lags=ilag)
-  fit = gm[[1]]
-  fit.CI = gm[[2]]
-  modelFormula.vis = gm[[3]]
-  result = gm[[4]]
-  if (is.null(result.rbind)) {
-    result.rbind = result
-  } else {
-    result.rbind=rbind(result.rbind, result)
+  gm = global.model(dff=df, smooth=smooth, lags=ilag)
+  
+  if (length(gm) != 1) {
+    fit = gm[[1]]
+    fit.CI = gm[[2]]
+    modelFormula.vis = gm[[3]]
+    result = gm[[4]]
+    if (is.null(result.rbind)) {
+      result.rbind = result
+    } else {
+      result.rbind=rbind(result.rbind, result)
+    }
   }
 }
 
@@ -35,7 +41,7 @@ result.rbind$coef = as.numeric(result.rbind$coef)
 result.rbind$ci.low = as.numeric(result.rbind$ci.low)
 result.rbind$ci.high = as.numeric(result.rbind$ci.high)
 result.rbind$ilag = as.numeric(result.rbind$ilag)
-
+write.csv(result.rbind, file.csv)
 ### visualize pm coefficients
 p2 = ggplot(result.rbind, aes(x=ilag)) +
   geom_errorbar(width=.1, aes(ymin=ci.low, ymax=ci.high), colour="red") + 
