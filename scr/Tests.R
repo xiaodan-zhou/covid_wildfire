@@ -34,3 +34,36 @@ dt$value[3] = NA
 nlag = 0:4
 dt.out = add.lag(df=dt, value="value", group="group", lags=nlag)
 print(dt.out)
+
+
+
+### compare mc2 and xz1 data 
+setwd("/Users/mac/Documents/GitHub/covid_wildfire")
+source("scr/Utilities.R")
+dfx = load.data.xz1()
+dfm = load.moddat2()
+
+dim(dfx)
+dim(dfm)
+
+dfm$date = ymd(dfm$date)
+dfm = dfm[dfm$date <= "2020-09-24", ]
+
+dfx = dfx[dfx$FIPS != 6000, ]
+
+unique(dfx$date_str)
+unique(dfm$date)
+
+unique(dfx$FIPS)
+unique(dfm$FIPS)
+
+dx = data.frame(dfx %>% group_by(FIPS) %>% count())
+dm = data.frame(dfm %>% group_by(FIPS) %>% count())
+sum(dx$n != dm$n)
+
+dx = data.frame(dfx %>% group_by(date) %>% count())
+dm = data.frame(dfm %>% group_by(date) %>% count())
+sum(dx$n != dm$n)
+
+sum(round(dfx$pm25, 3) != round(dfm$pm25, 3), na.rm=T)
+sum(round(dfx$tmmx, 3) != round(dfm$tmmx, 3), na.rm=T)

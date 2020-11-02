@@ -1,0 +1,5 @@
+export("tlnise", "initTLNise")
+
+importFrom(stats, "rnorm")
+
+useDynLib(tlnise)

@@ -6,40 +6,19 @@
 
 library(tsModel)
 library(splines)
-library(ggplot2)
+
 library(stats)
 library(reshape)
 library(tidyr)
 ## GAM model 
 library(mgcv)
+library(dlnm) # crossbasis
 
 ### read data 
+library(ggplot2)
 setwd("/Users/mac/Documents/GitHub/covid_wildfire")
-df = read.csv("data/moddat2.csv")
-
-### clean date
-df$date = strptime(df$date,format='%Y-%m-%d')
-
-### make dayofweek categorical
-df$dayofweek = as.factor(df$dayofweek)
-
-### replace negative number of daily cases with zero 
-print(length(df$cases[df$cases < 0]))
-df$cases[df$cases < 0] = 0
-# hist(df$cases)
-
-### replace negative number of daily deaths with zero 
-print(length(df$deaths[df$deaths < 0]))
-df$deaths[df$deaths < 0] = 0 
-
-### remove data without pm record 
-# summary(df$pm25)
-# df = df[!is.na(df$pm25),]
-
-### rename dataset 
-df_full = df
-rm(df)
-
+source("scr/Utilities.R")
+df_full = load.data()
 
 ################################ Poisson Model by FIPS ###############################
 ### FIPS list 
@@ -48,13 +27,13 @@ length(fips)
 
 ### parameter set up 
 df.name <- as.name(substitute(df))
-df.tmmx = 6
-df.sph = 6
+df.tmmx = 2
+df.sph = 2
 df.date = 8
 smooth = "bs" # "ns"
 cause = "cases"
 pollutant = "pm25"
-n_lag = 14
+n_lag = 3
 control = glm.control(epsilon = 1e-10, maxit = 1000)
 
 
@@ -80,6 +59,7 @@ for (ifips in 1:length(fips)) {
   
   # add pollutant element to the model
   rhs = as.character(f)
+  # this is wrong todo
   lag_pollutant = crossbasis(df[pollutant], lag=c(0, n_lag), argvar=list(type="lin", cen=FALSE), arglag=list(type="integer"))
   rhs[-1] = paste(rhs[-1], "lag_pollutant", sep = "+")
   

@@ -5,48 +5,56 @@
 # 3D compare the beta pool with the global model 
 # Sensitivity analysis by varying the df, using the alpha parameter
 
-library(ggplot2)
-library(gridExtra)
-library(meta)
-
 setwd("/Users/mac/Documents/GitHub/covid_wildfire")
 source("scr/Utilities.R")
 source("scr/GlobalModel.R")
-df_full = load.data.mc2()
-
-### FIPS list 
-fips = unique(df_full$FIPS)
-length(fips)
+# df_full = load.data.xz1()
+# df_full = load.moddat2()
+df_full = load.data.error()
 
 ### set up
-lags.to.run = 0:3
+lags.to.run=0:3
+smooth="ns"
+cause="cases"
+df.date=8
+df.tmmx=3
+df.rmax=3
 
-##debug 
-# ilag = 0
-# ifips = 1
-# df = df[df$FIPS == fips[ifips], ]
-# lags = ilag
-# df.date=4
-# df.tmmx=1
-# df.rmax=1
-# global.model(df=df.sub, lags=ilag)
+### output 
+temp.name = paste0(paste(lags.to.run, collapse=""), ".", cause, ".df", df.date, df.tmmx, df.rmax, ".error.reproduce") # confit
+file.pdf = paste0("LocalModel/lag", temp.name, ".pdf")
+file.csv = paste0("LocalModel/lag", temp.name, ".csv")
 
 
+##################### run local model for multiple lags separately #####################
+fips = unique(df_full$FIPS)
 result.rbind = c()
-for (lags in lags.to.run) {
+
+for (ilag in lags.to.run) {
   for (ifips in 1:length(fips)) {
     dff = df_full[df_full$FIPS == fips[ifips], ]
-    gm = global.model(dff=dff, lags=lags, smooth = "ns", 
-                      df.date=df.date, df.tmmx=df.tmmx, df.rmax=df.rmax)
+    
+    ## skip zero-inflated data ###########################
+    if (sum(dff$cases == 0) > dim(dff)[1] / 2) {
+      # print(paste(fips[ifips], "pass"))
+      next }
+    
+    gm = global.model(dff, smooth = smooth, lags=ilag, 
+                      df.date=df.date, df.tmmx=df.tmmx, 
+                      df.rmax=df.rmax, cause = cause)
+
     if ( length(gm) > 1) {
       fit = gm[[1]]
       fit.CI = gm[[2]]
       modelFormula.vis = gm[[3]]
       result = gm[[4]]
+      
       if (is.null(result.rbind)) {
         result.rbind = result
       } else {
         result.rbind=rbind(result.rbind, result) }
+    } else {
+      print(paste("failed: ", gm))
     }
   }
 }
@@ -56,10 +64,12 @@ result.rbind$std = as.numeric(result.rbind$std)
 result.rbind$ci.low = as.numeric(result.rbind$ci.low)
 result.rbind$ci.high = as.numeric(result.rbind$ci.high)
 result.rbind$ilag = as.numeric(result.rbind$ilag)
-# write.csv(result.rbind, "LocalModel/lag0to3.csv")
+write.csv(result.rbind, file.csv)
+
+
+
+#################### weight #####################
 # result.rbind = read.csv("LocalModel/lag0to3.csv")
-
-
 # weighted by inversed variance
 data.frame(result.rbind %>% group_by(ilag) %>% 
              summarise(weighted.coef = round(weighted.mean(coef, w=1./(std)^2), 6)))
@@ -70,54 +80,83 @@ for (i in lags.to.run) {
                         seTE=result.rbind$std[result.rbind$ilag == i])))
   }
 
+
 #################### visualize #####################
-##################### save #####################
-file.name = paste0("LocalModel/lag", paste0(lags.to.run, collapse=""), "mc2.pdf")
-pdf(file.name, width = 12, height = 5)
+plot.out = list()
+iplot = 1 
 
-lags = 0
-data.vis = result.rbind[result.rbind$ilag == lags,]
-p0 = ggplot(data=data.vis, aes(x=(1:dim(data.vis)[1]))) +
-  geom_errorbar(width=.1, aes(ymin=ci.low, ymax=ci.high), colour="red") +
-  geom_point(aes(y=coef)) +
-  geom_line(aes(y=coef)) +
-  xlab("FIPS") + ylab("PM2.5 coefficients") +
-  ylim(-0.05, 0.05) +
-  ggtitle(paste("lag", lags))
-p0
+for (ilag in lags.to.run) {
+  data.vis = result.rbind[result.rbind$ilag == ilag,]
+  data.vis = data.vis[!rowSums(is.na(data.vis)), ]
+  
+  if (sum(is.na(data.vis)) == 0) {
+    p0 = ggplot(data=data.vis, aes(x=(1:dim(data.vis)[1]))) +
+      geom_errorbar(width=.1, aes(ymin=ci.low, ymax=ci.high), colour="red") +
+      geom_point(aes(y=coef)) +
+      geom_line(aes(y=coef)) +
+      xlab("FIPS") + ylab("PM2.5 coefficients") +
+      # ylim(-0.05, 0.05) +
+      ggtitle(paste("lag", ilag))
+    
+    plot.out[[iplot]] = p0
+    iplot = iplot + 1
+  }
+}
 
-lags = 1
-data.vis = result.rbind[result.rbind$ilag == lags,]
-p1 = ggplot(data=data.vis, aes(x=(1:dim(data.vis)[1]))) +
-  geom_errorbar(width=.1, aes(ymin=ci.low, ymax=ci.high), colour="red") +
-  geom_point(aes(y=coef)) +
-  geom_line(aes(y=coef)) +
-  xlab("FIPS") + ylab("PM2.5 coefficients") +
-  ylim(-0.05, 0.05) +
-  ggtitle(paste("lag", lags))
-p1
 
-lags = 2
-data.vis = result.rbind[result.rbind$ilag == lags,]
-p2 = ggplot(data=data.vis, aes(x=(1:dim(data.vis)[1]))) +
-  geom_errorbar(width=.1, aes(ymin=ci.low, ymax=ci.high), colour="red") +
-  geom_point(aes(y=coef)) +
-  geom_line(aes(y=coef)) +
-  xlab("FIPS") + ylab("PM2.5 coefficients") +
-  ylim(-0.05, 0.05) +
-  ggtitle(paste("lag", lags))
-p2
+pdf(file.pdf, width = 12, height = 4 * length(plot.out))
+do.call('grid.arrange',c(plot.out, ncol = 1, top = "local model"))
+dev.off()
 
-lags = 3
-data.vis = result.rbind[result.rbind$ilag == lags,]
-p3 = ggplot(data=data.vis, aes(x=(1:dim(data.vis)[1]))) +
-  geom_errorbar(width=.1, aes(ymin=ci.low, ymax=ci.high), colour="red") +
-  geom_point(aes(y=coef)) +
-  geom_line(aes(y=coef)) +
-  xlab("FIPS") + ylab("PM2.5 coefficients") +
-  ylim(-0.05, 0.05) +
-  ggtitle(paste("lag", lags))
-p3
+
+
+# lags = 0
+# data.vis = result.rbind[result.rbind$ilag == lags,]
+# data.vis = data.vis[!rowSums(is.na(data.vis)), ]
+# p0 = ggplot(data=data.vis, aes(x=(1:dim(data.vis)[1]))) +
+#   geom_errorbar(width=.1, aes(ymin=ci.low, ymax=ci.high), colour="red") +
+#   geom_point(aes(y=coef)) +
+#   geom_line(aes(y=coef)) +
+#   xlab("FIPS") + ylab("PM2.5 coefficients") +
+#   # ylim(-0.05, 0.05) +
+#   ggtitle(paste("lag", lags))
+# p0
+# 
+# lags = 1
+# data.vis = result.rbind[result.rbind$ilag == lags,]
+# data.vis = data.vis[!rowSums(is.na(data.vis)), ]
+# p1 = ggplot(data=data.vis, aes(x=(1:dim(data.vis)[1]))) +
+#   geom_errorbar(width=.1, aes(ymin=ci.low, ymax=ci.high), colour="red") +
+#   geom_point(aes(y=coef)) +
+#   geom_line(aes(y=coef)) +
+#   xlab("FIPS") + ylab("PM2.5 coefficients") +
+#   # ylim(-0.05, 0.05) +
+#   ggtitle(paste("lag", lags))
+# p1
+# 
+# lags = 2
+# data.vis = result.rbind[result.rbind$ilag == lags,]
+# data.vis = data.vis[!rowSums(is.na(data.vis)), ]
+# p2 = ggplot(data=data.vis, aes(x=(1:dim(data.vis)[1]))) +
+#   geom_errorbar(width=.1, aes(ymin=ci.low, ymax=ci.high), colour="red") +
+#   geom_point(aes(y=coef)) +
+#   geom_line(aes(y=coef)) +
+#   xlab("FIPS") + ylab("PM2.5 coefficients") +
+#   # ylim(-0.05, 0.05) +
+#   ggtitle(paste("lag", lags))
+# p2
+# 
+# lags = 3
+# data.vis = result.rbind[result.rbind$ilag == lags,]
+# data.vis = data.vis[!rowSums(is.na(data.vis)), ]
+# p3 = ggplot(data=data.vis, aes(x=(1:dim(data.vis)[1]))) +
+#   geom_errorbar(width=.1, aes(ymin=ci.low, ymax=ci.high), colour="red") +
+#   geom_point(aes(y=coef)) +
+#   geom_line(aes(y=coef)) +
+#   xlab("FIPS") + ylab("PM2.5 coefficients") +
+#   # ylim(-0.05, 0.05) +
+#   ggtitle(paste("lag", lags))
+# p3
 
 
 
@@ -129,7 +168,6 @@ p3
 # plot.out[[4]] = p3
 # do.call('grid.arrange',c(plot.out, ncol = 1, top = "global model"))
 
-dev.off()
 
 # ### parameter set up### parameter set up### parameter set up### parameter set up### parameter set up### parameter set up
 # ### parameter set up 

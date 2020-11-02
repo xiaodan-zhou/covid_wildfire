@@ -13,7 +13,7 @@ df = load.data()
 
 ### set up 
 n.col.grid = 8
-file.name = paste0("ExploratoryDataAnalysis/pm&cases_raw_all.pdf")
+file.name = paste0("ExploratoryDataAnalysis/pm&cases_raw_moddat2.pdf")
 
 fips.unique = unique(df$FIPS[order(df$population, decreasing=TRUE)])
 
@@ -31,8 +31,8 @@ for (ifips in 1:length(fips.unique)) {
     geom_point(data=df.selected, aes(x=date, y=pm25), colour="blue", size = .1) +
     theme(legend.position="none", axis.title.x=element_blank(),
           axis.text.x=element_blank(), axis.ticks.x=element_blank(), 
-          axis.text.y=element_blank(), axis.ticks.y=element_blank()) + 
-    ggtitle(as.character(fips.unique[ifips]))
+          axis.text.y=element_blank(), axis.ticks.y=element_blank())# + 
+    # ggtitle(as.character(fips.unique[ifips]))
   
   ### visualize number of cases
   p2 = ggplot() +

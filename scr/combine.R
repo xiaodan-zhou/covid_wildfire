@@ -1,6 +1,6 @@
-library(tidyverse)
-library(imputeTS)
 library(lubridate)
+library(tidyr)
+library(dplyr)
 
 setwd('/Users/mac/Documents/GitHub/covid_wildfire/data')
 
@@ -12,10 +12,10 @@ cases = read.csv('https://usafactsstatic.blob.core.windows.net/public/data/covid
 names(cases)[1] = "countyFIPS"
 
 # remove countyFIPS == 1 which are state aggregation, and filter out the west coast states WA, OR, CA
-cases = filter(cases, countyFIPS > 2, stateFIPS %in% c(6, 53, 41))
+cases = dplyr::filter(cases, countyFIPS > 2, stateFIPS %in% c(6, 53, 41))
 
 # wide data to long data
-cases = gather(cases, key=date, value=cases, 
+cases = tidyr::gather(cases, key=date, value=cases, 
                -"countyFIPS", -"County Name", -"State", -"stateFIPS")
 
 # format date and FIPS 
@@ -81,16 +81,13 @@ pop = pop[, c("FIPS", "population")]
 pm = read.csv('daily_pm_2020.csv')
 pm = pm %>% rename(date=day, FIPS=fips)
 pm$FIPS = substr(100000 + pm$FIPS, 2, 6)
-
-# select three states 
 pm = filter(pm, grepl('^06|^53|^41', FIPS)) 
+pm$date = ymd(gsub('X', '', pm$date))
 
 # some counties have multiple records for different ZIPS
 # take the median of them 
 pm = data.frame(pm %>% group_by(date, FIPS) %>%
                   summarize(pm25 = median(pm25), Long = mean(X), Lat = mean(Y)))
-
-pm$date = ymd(gsub('X', '', pm$date))
 
 # there is no missing 
 # st %>% group_by(FIPS) %>%
@@ -103,18 +100,23 @@ print(paste("there are", sum(pm$pm25 < 0),
 
 
 ################################ get climate data ################################ 
+# pr_ = read.csv("pr_county_2020.csv")
+# tmmx_ = read.csv("tmmx_county_2020.csv")
+# srad_ = read.csv("srad_county_2020.csv")
+# sph_ = read.csv("sph_county_2020.csv")
+# rmax_ = read.csv("rmax_county_2020.csv")
+# climate = dplyr::left_join(pr_, tmmx_, by=c("fips", "date"))
+# climate = dplyr::left_join(climate, srad_, by=c("fips", "date"))
+# climate = dplyr::left_join(climate, sph_, by=c("fips", "date"))
+# climate = dplyr::left_join(climate, rmax_, by=c("fips", "date"))
+# limate = data.frame(climate %>% rename(FIPS=fips))
+# write.csv(climate, "climate.csv")
+# rm(pr_, tmmx_, srad_, sph_, rmax_)
 
-pr_ = read.csv("pr_county_2020.csv")
-tmmx_ = read.csv("tmmx_county_2020.csv")
-srad_ = read.csv("srad_county_2020.csv")
-sph_ = read.csv("sph_county_2020.csv")
-rmax_ = read.csv("rmax_county_2020.csv")
-
-climate = Reduce(function(x, y) merge(x, y, all.x=T, all.y=T), list(pr_, tmmx_, srad_, sph_, rmax_))
-rm(pr_, tmmx_, srad_, sph_, rmax_)
-climate = data.frame(climate %>% rename(FIPS=fips))
+climate = read.csv("climate.csv")
 climate$FIPS = substr(100000 + climate$FIPS, 2, 6)
 climate$date = ymd(gsub('X', '', climate$date))
+
 
 ################################ merge all together ################################ 
 covid_county = left_join(cases, deaths, by=c("FIPS", "date"))
@@ -122,16 +124,16 @@ covid_county = left_join(covid_county, pop, by="FIPS")
 covid_county = left_join(covid_county, pm, by=c("FIPS", "date"))
 covid_county = left_join(covid_county, climate, by=c("FIPS", "date"))
 
-# no pm2.5 data before 2020-09-24
+# no pm2.5 data before 2020-09-24 and after 2020-03-15
 covid_county = covid_county[covid_county$date <= "2020-09-24",]
+covid_county = covid_county[covid_county$date >= "2020-03-15",]
 
 
-################################ add dayofweek ################################ 
 covid_county$dayofweek = weekdays(as.Date(covid_county$date))
-covid_county$date_str = strptime(covid_county$date,format='%Y-%m-%d')
-covid_county$date_num = as.integer((covid_county$date_str - min(covid_county$date_str)) /24/60/60)
+covid_county$date_str = covid_county$date
+covid_county$date_num = as.integer(covid_county$date_str - min(covid_county$date_str))
 covid_county$date = covid_county$date_str
-write.csv(covid_county, 'moddat_xz1.csv', row.names=F)
+write.csv(covid_county, 'moddat_xz1_rerun.csv', row.names=F)
 
 
 
@@ -158,7 +160,7 @@ write.csv(covid_county, 'moddat_xz1.csv', row.names=F)
 # days = length(unique(covid_county$date))
 # hist(missing.count$count / days)
 # missing.FIPS = missing.count$FIPS[missing.count$count > days * .5]
-# 
+# # 
 # # these counties covers 2.6 percent of population in three states 
 # missing.pop = data.frame(covid_county[covid_county$FIPS %in% missing.FIPS, ] %>% group_by(FIPS) %>% summarise(pop = mean(population)))
 # missing.pct = sum(covid_county[covid_county$FIPS %in% missing.FIPS, "population"]) / sum(covid_county["population"]) * 100

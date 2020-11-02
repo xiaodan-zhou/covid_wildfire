@@ -8,7 +8,7 @@ import os
 
 # os.chdir('..')
 dir = os.getcwd()
-df = pd.read_csv(dir + "/data/moddat_mc1.csv", sep=",")
+df = pd.read_csv(dir + "/data/moddat2.csv", sep=",")
 # df['FIPS'] = df['FIPS'].astype(str)
 df['date'] = pd.to_datetime(df['date'])
 df.sort_values(["FIPS", "date"], inplace=True)
@@ -58,7 +58,7 @@ for icounty in df.FIPS.unique():
 
 df['dayofweek'] = df['date'].dt.dayofweek
 df.loc[:, "dayofweek_str"] = df.dayofweek.replace({0: "Mo", 1: "Tu", 2: "We", 3: "Th", 4: "Fr", 5: "Sa", 6: "Su"})
-df.to_csv(dir + "/data/moddat_mc2.csv")
+
 
 
 ##################################### merge with climate data ###############################
@@ -85,5 +85,5 @@ climate['date'] = pd.to_datetime(climate.date)
 df = pd.merge(df, climate, how='left', left_on=["date", "FIPS"], right_on=["date", "fips"])
 
 df.drop(columns=['Unnamed: 0_x', 'Unnamed: 0_y', 'fips'], inplace=True)
-df.to_csv(dir + "/data/moddat_mc2.csv")
+df.to_csv(dir + "/data/moddat3.csv")
 

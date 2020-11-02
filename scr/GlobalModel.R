@@ -6,36 +6,16 @@
 # do separately for lags 0, 1, 2 
 # plot the point estimates and the 95% CI for beta global by lags 0, 1, 2 
 
-
-# testing set up 
-setwd("/Users/mac/Documents/GitHub/covid_wildfire")
-source("scr/Utilities.R")
-dff = load.data.xz1()
-df.date=4
-df.tmmx=1
-df.rmax=1
-lags=0:3
-smooth = "ns"
-library(stats, pos = "package:base")
-library(splines)
-        
-# options(na.action = "na.exclude") 
-
-global.model = function(dff, smooth = "ns", df.date=8, df.tmmx=3, df.rmax=3, lags=0) {
-  ### parameter set up 
-  cause = "cases"
-  pollutant = "pm25"
-  group = "FIPS"
-  control = glm.control(epsilon = 1e-10, maxit = 1000)
+global.model = function(dff, smooth="ns", df.date=8, df.tmmx=3, df.rmax=3, lags=0, 
+                        cause="cases", pollutant="pm25", group="FIPS", 
+                        control=glm.control(epsilon = 1e-10, maxit = 10000)) {
   
-  ### create lags of pollutant
+  ### create lag values
   lag.out = add.lag(dff=dff, value=pollutant, group=group, lags=lags)
   lag.data = as.matrix(lag.out[[1]])
-  lag.data.name = "lag.data" # import function
-  # if run interactively, lag.data.name = as.name(substitute(lag.data)) why???
+  lag.data.name = "lag.data" # if run interactively, lag.data.name = as.name(substitute(lag.data)) why???
   
-  
-  ### create lag names
+    ### create lag names
   lag.names = lag.out[[2]]
   if (length(lag.names) == 1) {
     lag.names = c("lag.data")
@@ -47,10 +27,19 @@ global.model = function(dff, smooth = "ns", df.date=8, df.tmmx=3, df.rmax=3, lag
   ### initialize model
   df.name = as.name(substitute(dff))
 
-  f = substitute(~ smooth(date, df.date) + smooth(tmmx, df.tmmx) + 
-                   smooth(rmax, df.rmax) + dayofweek + log(population),
-                 list(df.date = df.date, df.tmmx = df.tmmx, 
-                      df.rmax = df.rmax, smooth = as.name(smooth)))
+  ### local model doesn't have population
+  if (length(unique(dff[group])) == 1) {
+    f = substitute(~ smooth(date, df.date) + smooth(tmmx, df.tmmx) + 
+                     smooth(rmax, df.rmax) + dayofweek,
+                   list(df.date = df.date, df.tmmx = df.tmmx, 
+                        df.rmax = df.rmax, smooth = as.name(smooth)))
+  } else {
+    f = substitute(~ smooth(date, df.date) + smooth(tmmx, df.tmmx) + 
+                     smooth(rmax, df.rmax) + dayofweek + log(population),
+                   list(df.date = df.date, df.tmmx = df.tmmx, 
+                        df.rmax = df.rmax, smooth = as.name(smooth)))
+  }
+
   rhs = as.character(f)
   
   ### create the formula for visualization purpose
@@ -68,29 +57,41 @@ global.model = function(dff, smooth = "ns", df.date=8, df.tmmx=3, df.rmax=3, lag
                         control = control, na.action = na.exclude),
                     list(modelFormula = modelFormula, data = df.name, 
                          lag.name = lag.data, control = substitute(control))) 
-  
-  # test 
-  # glm("cases ~ ns(date, 4) + ns(tmmx, 1) + ns(rmax, 1) + dayofweek + log(population) + lag.data",
-  #     family = quasipoisson, data = dff,
-  #     control = control, na.action = na.exclude)
 
   ### if hit any problems in modelling, returns -1 
   fit = try(eval.parent(call), silent=TRUE)
   if('try-error' %in% class(fit)){
-    return(-1) }
+    return(modelFormula.vis) }
   
-  fit.CI = try(confint(fit),silent=TRUE)
-  if('try-error' %in% class(fit.CI)){
-    return(-1) }
+  fit.CI = list()
+  ### original 
+  # fit.CI = try(confint(fit, silent=TRUE)
+  # if('try-error' %in% class(fit.CI)){
+  #   return(-1) }
+  ### new method not tested for global model 
+  for (iname in lag.names) {
+    temp = confint(fit, iname)
+    fit.CI[[iname]][1] = temp[1]
+    fit.CI[[iname]][2] = temp[2]
+  }
+  ### new method 2 not tested for global model 
+  # for (iname in lag.names) {
+  #   temp = confint.default(fit, iname)
+  #   fit.CI[[iname]][1] = temp[1]
+  #   fit.CI[[iname]][2] = temp[2]
+  # }
   
+
   ### save and returns the results
-  var.out = c("coef", "std", "ci.low", "ci.high", "ilag", "name", "smooth", "df.date", "df.tmmx", "df.rmax")
+  var.out = c("coef", "std", "ci.low", "ci.high", "ilag", "name", 
+              "smooth", "df.date", "df.tmmx", "df.rmax")
+  
   result = data.frame(matrix(ncol = length(var.out), nrow = length(lags)))
   colnames(result) = var.out
   
   for (ilag in 1:length(lag.names)) {
     var.name = lag.names[ilag]
-    ci.value = fit.CI[var.name,]
+    ci.value = fit.CI[[var.name]]
     result[ilag,] = c(fit$coefficients[var.name],
                       summary(fit)$coef[var.name,"Std. Error"],
                       ci.value[1],
@@ -102,7 +103,6 @@ global.model = function(dff, smooth = "ns", df.date=8, df.tmmx=3, df.rmax=3, lag
                       df.tmmx, 
                       df.rmax)
   }
-  # return(list("fit" = fit, "fit.CI" = fit.CI, 
-  #             "modelFormula.vis" = modelFormula.vis, "result" = result))
-  return(list(fit, fit.CI, modelFormula.vis, result))
+  return(list("fit" = fit, "fit.CI" = fit.CI, "modelFormula.vis" = modelFormula.vis, "result" = result))
+  # return(list(fit, fit.CI, modelFormula.vis, result))
 }

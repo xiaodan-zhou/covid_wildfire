@@ -2,11 +2,6 @@
 # function: visualize the PM2.5 smoothed with various degree of freedom
 # output file name: case.smoothed.pdf
 
-library(splines)
-library(ggplot2)
-library(gridExtra)
-library(pracma)
-
 setwd("/Users/mac/Documents/GitHub/covid_wildfire")
 source("scr/Utilities.R")
 df = load.data()

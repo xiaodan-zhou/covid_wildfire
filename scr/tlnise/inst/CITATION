@@ -1,0 +1,13 @@
+citHeader("Please cite the following article when using 'TLNise':")
+
+citEntry(entry = "article",
+         title = "Inference for Multivariate Normal Hierarchical Models",
+         author = personList(person("Philip", "Everson", "J."), person("Carl", "Morris", "N.")),
+	 journal = "Journal of the Royal Statistical Society, Series B",
+         year = "2000",
+	 volume = "62",
+         number = "6",
+         pages = "399--412",
+         textVersion = paste("Everson PJ, Morris CN (2000).", dQuote("Inference for Multivariate Normal Hierarchical Models,"), "Journal of the Royal Statistical Society, Series B, 62 (6) 399--412.")
+         )
+

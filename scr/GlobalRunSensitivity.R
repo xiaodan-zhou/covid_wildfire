@@ -1,54 +1,45 @@
-
-library(ggplot2)
-library(gridExtra)
-
-### read data 
 setwd("/Users/mac/Documents/GitHub/covid_wildfire")
 source("scr/Utilities.R")
 source("scr/GlobalModel.R")
-dff = load.data.xz1()
+# dff = load.data.xz1()
+# dff = load.moddat2()
+dff = load.data.error()
+
 
 ### set up 
 lags.to.run = 0:3
-smooth = "ns"
-df.combo = list(c(2,1,1), c(3,1,1), c(4,1,1), c(5,2,2),
-                c(6,2,2), c(7,2,2), c(8,2,2), c(9, 3, 3), c(10, 3, 3))
+smooth="ns"
+cause = "cases"
+df.combo = list(c(2,1,1), c(3,1,1), c(4,1,1),
+                c(5,2,2), c(6,2,2), c(7,2,2), 
+                c(8,2,2), c(9,3,3), c(10,3,3))
 
-file.name = paste0("GlobalModel/lag", paste0(lags.to.run, collapse=""), "Sensitivity_moddat_xz1_keep.missing.pdf")
-file.csv = paste0("GlobalModel/lag", paste0(lags.to.run, collapse=""), "Sensitivity_moddat_xz1_keep.missing.csv")
-pdf(file.name, width = 12, height = 10)
-plot.out = list()
+### output 
+temp.name = paste0(paste(lags.to.run, collapse=""), ".", cause, ".sensitivity", ".error.reproduce") # confit
+file.pdf = paste0("GlobalModel/lag", temp.name, ".pdf")
+file.csv = paste0("GlobalModel/lag", temp.name, ".csv")
 
-# test
-# ilag = 1
-# idf.combo = c(6,2,2)
-# dff=df
-# smooth = smooth
-# lags=ilag
-# df.date=idf.combo[1]
-# df.tmmx=idf.combo[2]
-# df.rmax=idf.combo[3]
 ##################### run global model for lag 0-3 separately #####################
 result.rbind = c()
 for (ilag in lags.to.run) {
   for (idf.combo in df.combo) {
-    print(paste(smooth, ilag, idf.combo))
-    gm = global.model(dff=dff, smooth = smooth, lags=ilag, 
+    gm = global.model(dff, smooth = smooth, lags=ilag, 
                       df.date=idf.combo[1], df.tmmx=idf.combo[2], 
-                      df.rmax=idf.combo[3])
+                      df.rmax=idf.combo[3], cause = cause)
+    
     if (length(gm) != 1) {
       fit = gm[[1]]
       fit.CI = gm[[2]]
       modelFormula.vis = gm[[3]]
       result = gm[[4]]
+      
       if (is.null(result.rbind)) {
         result.rbind = result
       } else {
         result.rbind=rbind(result.rbind, result)
       }
     } else {
-      print(paste("model failed for lag", ilag, "with df"))
-      print(idf.combo)
+      print(paste("failed: ", gm))
       }
    }
 }
@@ -63,14 +54,17 @@ result.rbind$df.rmax = as.numeric(result.rbind$df.rmax)
 result.rbind$df.combo = as.character(paste0(result.rbind$df.date,result.rbind$df.tmmx,result.rbind$df.rmax))
 write.csv(result.rbind, file.csv)
 
-file.name = paste0("GlobalModel/lag", paste0(lags.to.run, collapse=""), "Sensitivity_moddat_xz1_keep.missing_3.pdf")
-file.csv = paste0("GlobalModel/lag", paste0(lags.to.run, collapse=""), "Sensitivity_moddat_xz1_keep.missing.csv")
-pdf(file.name, width = 12, height = 3)
-plot.out = list()
 
+
+##################### visualize #####################
+
+
+plot.out = list()
 iplot = 1 
-for (ilag in 3) { # lags.to.run
+
+for (ilag in lags.to.run) {
   data.vis = result.rbind[result.rbind$ilag == ilag,]
+  
   if (sum(is.na(data.vis)) == 0) {
     p0 = ggplot(data=data.vis, aes(x=(1:dim(data.vis)[1]))) +
       geom_errorbar(width=.1, aes(ymin=ci.low, ymax=ci.high), colour="red") + 
@@ -85,7 +79,6 @@ for (ilag in 3) { # lags.to.run
   }
 }
 
-##################### save #####################
+pdf(file.pdf, width = 12, height = 3 * length(plot.out))
 do.call('grid.arrange',c(plot.out, ncol = 1, top = "global model"))
-
 dev.off()
