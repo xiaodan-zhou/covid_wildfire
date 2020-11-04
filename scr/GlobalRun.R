@@ -4,6 +4,10 @@ source("scr/GlobalModel.R")
 # dff = load.data.xz1()
 dff = load.data.error()
 
+# manipulate datat 
+df$fireday[df$pm25 >= 20] = 1
+
+
 ### set up 
 lags.to.run = 0:3
 smooth="ns"
@@ -14,7 +18,7 @@ df.rmax=3
 
 
 ### output 
-temp.name = paste0(paste(lags.to.run, collapse=""), ".", cause, ".error") # confit
+temp.name = paste0(paste(lags.to.run, collapse=""), ".", cause, ".nofireday") # confit
 file.pdf = paste0("GlobalModel/lag", temp.name, ".pdf")
 file.csv = paste0("GlobalModel/lag", temp.name, ".csv")
 

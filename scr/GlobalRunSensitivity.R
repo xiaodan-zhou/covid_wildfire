@@ -3,19 +3,28 @@ source("scr/Utilities.R")
 source("scr/GlobalModel.R")
 # dff = load.data.xz1()
 # dff = load.moddat2()
-dff = load.data.error()
+dff = load.data.xz1()
 
+# manipulate datat 
+dff$fireday[dff$pm25 >= 20] = 1
+# dff = dff[dff$fireday == 0, ] #wrong!!!!!
+dff$pm25[dff$fireday == 0, ] = NA
 
 ### set up 
 lags.to.run = 0:3
 smooth="ns"
 cause = "cases"
+# df.combo = list(c(2,1,1), c(3,1,1), c(4,1,1),
+#                 c(5,2,2), c(6,2,2), c(7,2,2),
+#                 c(8,2,2), c(9,3,3), c(10,3,3))
 df.combo = list(c(2,1,1), c(3,1,1), c(4,1,1),
-                c(5,2,2), c(6,2,2), c(7,2,2), 
-                c(8,2,2), c(9,3,3), c(10,3,3))
+                c(5,2,2), c(6,2,2), c(7,2,2),
+                c(8,2,2), c(9,3,3), c(10,3,3),
+                c(11,3,3), c(12,3,3), c(14,3,3),
+                c(16,3,3), c(20,3,3), c(24,4,4))
 
 ### output 
-temp.name = paste0(paste(lags.to.run, collapse=""), ".", cause, ".sensitivity", ".error.reproduce") # confit
+temp.name = paste0(paste(lags.to.run, collapse=""), ".", cause, ".sensitivity", ".nofireday.more2") # confit
 file.pdf = paste0("GlobalModel/lag", temp.name, ".pdf")
 file.csv = paste0("GlobalModel/lag", temp.name, ".csv")
 
@@ -55,7 +64,6 @@ result.rbind$df.combo = as.character(paste0(result.rbind$df.date,result.rbind$df
 write.csv(result.rbind, file.csv)
 
 
-
 ##################### visualize #####################
 
 
@@ -73,7 +81,8 @@ for (ilag in lags.to.run) {
       xlab("df.combo") + ylab("PM2.5 coefficients") + 
       ggtitle(paste("lag", ilag)) + 
       scale_x_continuous(breaks = 1:length(data.vis$df.combo),
-                         labels = data.vis$df.combo)
+                         labels = data.vis$df.combo) + 
+      geom_hline(yintercept=0, linetype="dashed", color = "orange", alpha=.6)
     plot.out[[iplot]] = p0
     iplot = iplot + 1
   }

@@ -16,9 +16,9 @@ df_full = load.data.error()
 lags.to.run=0:3
 smooth="ns"
 cause="cases"
-df.date=8
-df.tmmx=3
-df.rmax=3
+df.date=4
+df.tmmx=1
+df.rmax=1
 
 ### output 
 temp.name = paste0(paste(lags.to.run, collapse=""), ".", cause, ".df", df.date, df.tmmx, df.rmax, ".error.reproduce") # confit
@@ -35,7 +35,7 @@ for (ilag in lags.to.run) {
     dff = df_full[df_full$FIPS == fips[ifips], ]
     
     ## skip zero-inflated data ###########################
-    if (sum(dff$cases == 0) > dim(dff)[1] / 2) {
+    if ((sum(dff$cases == 0) > dim(dff)[1] / 2) | (dim(dff)[1] < 30) ) {
       # print(paste(fips[ifips], "pass"))
       next }
     
