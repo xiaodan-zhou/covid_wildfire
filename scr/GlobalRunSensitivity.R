@@ -5,26 +5,38 @@ source("scr/GlobalModel.R")
 # dff = load.moddat2()
 dff = load.data.xz1()
 
-# manipulate datat 
-dff$fireday[dff$pm25 >= 20] = 1
-# dff = dff[dff$fireday == 0, ] #wrong!!!!!
-dff$pm25[dff$fireday == 0, ] = NA
-
-### set up 
+### set up
+# keep.fireday = TRUE
 lags.to.run = 0:3
 smooth="ns"
 cause = "cases"
-# df.combo = list(c(2,1,1), c(3,1,1), c(4,1,1),
-#                 c(5,2,2), c(6,2,2), c(7,2,2),
-#                 c(8,2,2), c(9,3,3), c(10,3,3))
-df.combo = list(c(2,1,1), c(3,1,1), c(4,1,1),
-                c(5,2,2), c(6,2,2), c(7,2,2),
-                c(8,2,2), c(9,3,3), c(10,3,3),
-                c(11,3,3), c(12,3,3), c(14,3,3),
-                c(16,3,3), c(20,3,3), c(24,4,4))
+extra.note = ""
+# df.combo = list(c(5,1), c(10, 1), c(15, 2), c(20, 2), c(25, 3), c(30, 3), c(35, 4))
+# df.combo = list(c(5,1), c(10, 1), c(15, 2), c(20, 2), c(25, 3), c(30, 3), c(35, 4))
+df.combo = list(c(2,1,1),# c(3,1,1), c(4,1,1),
+                c(5,2,2))# , #c(6,2,2), c(7,2,2),
+                # c(8,2,2))# c(9,3,3), c(10,3,3))
+# df.combo = list(c(11,3,3), c(12,3,3), c(14,3,3),
+#                 c(16,3,3), c(20,3,3), c(24,4,4))
+
+
+extra.note = "FIPS.DEBUG"
+# if (keep.fireday) {
+  # extra.note = ".keepfireday"
+# } else {
+  # extra.note = ".removefireday.moremore"
+  ### fire day setup 
+dff$fireday = 0
+dff$fireday[dff$pm25 >= 20] = 1 # define those pm>=20 as smoke day
+  # dff = dff[dff$fireday == 0, ] # WRONG!!!!!
+  # dff$cases[dff$fireday == 1] = NA # NOT WORKING!!!!!!
+  # dff$pm[dff$fireday == 1] = NA # remove fireday by tag missing
+# }
+
+
 
 ### output 
-temp.name = paste0(paste(lags.to.run, collapse=""), ".", cause, ".sensitivity", ".nofireday.more2") # confit
+temp.name = paste0(paste(lags.to.run, collapse=""), ".", cause, ".sensitivity", extra.note) # confit
 file.pdf = paste0("GlobalModel/lag", temp.name, ".pdf")
 file.csv = paste0("GlobalModel/lag", temp.name, ".csv")
 
@@ -34,7 +46,7 @@ for (ilag in lags.to.run) {
   for (idf.combo in df.combo) {
     gm = global.model(dff, smooth = smooth, lags=ilag, 
                       df.date=idf.combo[1], df.tmmx=idf.combo[2], 
-                      df.rmax=idf.combo[3], cause = cause)
+                      df.rmax=idf.combo[2], cause = cause)
     
     if (length(gm) != 1) {
       fit = gm[[1]]
@@ -82,7 +94,7 @@ for (ilag in lags.to.run) {
       ggtitle(paste("lag", ilag)) + 
       scale_x_continuous(breaks = 1:length(data.vis$df.combo),
                          labels = data.vis$df.combo) + 
-      geom_hline(yintercept=0, linetype="dashed", color = "orange", alpha=.6)
+      geom_hline(yintercept=0, linetype="dashed", color = "blue", alpha=.6)
     plot.out[[iplot]] = p0
     iplot = iplot + 1
   }

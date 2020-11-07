@@ -14,7 +14,7 @@ df = load.data.xz1()
 ### manipulate the fireday 
 # df$fireday[df$pm25 >= 20] = 1
 # Valid California FIPS codes are 06001 to 06115.
-df = df[(as.integer(as.character(df$FIPS)) >= 6001) & (as.integer(as.character(df$FIPS)) <= 6115), ]
+# df = df[(as.integer(as.character(df$FIPS)) >= 6001) & (as.integer(as.character(df$FIPS)) <= 6115), ]
 
 ### set up 
 n.col.grid = 8

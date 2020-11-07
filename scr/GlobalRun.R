@@ -1,24 +1,33 @@
 setwd("/Users/mac/Documents/GitHub/covid_wildfire")
 source("scr/Utilities.R")
-source("scr/GlobalModel.R")
-# dff = load.data.xz1()
-dff = load.data.error()
-
-# manipulate datat 
-df$fireday[df$pm25 >= 20] = 1
-
+source("scr/GlobalModelInteract.R")
+dff = load.data.xz1()
 
 ### set up 
+keep.fireday = TRUE
 lags.to.run = 0:3
 smooth="ns"
 cause = "cases"
-df.date=8
-df.tmmx=3
-df.rmax=3
+df.date=5
+df.tmmx=2
+df.rmax=2
 
+
+### fire day setup 
+dff$fireday = 0
+dff$fireday[dff$pm25 >= 20] = 1 # define those pm>=20 as smoke day
+# dff = dff[dff$fireday == 0, ] # WRONG!!!!!
+if (keep.fireday) {
+  extra.note = ".keepfireday"
+  dff$fireday = as.factor(dff$fireday)
+} else {
+  extra.note = ".removefireday.moremore"
+  dff$cases[dff$fireday == 1] = NA # NOT WORKING!!!!!!
+  dff$pm[dff$fireday == 1] = NA # remove fireday by tag missing
+}
 
 ### output 
-temp.name = paste0(paste(lags.to.run, collapse=""), ".", cause, ".nofireday") # confit
+temp.name = paste0(paste(lags.to.run, collapse=""), ".", cause, extra.note) # confit
 file.pdf = paste0("GlobalModel/lag", temp.name, ".pdf")
 file.csv = paste0("GlobalModel/lag", temp.name, ".csv")
 

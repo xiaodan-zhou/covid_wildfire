@@ -10,12 +10,16 @@ global.model = function(dff, smooth="ns", df.date=8, df.tmmx=3, df.rmax=3, lags=
                         cause="cases", pollutant="pm25", group="FIPS", 
                         control=glm.control(epsilon = 1e-10, maxit = 10000)) {
   
+  ### testing
+  print("global model environtment")
+  print(ls())
+  
   ### create lag values
   lag.out = add.lag(dff=dff, value=pollutant, group=group, lags=lags)
   lag.data = as.matrix(lag.out[[1]])
   lag.data.name = "lag.data" # if run interactively, lag.data.name = as.name(substitute(lag.data)) why???
   
-    ### create lag names
+  ### create lag names
   lag.names = lag.out[[2]]
   if (length(lag.names) == 1) {
     lag.names = c("lag.data")
@@ -24,18 +28,26 @@ global.model = function(dff, smooth="ns", df.date=8, df.tmmx=3, df.rmax=3, lags=
       lag.names[i] = paste0(lag.data.name, lag.names[i])
     } }
 
+  ### save lag value to dataframe
+  for (ii in dim(lag.data)[2]) {
+    print(lag.names[ii])
+    dff[lag.names[ii]] = lag.data[,ii]
+    # print(dff[lag.names[ii]])
+  }
+  
   ### initialize model
-  df.name = as.name(substitute(dff))
+  # df.name = as.name(substitute(dff))  # if run interactively, why???
 
-  ### local model doesn't have population
-  if (length(unique(dff[group])) == 1) {
-    f = substitute(~ smooth(date, df.date) + smooth(tmmx, df.tmmx) + 
+  ### local model doesn't have population/FIPS
+  if (dim(unique(dff[group]))[1] == 1) {
+    f = substitute(~ smooth(date_num, df.date) + smooth(tmmx, df.tmmx) + 
                      smooth(rmax, df.rmax) + dayofweek,
                    list(df.date = df.date, df.tmmx = df.tmmx, 
                         df.rmax = df.rmax, smooth = as.name(smooth)))
   } else {
-    f = substitute(~ smooth(date, df.date) + smooth(tmmx, df.tmmx) + 
-                     smooth(rmax, df.rmax) + dayofweek + log(population),
+    print("Random intercept for multiple FIPS")
+    f = substitute(~ smooth(date_num, df.date) + smooth(tmmx, df.tmmx) + 
+                     smooth(rmax, df.rmax) + dayofweek + FIPS, # log(population) +  
                    list(df.date = df.date, df.tmmx = df.tmmx, 
                         df.rmax = df.rmax, smooth = as.name(smooth)))
   }
@@ -55,8 +67,8 @@ global.model = function(dff, smooth="ns", df.date=8, df.tmmx=3, df.rmax=3, lags=
   ### fit quasipoisson model
   call = substitute(glm(modelFormula, family = quasipoisson, data = dff, 
                         control = control, na.action = na.exclude),
-                    list(modelFormula = modelFormula, data = df.name, 
-                         lag.name = lag.data, control = substitute(control))) 
+                    list(modelFormula = modelFormula, # data = df.name, 
+                         control = substitute(control))) # , lag.name = lag.data)) 
 
   ### if hit any problems in modelling, returns -1 
   fit = try(eval.parent(call), silent=TRUE)

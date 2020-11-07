@@ -8,20 +8,20 @@
 setwd("/Users/mac/Documents/GitHub/covid_wildfire")
 source("scr/Utilities.R")
 source("scr/GlobalModel.R")
-# df_full = load.data.xz1()
+df_full = load.data.xz1()
 # df_full = load.moddat2()
-df_full = load.data.error()
+# df_full = load.data.error()
 
 ### set up
 lags.to.run=0:3
 smooth="ns"
 cause="cases"
-df.date=4
-df.tmmx=1
-df.rmax=1
+df.date=5
+df.tmmx=2
+df.rmax=2
 
 ### output 
-temp.name = paste0(paste(lags.to.run, collapse=""), ".", cause, ".df", df.date, df.tmmx, df.rmax, ".error.reproduce") # confit
+temp.name = paste0(paste(lags.to.run, collapse=""), ".", cause, ".df", df.date, df.tmmx, df.rmax, "") # confit
 file.pdf = paste0("LocalModel/lag", temp.name, ".pdf")
 file.csv = paste0("LocalModel/lag", temp.name, ".csv")
 

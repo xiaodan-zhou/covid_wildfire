@@ -78,6 +78,9 @@ load.data.xz1 = function() {
 #   if (length(missing.FIPS) > 0)
 #     df = df[!(df$FIPS %in% missing.FIPS),]
 
+  # exclude 06000
+  df = df[df$population != 0, ]
+  
   return(df)
 }
 
@@ -117,7 +120,9 @@ load.data.error = function() {
   }
   ### todo remove FIPS with fewer than 10 records
   # min(data.frame(df %>% group_by(FIPS) %>% count())$n)
-
+  
+  # exclude 06000
+  df = df[df$population != 0, ]
   return(df)
 }
 
