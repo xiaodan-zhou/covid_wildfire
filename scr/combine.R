@@ -124,63 +124,40 @@ covid_county = left_join(covid_county, pop, by="FIPS")
 covid_county = left_join(covid_county, pm, by=c("FIPS", "date"))
 covid_county = left_join(covid_county, climate, by=c("FIPS", "date"))
 
-# no pm2.5 data before 2020-09-24 and after 2020-03-15
-covid_county = covid_county[covid_county$date <= "2020-09-24",]
-covid_county = covid_county[covid_county$date >= "2020-03-15",]
+### replace negative number of daily cases with NA 
+if (sum(covid_county$cases < 0) > 0) {
+  print(paste(sum(covid_county$cases < 0), "records have negative daily cases"))
+  covid_county$cases[covid_county$cases < 0] = NA
+}
+print(sum(covid_county$cases < 0, na.rm = T))
 
+### replace negative number of daily deaths with zero 
+if (sum(covid_county$deaths < 0) > 0) {
+  print(paste(sum(covid_county$deaths < 0), "records have negative daily deaths"))
+  covid_county$deaths[covid_county$deaths < 0] = NA
+}
+print(sum(covid_county$deaths < 0, na.rm = T))
+
+# cut covid data at 2020-09-24 and 2020-03-15
+covid_county = covid_county[covid_county$date <= "2020-09-24",]
+
+# mark cases cumu_cases deaths cumu_deaths before "2020-03-15" as NA
+### covid_county = covid_county[covid_county$date >= "2020-03-15",]
+covid_county$cases[covid_county$date < "2020-03-15"] = NA
+covid_county$deaths[covid_county$date < "2020-03-15"] = NA
+covid_county$cumu_cases[covid_county$date < "2020-03-15"] = NA
+covid_county$cumu_deaths[covid_county$date < "2020-03-15"] = NA
+print(sum(is.na(covid_county$cases)))
+print(sum(is.na(covid_county$deaths)))
 
 covid_county$dayofweek = weekdays(as.Date(covid_county$date))
 covid_county$date_str = covid_county$date
 covid_county$date_num = as.integer(covid_county$date_str - min(covid_county$date_str))
 covid_county$date = covid_county$date_str
+
+
+# exclude 06000
+covid_county = covid_county[covid_county$population != 0, ]
+
+
 write.csv(covid_county, 'moddat_xz1_rerun.csv', row.names=F)
-
-
-
-################################ clean records with pm2.5 missing ################################ 
-# # find counties with more than 50% pm2.5 missing
-# missing.count = data.frame(covid_county %>% group_by(FIPS) %>% summarise(count = sum(is.na(pm25))))
-# days = length(unique(covid_county$date))
-# hist(missing.count$count / days)
-# missing.FIPS = missing.count$FIPS[missing.count$count > days * .5]
-# 
-# # these counties covers 2.6 percent of population in three states 
-# missing.pop = data.frame(covid_county[covid_county$FIPS %in% missing.FIPS, ] %>% group_by(FIPS) %>% summarise(pop = mean(population)))
-# missing.pct = sum(covid_county[covid_county$FIPS %in% missing.FIPS, "population"]) / sum(covid_county["population"]) * 100
-# missing.pct
-# 
-# # remove these counties
-# covid_county = covid_county[!covid_county$FIPS %in% missing.FIPS, ]
-
-
-
-
-################################ clean records with climate data missing ################################
-# missing.count = data.frame(covid_county %>% group_by(FIPS) %>% summarise(count = sum(is.na(tmmx))))
-# days = length(unique(covid_county$date))
-# hist(missing.count$count / days)
-# missing.FIPS = missing.count$FIPS[missing.count$count > days * .5]
-# # 
-# # these counties covers 2.6 percent of population in three states 
-# missing.pop = data.frame(covid_county[covid_county$FIPS %in% missing.FIPS, ] %>% group_by(FIPS) %>% summarise(pop = mean(population)))
-# missing.pct = sum(covid_county[covid_county$FIPS %in% missing.FIPS, "population"]) / sum(covid_county["population"]) * 100
-# missing.pct
-# 
-# # temp 
-# # write.csv(covid_county, 'moddat_v2.csv', row.names=F)
-# # covid_county = read.csv("moddat_v2.csv")
-# 
-# # find counties with more than ......
-# # test = covid_county[is.na(covid_county$tmmx), ]
-# # test = data.frame(test %>% group_by(FIPS) %>% summarise(count = length(pm25)))
-# # for (i in test) print(i)
-# covid_county = covid_county[!is.na(covid_county$tmmx),]
-# 
-# print(colSums(is.na(covid_county)))
-
-# remove records with pm2.5 missing 
-# covid_county = covid_county[!is.na(covid_county$pm25),]
-########################################################
-
-
-

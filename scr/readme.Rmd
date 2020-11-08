@@ -14,3 +14,24 @@ srad	W/m^2 0*	  5477*	  Downward surface shortwave radiation
 tmmx	??C	  -670*	576*	  Maximum temperature
 rmax	%	    1.05*	100*    Maximum relative humidity
 sph	  kg/kg	0*	  0.02*   Specific humidity
+
+
+
+Utilities.R
+  function to load data
+  function to add time lag for pollutants 
+  
+GlobalModel.R
+  function 1) single model with pollutants >= 1 lags
+  function 2) model with interaction iterm (wildfire day) for 1 lag in pollutants only 
+
+Global_RunSingleModel.R
+Global_RunSingleModel_Sensitivity.R
+  run model 1) and visualize 
+  
+Global_RunInteractionModel.R
+?? Global_RunInteractionModel_Sensitivity.R
+  run model 2) and visualize
+  
+LocalModel.R
+LocalRun.R
