@@ -1,16 +1,16 @@
 setwd("/Users/mac/Documents/GitHub/covid_wildfire")
 source("scr/Utilities.R")
-source("/Users/mac/Desktop/GlobalModel.R")
+source("scr/GlobalModel.R")
 dff = load.data.xz1()
 
 ### set up
-lags.to.run = 0:28
+lags.to.run = c(0,5,10)
 smooth="ns"
 cause = "cases"
 df.date=5
 df.tmmx=2
 df.rmax=2
-extra.note = "rerunoldGlolbaModel"
+extra.note = "validate"
 
 
 ### output 
@@ -26,6 +26,7 @@ result.rbind = c()
 for (ilag in lags.to.run) {
   gm = global.model2(dff=dff, smooth=smooth, lags=ilag, cause = cause, 
                     df.date=df.date, df.tmmx=df.tmmx, df.rmax=df.rmax)
+
   if (length(gm) != 1) {
     gm = c(gm, lag=ilag, df.date=df.date, df.tmmx=df.tmmx, df.rmax=df.rmax)
     if (is.null(gm)) {
@@ -51,7 +52,8 @@ names(result.vis) = c("coef", "coef.low", "coef.high", "lag")
 p1 = ggplot(data=result.vis, aes(x=lag)) +
   geom_errorbar(width=.1, aes(ymin=coef.low, ymax=coef.high), colour="red") + 
   geom_point(aes(y=coef)) + 
-  geom_line(aes(y=coef)) + ylab("PM2.5 coefficients") 
+  geom_line(aes(y=coef)) + ylab("PM2.5 coefficients") + 
+  geom_hline(yintercept=0, linetype="dashed", color = "blue", alpha=.6)
 plot.out[[1]] = p1
 
 result.vis = result.rbind[,c(7:9, 10)]
@@ -60,7 +62,8 @@ names(result.vis) = c("coef", "coef.low", "coef.high", "lag")
 p2 = ggplot(data=result.vis, aes(x=lag)) +
   geom_errorbar(width=.1, aes(ymin=coef.low, ymax=coef.high), colour="red") + 
   geom_point(aes(y=coef)) + 
-  geom_line(aes(y=coef)) + ylab("PM2.5:Fireday coefficients") 
+  geom_line(aes(y=coef)) + ylab("PM2.5:Fireday coefficients") + 
+  geom_hline(yintercept=0, linetype="dashed", color = "blue", alpha=.6)
 plot.out[[2]] = p2
 
 result.vis = result.rbind[,c(4:6, 10)]
@@ -69,7 +72,8 @@ names(result.vis) = c("coef", "coef.low", "coef.high", "lag")
 p3 = ggplot(data=result.vis, aes(x=lag)) +
   geom_errorbar(width=.1, aes(ymin=coef.low, ymax=coef.high), colour="red") + 
   geom_point(aes(y=coef)) + 
-  geom_line(aes(y=coef)) + ylab("WildFire day coefficients") 
+  geom_line(aes(y=coef)) + ylab("WildFire day coefficients") + 
+  geom_hline(yintercept=0, linetype="dashed", color = "blue", alpha=.6)
 plot.out[[3]] = p3
 
 pdf(file.pdf, width = 12, height = 5 * length(plot.out))

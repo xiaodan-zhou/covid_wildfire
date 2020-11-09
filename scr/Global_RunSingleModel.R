@@ -66,7 +66,8 @@ if (!isempty(result.rbind)) {
     geom_point(aes(y=coef)) + 
     geom_line(aes(y=coef)) + 
     xlab("PM2.5 lag") + ylab("PM2.5 coefficients") + 
-    ggtitle(modelFormula.vis)
+    ggtitle(modelFormula.vis) + 
+    geom_hline(yintercept=0, linetype="dashed", color = "blue", alpha=.6)
   plot.out[[1]] = p1
   
   pdf(file.pdf, width = 12, height = 5 * length(plot.out))

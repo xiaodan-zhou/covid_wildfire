@@ -91,6 +91,8 @@ global.model = function(dff, smooth="ns", df.date=8, df.tmmx=3, df.rmax=3, lags=
 
 
 # https://www.econometrics-with-r.org/8-3-interactions-between-independent-variables.html
+# ~ lag.data * fireday
+# fireday is factor 
 global.model2 = function(dff, smooth="ns", df.date=8, df.tmmx=3, df.rmax=3, lags=0, 
                          cause="cases", pollutant="pm25", group="FIPS", 
                          control=glm.control(epsilon = 1e-10, maxit = 10000)) {
@@ -102,21 +104,20 @@ global.model2 = function(dff, smooth="ns", df.date=8, df.tmmx=3, df.rmax=3, lags
   lag.out = add.lag(dff=dff, value=pollutant, group=group, lags=lags)
   lag.data = as.matrix(lag.out[[1]])
   lag.data.name = "lag.data"
-  
+
   ### have the fireday index shifted! it must be her! 
   fireday = as.factor(as.character((lag.data>20)*1))
   fireday.name = "fireday"
-  
+
   print(paste("=lag=", lags, "pm>=20", sum(lag.data>20, na.rm=T), "fireday count", sum(as.numeric(as.character(fireday)), na.rm=T)))
-  
+
   ### create lag names
   lag.names = lag.out[[2]]
   
   f = substitute(~ FIPS + smooth(date_num, df.date) + smooth(tmmx, df.tmmx) +
                      smooth(rmax, df.rmax) + dayofweek,
-                   list(df.date = df.date, df.tmmx = df.tmmx, 
+                   list(df.date = df.date, df.tmmx = df.tmmx,
                         df.rmax = df.rmax, smooth = as.name(smooth)))
-  
   rhs = as.character(f)
   
   modelFormula.vis = ""
@@ -137,10 +138,10 @@ global.model2 = function(dff, smooth="ns", df.date=8, df.tmmx=3, df.rmax=3, lags
                          control = substitute(control))) 
   
   ### if hit any problems in modelling, returns -1 
-  fit = eval.parent(call)
-  # fit = try(eval.parent(call), silent=TRUE)
+  fit = try(eval.parent(call), silent=TRUE)
   if('try-error' %in% class(fit)){
     return(-1) }
+  print(summary(fit))
   
   coefs = c()
   coefs.names = c()
@@ -153,3 +154,4 @@ global.model2 = function(dff, smooth="ns", df.date=8, df.tmmx=3, df.rmax=3, lags
   names(coefs) = coefs.names
   return(coefs)
 }
+

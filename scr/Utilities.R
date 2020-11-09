@@ -53,12 +53,3 @@ add.lag = function(dff, value="pm25", group="FIPS", lags=1) {
 }
 
 
-smooth.y = function(dff, cause, group="FIPS") {
-  dff.out = dff %>% 
-    dplyr::group_by(.dots = group) %>% 
-    dplyr::mutate(smoothed.cause := pracma::movavg(!!as.name(cause), n=14, type=c("w")))
-  return(dff.out$smoothed.cause)
-  }
-
-# dff = data.frame(cases=runif(100), FIPS=rep(c('a', 'b'), each=50))
-# dffy = smooth.y(dff, cause="cases")
