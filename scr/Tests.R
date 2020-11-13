@@ -29,17 +29,15 @@
 # [1] "14 pm.l missing 9488 fireday count 967 count pm 23363 cor 0.69"
 
 
-
-
-
-############################ test the interaction model #########################
+############################ what if spline on pm #########################
 setwd("/Users/mac/Documents/GitHub/covid_wildfire")
 source("scr/Utilities.R")
 source("scr/GlobalModel.R")
-dff = load.data.xz1()
+dff_full = load.data.xz1()
 df.date=5
 df.tmmx=2
 df.rmax=2
+df.pm=2
 lags=0
 lags.to.run = lags
 
@@ -49,22 +47,79 @@ pollutant="pm25"
 group="FIPS"
 control=glm.control(epsilon = 1e-10, maxit = 10000)
 
-gm = global.model2(dff=dff, smooth = smooth, df.date = df.date,
-                   df.tmmx = df.tmmx, df.rmax = df.rmax, lags = lags, cause = cause)
+pm.quantile = quantile(dff_full$pm25, c(0, .25,.5,.75,1), na.rm=T)
+pm.quantile # -0.9269231   3.1576923   4.8538462   8.2230769 761.6576923
+for (i in 1:4) {
+  dff = load.data.xz1()
+  dff$pm25[(dff$pm25 <= pm.quantile[i]) | (dff$pm25 > pm.quantile[i+1])] = NA
+  print(sum(!is.na(dff$pm25),na.rm=T))
+  fit = glm(formula = cases ~ FIPS + ns(date_num, df.date) + ns(tmmx, df.tmmx) + ns(rmax, df.rmax) + dayofweek + pm25,
+            family = quasipoisson, data = dff, na.action = na.exclude,
+            control = glm.control(epsilon = 1e-10, maxit = 10000))
+  summary(fit)
+  
+  print(coefficients(fit)['pm25'])
+  print(confint(fit, "pm25"))
+}
 
 
-# dff$fireday = NA
-# dff$fireday[dff$pm25 <= 20] = "ANOFIRE"
-# dff$fireday[dff$pm25 > 20] = "FIRE"
-# dff$fireday = as.factor(dff$fireday)
-# unique(dff$fireday)
-#+ I(ns(date_num, df.date)*fireday) 
-dff$fireday = dff$pm25 > 20 * 1
+# dff = dff_full[(dff_full$pm25 > pm.quantile[i]) & (dff_full$pm25 <= pm.quantile[i+1]), ]
+# 
+# fit = glm(formula = cases ~ FIPS + ns(date_num, df.date) + ns(tmmx, df.tmmx) + ns(rmax, df.rmax) + dayofweek + pm25,
+#           family = quasipoisson, data = dff, na.action = na.exclude,
+#           control = glm.control(epsilon = 1e-10, maxit = 10000))
+# summary(fit)
+# 
+# coefficients(fit)
+# 
+# pmeffect = ns(dff$pm25, df.pm) %*%  matrix(data=tail(coefficients(fit), df.pm), ncol=1)
+# c1 = confint(fit, "ns(pm25, df.pm)1")
+# c2 = confint(fit, "ns(pm25, df.pm)2")
+# pmeffect.low = ns(dff$pm25, df.pm) %*%  matrix(data=c(c1[1], c2[2]), ncol=1)
+# pmeffect.high = ns(dff$pm25, df.pm) %*%  matrix(data=c(c1[2], c2[1]), ncol=1)
+# 
+# ggplot() + geom_point(aes(dff$pm25, exp(pmeffect)-1), col="black")  + 
+#   geom_point(aes(dff$pm25, exp(pmeffect.low)-1), col="red") + 
+#   geom_point(aes(dff$pm25, exp(pmeffect.high)-1), col="red")
 
-fit = glm(formula = cases ~ FIPS + ns(date_num, df.date) + ns(tmmx, df.tmmx) + ns(rmax, df.rmax) + dayofweek + pm25*fireday,
-          family = quasipoisson, data = dff, na.action = na.exclude,
-          control = glm.control(epsilon = 1e-10, maxit = 10000))
-summary(fit)
+
+  
+
+# ############################ test the interaction model #########################
+# setwd("/Users/mac/Documents/GitHub/covid_wildfire")
+# source("scr/Utilities.R")
+# source("scr/GlobalModel.R")
+# dff = load.data.xz1()
+# df.date=5
+# df.tmmx=2
+# df.rmax=2
+# lags=0
+# lags.to.run = lags
+# 
+# smooth = "ns"
+# cause = "cases"
+# pollutant="pm25"
+# group="FIPS"
+# control=glm.control(epsilon = 1e-10, maxit = 10000)
+# 
+# gm = global.model2(dff=dff, smooth = smooth, df.date = df.date,
+#                    df.tmmx = df.tmmx, df.rmax = df.rmax, lags = lags, cause = cause)
+# 
+# 
+# # dff$fireday = NA
+# # dff$fireday[dff$pm25 <= 20] = "ANOFIRE"
+# # dff$fireday[dff$pm25 > 20] = "FIRE"
+# # dff$fireday = as.factor(dff$fireday)
+# # unique(dff$fireday)
+# #+ I(ns(date_num, df.date)*fireday) 
+# dff$fireday = dff$pm25 > 20 * 1
+# 
+# fit = glm(formula = cases ~ FIPS + ns(date_num, df.date) + ns(tmmx, df.tmmx) + 
+#             ns(rmax, df.rmax) + dayofweek + pm25*fireday,
+#           family = quasipoisson, data = dff, na.action = na.exclude,
+#           control = glm.control(epsilon = 1e-10, maxit = 10000))
+# summary(fit)
+
 # pm25                    1.769e-02  2.481e-03   7.130 1.04e-12 ***
 # firedayFIRE             3.644e-01  4.561e-02   7.990 1.42e-15 ***
 # pm25:firedayFIRE       -1.730e-02  2.568e-03  -6.734 1.70e-11 ***
