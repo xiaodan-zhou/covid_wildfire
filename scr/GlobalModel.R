@@ -87,9 +87,6 @@ global.model = function(dff, smooth="ns", df.date=8, df.tmmx=3, df.rmax=3, lags=
 }
 
 
-
-
-
 # https://www.econometrics-with-r.org/8-3-interactions-between-independent-variables.html
 # ~ lag.data * fireday
 # fireday is factor 
@@ -97,7 +94,7 @@ global.model2 = function(dff, smooth="ns", df.date=8, df.tmmx=3, df.rmax=3, lags
                          cause="cases", pollutant="pm25", group="FIPS", 
                          control=glm.control(epsilon = 1e-10, maxit = 10000)) {
   
-  if (length(lags) > 1) stop("Interaction model only works for 1 lags")
+  if (length(lags) > 1) stop("Interaction model only works for 1 lag")
   if (dim(unique(dff[group]))[1] == 1) stop("Interaction model requires multiple counties/FIPS")
   
   ### create lag values
@@ -105,7 +102,7 @@ global.model2 = function(dff, smooth="ns", df.date=8, df.tmmx=3, df.rmax=3, lags
   lag.data = as.matrix(lag.out[[1]])
   lag.data.name = "lag.data"
 
-  ### have the fireday index shifted! it must be her! 
+  ### have the fireday index shifted! it must be here! 
   fireday = as.factor(as.character((lag.data>20)*1))
   fireday.name = "fireday"
 
@@ -155,3 +152,60 @@ global.model2 = function(dff, smooth="ns", df.date=8, df.tmmx=3, df.rmax=3, lags
   return(coefs)
 }
 
+
+# ~ fireday
+global.model3 = function(dff, smooth="ns", df.date=8, df.tmmx=3, df.rmax=3, lag=0, 
+                         cause="cases", pollutant="pm25", group="FIPS", pm.threshold = 20, 
+                         control=glm.control(epsilon = 1e-10, maxit = 10000)) {
+  
+  if (length(lag) > 1) stop("model only works for 1 lag")
+  if (dim(unique(dff[group]))[1] == 1) stop("model requires multiple counties/FIPS")
+  
+  ### create lag values
+  lag.out = add.smoke(dff=dff, value=pollutant, group=group, lag=lag, pm.threshold=pm.threshold)
+  lag.smoke = as.matrix(lag.out[[1]])
+  lag.smoke.name = "lag.smoke"
+
+  print(paste("=lag=", lag, "pm>=", pm.threshold, "fireday count", sum(lag.smoke, na.rm=T)))
+
+  ### create lag names
+  lag.names = lag.out[[2]]
+  
+  f = substitute(~ FIPS + smooth(date_num, df.date) + smooth(tmmx, df.tmmx) +
+                   smooth(rmax, df.rmax) + dayofweek,
+                 list(df.date = df.date, df.tmmx = df.tmmx,
+                      df.rmax = df.rmax, smooth = as.name(smooth)))
+  rhs = as.character(f)
+  
+  modelFormula.vis = ""
+  
+  ### add pollutant elements to the model
+  rhs[-1] = paste(rhs[-1], lag.smoke.name, sep = "+")
+
+  ### add cause to the model
+  modelFormula = as.formula(paste(cause, paste(rhs, collapse = "")))
+  print(modelFormula)
+  
+  ### fit quasipoisson model
+  call = substitute(glm(modelFormula, family = quasipoisson, data = dff, 
+                        control = control, na.action = na.exclude),
+                    list(modelFormula = modelFormula,
+                         lag.name = lag.smoke, 
+                         control = substitute(control))) 
+  
+  ### if hit any problems in modelling, returns -1 
+  fit = try(eval.parent(call), silent=TRUE)
+  if('try-error' %in% class(fit)){
+    return(-1) }
+
+  coefs = c()
+  coefs.names = c()
+
+  var.name = lag.smoke.name
+  temp = confint(fit, var.name)
+  coefs = c(coefs, fit$coefficients[var.name], temp[1], temp[2])
+  coefs.names = c(coefs.names, var.name, paste0(var.name, ".low"), paste0(var.name, ".high"))
+ 
+  names(coefs) = coefs.names
+  return(coefs)
+}

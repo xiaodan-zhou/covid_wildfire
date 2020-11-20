@@ -98,6 +98,7 @@ setwd("/Users/mac/Documents/GitHub/covid_wildfire/data/statetotaltests")
 
 
 ### read data 
+pm.threshold=20
 dt = read.csv("merged.csv")
 dt$date = ymd(dt$date)
 dt$dayofweek = as.factor(dt$dayofweek)
@@ -130,8 +131,9 @@ dff$state[dff$state_num == "6"] = "CA"
 dff$state[dff$state_num == "41"] = "OR"
 dff$state[dff$state_num == "53"] = "WA"
 
-pm_state = data.frame(dff %>% group_by(state, date) %>% summarise("firecount"=sum(pm25>20,na.rm=T)))
-ggplot() + geom_line(data=pm_state,aes(x=date,y=firecount,col=state)) + ylab("count (FIPS where pm>20")
+pm.threshold=12
+pm_state = data.frame(dff %>% group_by(state, date) %>% summarise("firecount"=sum(pm25>pm.threshold,na.rm=T)))
+ggplot() + geom_line(data=pm_state,aes(x=date,y=firecount,col=state)) + ylab(paste0("count (FIPS where pm>", pm.threshold, ")"))
 
 ### newcases ~ ns(date, 5) + state + dayofweek
 fit.dt = glm(data=dt, newcases ~ ns(date, 5) + state + dayofweek, family=quasipoisson)

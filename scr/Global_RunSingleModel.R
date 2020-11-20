@@ -54,7 +54,7 @@ result.rbind$df.rmax = as.numeric(result.rbind$df.rmax)
 write.csv(result.rbind, file.csv)
 
 
-
+result.rbind = read.csv("GlobalModel/*lag0to28.cases.df522.csv")
 
 ##################### visualize #####################
 if (!isempty(result.rbind)) {
@@ -66,7 +66,7 @@ if (!isempty(result.rbind)) {
     geom_point(aes(y=coef)) + 
     geom_line(aes(y=coef)) + 
     xlab("PM2.5 lag") + ylab("PM2.5 coefficients") + 
-    ggtitle(modelFormula.vis) + 
+    # ggtitle(modelFormula.vis) + 
     geom_hline(yintercept=0, linetype="dashed", color = "blue", alpha=.6)
   plot.out[[1]] = p1
   
