@@ -1,20 +1,25 @@
+The key function is in GlobalModel.R
+It is called in Global_RunSingleModel.R, Global_RunSingleModel_Sensitivity.R 
+and Global_RunSmokedayModel.R, Global_RunSmokedayModel_Sensitivity.R
+to create out key outputs. 
 
-## Script Structure
+## Code Structure in folder scr/
 
 Utilities.R
   function to load data
-  function to add time lag for pollutants 
-  function to define smoke day
+  function to create pollutant lags
+  function to define smoke day and create lags 
   
 GlobalModel.R
-  function 1) single model with pollutants >= 1 lags
-  function 2) model with interaction iterm (wildfire day) for 1 lag in pollutants only 
-  function 3) single model with smoke day variate
+  function 1) single model regressing on pm2.5 values 
+  function 2) single model regressing on interaction item of pm2.5 value and smoke day covariate  
+  function 3) single model regressing on smoke day covariate
+  above functions are validated for single-lag scenario only  
   
 Global_RunSingleModel.R
 Global_RunSingleModel_Sensitivity.R
   run model 1) and visualize 
-  
+
 Global_RunInteractionModel.R
   run model 2) and visualize
 
@@ -28,17 +33,17 @@ LocalRun.R
 
 ## Data Description 
 
-Name	      Units	    Min	  Max	    Description
-cases       people                  Confirmed COVID cases            
-deaths      people                  Deaths of COVID
-population  people
-pm25        ug/m^3
-
 # https://developers.google.com/earth-engine/datasets/catalog/IDAHO_EPSCOR_TERRACLIMATE#bands
 # https://developers.google.com/earth-engine/datasets/catalog/IDAHO_EPSCOR_GRIDMET?hl=es#bands
 Name	Units	Min	  Max	    Description
 pr	  mm	  0*	  7245*   Precipitation accumulation
 srad	W/m^2 0*	  5477*	  Downward surface shortwave radiation
-tmmx	??C	  -670*	576*	  Maximum temperature
+tmmx	C	    -670*	576*	  Maximum temperature
 rmax	%	    1.05*	100*    Maximum relative humidity
 sph	  kg/kg	0*	  0.02*   Specific humidity
+
+Name	      Units	    Min	  Max	    Description
+cases       people                  Confirmed COVID cases            
+deaths      people                  Deaths of COVID
+population  people
+pm25        ug/m^3
