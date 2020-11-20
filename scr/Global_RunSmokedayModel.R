@@ -7,7 +7,7 @@ dff = load.data.xz1()
 ### set up
 lags.to.run = 0:28
 smooth="ns"
-cause = "cases"
+cause = "deaths"
 df.date=5
 df.tmmx=2
 df.rmax=2
