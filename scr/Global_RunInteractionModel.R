@@ -4,7 +4,7 @@ source("scr/GlobalModel.R")
 dff = load.data.xz1()
 
 ### set up
-lags.to.run = c(0,5,10)
+lags.to.run = c(0,5,10,15)
 smooth="ns"
 cause = "cases"
 df.date=5
@@ -12,21 +12,23 @@ df.tmmx=2
 df.rmax=2
 extra.note = "validate"
 
-
 ### output 
 temp.name = paste0(paste0("df", df.date, df.tmmx, df.rmax), ".", 
                    paste0(lags.to.run[1], "to", tail(lags.to.run, n=1)), 
                    ".", cause, extra.note)
-file.pdf = paste0("GlobalModel/Interactlag.", temp.name, ".pdf")
-file.csv = paste0("GlobalModel/Interactlag.", temp.name, ".csv")
-
+# consecutive smoke defined on pm value 
+# file.pdf = paste0("GlobalModel/Interact.", temp.name, ".pdf")
+# file.csv = paste0("GlobalModel/Interactlag.", temp.name, ".csv")
+# hazard smoke observed AOD 
+file.pdf = paste0("GlobalModel/InteractCTSHarzard.", temp.name, ".pdf")
+file.csv = paste0("GlobalModel/InteractCTSHarzard.", temp.name, ".csv")
 
 ##################### run global model for multiple lags separately #####################
 result.rbind = c()
 for (ilag in lags.to.run) {
   gm = global.model2(dff=dff, smooth=smooth, lags=ilag, cause = cause, 
                     df.date=df.date, df.tmmx=df.tmmx, df.rmax=df.rmax)
-
+  print(gm)
   if (length(gm) != 1) {
     gm = c(gm, lag=ilag, df.date=df.date, df.tmmx=df.tmmx, df.rmax=df.rmax)
     if (is.null(gm)) {
