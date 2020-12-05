@@ -54,7 +54,7 @@ result.rbind$df.rmax = as.numeric(result.rbind$df.rmax)
 write.csv(result.rbind, file.csv)
 
 
-result.rbind = read.csv("GlobalModel/*lag0to28.cases.df522.csv")
+# result.rbind = read.csv("GlobalModel/*lag0to28.cases.df522.csv")
 
 ##################### visualize #####################
 if (!isempty(result.rbind)) {
@@ -74,4 +74,3 @@ if (!isempty(result.rbind)) {
   do.call('grid.arrange',c(plot.out, ncol = 1, top = "global model"))
   dev.off()
 }
-

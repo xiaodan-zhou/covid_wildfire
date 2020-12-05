@@ -38,7 +38,7 @@ LocalRun.R
 Name	Units	Min	  Max	    Description
 pr	  mm	  0*	  7245*   Precipitation accumulation
 srad	W/m^2 0*	  5477*	  Downward surface shortwave radiation
-tmmx	C	    -670*	576*	  Maximum temperature
+tmmx	K	    -670*	576*	  Maximum temperature
 rmax	%	    1.05*	100*    Maximum relative humidity
 sph	  kg/kg	0*	  0.02*   Specific humidity
 
