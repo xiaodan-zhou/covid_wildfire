@@ -9,7 +9,7 @@ library(stats)
 library(meta)
   
 ############################################################################
-load.data.xz1 = function() {
+load.data = function() {
   
   ### read data 
   setwd("/Users/mac/Documents/GitHub/covid_wildfire")
@@ -98,7 +98,7 @@ split.pm = function(pm25, hazardmap) {
   
 
 ############################################################################
-add.lag = function(dff, value="pm25", group="FIPS", lags=1) {
+create.lag.value = function(dff, value="pm25", group="FIPS", lags=1) {
   ### return all lagged 'value' as listed in 'lags', after grouping value by 'group'
   ### assumes df is ordered in time!!! 
   ### dplyr version 0.8.5
@@ -106,28 +106,32 @@ add.lag = function(dff, value="pm25", group="FIPS", lags=1) {
   lag.names = c()
   
   for (i in lags) {
-    new.var = ifelse(i == 0, value, paste0(value, ".l", i))
+    new.var = paste0(".l", i)
     lag.names = c(lag.names, new.var)
     dff = dff %>% 
       dplyr::group_by(.dots = group) %>% 
       dplyr::mutate(!!new.var := dplyr::lag(!!as.name(value), n = i, default = NA))
     dff = data.frame(dff)
   }
-  return(list(dff[lag.names], lag.names))
+  return(dff[lag.names])
 
 }
-
 
 ############################################################################
-add.hazard = function(dff, value="hazardmap", group="FIPS", lag=1, hazard.threshold=27) {
-  if (length(lag) > 1) stop("add.hazard only works for 1 lag")
-  i = lag
-  new.var = ifelse(i == 0, value, paste0(value, ".l", i))
-  dff = dff %>% 
-    dplyr::group_by(.dots = group) %>% 
-    dplyr::mutate(!!new.var := dplyr::lag(!!as.name(value), n = i, default = NA))
-  dff = data.frame(dff)
-  # dff[new.var] = as.factor(as.character((dff[new.var] >= hazard.threshold) * 1))           TODO 
-  return(list(dff[new.var], new.var))
+trans.coef = function(ls, pm.delta = 10) {
+  return((exp(ls * pm.delta) - 1) * 100)
 }
-  
+
+############################################################################
+# add.hazard = function(dff, value="hazardmap", group="FIPS", lag=1, hazard.threshold=27) {
+#   if (length(lag) > 1) stop("add.hazard only works for 1 lag")
+#   i = lag
+#   new.var = ifelse(i == 0, value, paste0(value, ".l", i))
+#   dff = dff %>% 
+#     dplyr::group_by(.dots = group) %>% 
+#     dplyr::mutate(!!new.var := dplyr::lag(!!as.name(value), n = i, default = NA))
+#   dff = data.frame(dff)
+#   # dff[new.var] = as.factor(as.character((dff[new.var] >= hazard.threshold) * 1))           TODO 
+#   return(list(dff[new.var], new.var))
+# }
+#   

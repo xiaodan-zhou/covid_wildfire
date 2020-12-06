@@ -1,32 +1,30 @@
 ## Code Structure in folder scr/
 
 Model.R
-    'default.model' regression on pm2.5 values
-        works for sinple or multiple lags, 
+    'model' regression 
+        1) on pm2.5 values; 2) on pm2.5 baseline and wildfire contribution ???
+        works for sinple or multiple lags, ???
         w/ or w/o mobility data 
-    'two.bands.model' regression on 1) pm2.5 baseline and 2) wildfire contribution
-        works for sinple or multiple lags, 
-        w/ or w/o mobility data  single
-    || above functions are validated for single-lag scenario only  
-  
+
 ExeSingleLagModel.R 
     run default.model for single lag w/o mobility (varies degree of freedom setup)
-
+    Please transform before saving as csv!
 ExeDistLagModel.R 
     run default.model for multiple lags w/o mobility (varies degree of freedom setup)
-
+    Please transform before saving as csv!
 ExeTwoBandSingleLagModel.R 
     run two.bands.model for single lag w/o mobility (varies degree of freedom setup)
-
+    Please transform before saving as csv!
 ExeTwoBandDistLagModel.R 
     run two.bands.model for multiple lags w/o mobility (varies degree of freedom setup)
-
+    Please transform before saving as csv!
+    
 Utilities.R
-    'load.data'           load data
-    'split.pm'            split pm2.5 into baseline and wildfire contribution
-    'create.lag'          create lags for pm2.5 or baseline or wildfire contribution
+    'load.data'           load data ???
+    'split.pm'            split pm2.5 into baseline and wildfire contribution ???
+    'create.lag.value'    create lags for pm2.5 or baseline or wildfire contribution ???
     'create.output.name'  create modelling output file names
-    'trans.coef'          transform coefficients in Poisson model 
+    'trans.coef'          transform coefficients in Poisson model ???
         Please transform before saving as csv!
         percent of change given 10ug/m3 increases in pm values
         (how to interpret distributed lag model????????)
