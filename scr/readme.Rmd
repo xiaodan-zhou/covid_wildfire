@@ -1,36 +1,76 @@
-The key function is in GlobalModel.R
-It is called in Global_RunSingleModel.R, Global_RunSingleModel_Sensitivity.R 
-and Global_RunSmokedayModel.R, Global_RunSmokedayModel_Sensitivity.R
-to create out key outputs. 
-
 ## Code Structure in folder scr/
 
+Model.R
+    'default.model' regression on pm2.5 values
+        works for sinple or multiple lags, 
+        w/ or w/o mobility data 
+    'two.bands.model' regression on 1) pm2.5 baseline and 2) wildfire contribution
+        works for sinple or multiple lags, 
+        w/ or w/o mobility data  single
+    || above functions are validated for single-lag scenario only  
+  
+ExeSingleLagModel.R 
+    run default.model for single lag w/o mobility (varies degree of freedom setup)
+
+ExeDistLagModel.R 
+    run default.model for multiple lags w/o mobility (varies degree of freedom setup)
+
+ExeTwoBandSingleLagModel.R 
+    run two.bands.model for single lag w/o mobility (varies degree of freedom setup)
+
+ExeTwoBandDistLagModel.R 
+    run two.bands.model for multiple lags w/o mobility (varies degree of freedom setup)
+
 Utilities.R
-  function to load data
-  function to create pollutant lags
-  function to define smoke day and create lags 
+    'load.data'           load data
+    'split.pm'            split pm2.5 into baseline and wildfire contribution
+    'create.lag'          create lags for pm2.5 or baseline or wildfire contribution
+    'create.output.name'  create modelling output file names
+    'trans.coef'          transform coefficients in Poisson model 
+        Please transform before saving as csv!
+        percent of change given 10ug/m3 increases in pm values
+        (how to interpret distributed lag model????????)
+
+Visualization script name ....
+    read csv1 csv2 
+    plot plot plot 
+    a lot of formatting here 
+    save as pdf ... 
+
+## Modelling output file names
+  ## 
+  OneBand     singleLag21      wMobility
+  OneBand     singleLag21      woMobility
+  ## ?????????????????????????????? ???????????? df????????
+  TwoBand     MultiLag0       wMobility
+  ... 
+  TwoBand     MultiLag21       wMobility
+  ##
+  TwoBand     MultiLag0        woMobility
+  ... 
+  TwoBand     MultiLag21       woMobility
   
-GlobalModel.R
-  function 1) single model regressing on pm2.5 values 
-  function 2) single model regressing on interaction item of pm2.5 value and smoke day covariate  
-  function 3) single model regressing on smoke day covariate
-  above functions are validated for single-lag scenario only  
+  output table 
+  df.date df.tmmx df.rmax mobility lag variable coef coef.low coef.high
+  ?????? df.combo
+  save without column name!!!!
   
-Global_RunSingleModel.R
-Global_RunSingleModel_Sensitivity.R
-  run model 1) and visualize 
-
-Global_RunInteractionModel.R
-  run model 2) and visualize
-
-Global_RunSmokedayModel.R
-Global_RunSmokedayModel_Sensitivity.R
-  run model 3) and visualize 
-
-LocalModel.R
-LocalRun.R
+  
+## Visualization output file names ....
 
 
+## Tests.R
+
+
+## some exploration and visualization 
+    combine.R (clean data!!!)
+    GoogleMobility.R
+    HazardSmokeSystem.R
+    SummarizeData.R
+    calfire.R
+    Exploratory...
+    (total)TestCount.R
+    
 ## Data Description 
 
 # https://developers.google.com/earth-engine/datasets/catalog/IDAHO_EPSCOR_TERRACLIMATE#bands
