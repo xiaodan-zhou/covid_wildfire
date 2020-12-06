@@ -30,8 +30,13 @@ ExeDistLagModel.R
       TwoBand     MultiLag21      wMobility      (for cases and deaths, one combination degree of freedom)  
       TwoBand     MultiLag21      -              (for cases and deaths, one combination degree of freedom)
 
-## Visualization output file names ....
+Vis1.R
+    x-axis is lag number
+    
+Vis2.R
+    x-axis is degree of freedom number
 
+Vis3.R // SummarizeData.R
 
 ## Tests.R
 

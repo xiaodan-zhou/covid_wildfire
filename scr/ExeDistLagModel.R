@@ -6,19 +6,17 @@ dff = load.data()
 ## testing 
 # dff = dff[dff$FIPS %in% c("6037", "6039"), ]
 
-### fixed 
+### parameter set up
 pollutants = 2
-
-### set up 
 causes = c("cases", "deaths")
 max.lag = 21
 mobility = NA
-# ???????????????
+
 df.date=5
 df.tmmx=2
 df.rmax=2
 
-### output 
+### output file name
 df.combo = paste0(df.date, df.tmmx, df.rmax)
 if (pollutants == 1) temp.name = paste0("OneBand.DistLag", max.lag)
 if (pollutants == 2) temp.name = paste0("TwoBand.DistLag", max.lag)
@@ -26,7 +24,7 @@ if (!is.na(mobility)) temp.name = paste0(temp.name, ".withMobility")
 temp.name = paste0(temp.name, "[", Sys.time(), "]")
 file.csv = paste0("output/", temp.name, ".csv")
 
-##################### run global model for multiple lags separately #####################
+### execute modelling 
 result.rbind = c()
 for (cause in causes) {
   for (ilag in 0:max.lag) {
