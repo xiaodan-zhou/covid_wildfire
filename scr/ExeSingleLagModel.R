@@ -1,83 +1,55 @@
 setwd("/Users/mac/Documents/GitHub/covid_wildfire")
 source("scr/Utilities.R")
-source("scr/GlobalModel.R")
-dff = load.data.xz1()
+source("scr/Model.R")
+dff = load.data()
+
+## testing 
+# dff = dff[dff$FIPS %in% c("6037", "6039"), ]
 
 ### set up
-lags.to.run = 0:14
-smooth="ns"
-cause = "deaths"
-extra.note = ""
-# df.combo = list(c(5,1), c(10, 1), c(15, 2), c(20, 2), c(25, 3), c(30, 3), c(35, 4))
-df.combo = list(c(2,1,1), c(3,1,1), c(4,1,1),
-                c(5,2,2) , c(6,2,2), c(7,2,2),
-                c(9,2,2), c(11,3,3), c(14,3,3))
+pollutants = 2
+causes = c("cases", "deaths")
+max.lag = 21
+mobility = NA
+df.combo = list(c(3,1), c(4,1), c(5,2), c(6,2), c(7,2), 
+                c(8, 2), c(9,3), c(10,3), c(11,3), c(12,3))
 
 ### output 
-temp.name = paste0(paste(lags.to.run, collapse=""), ".", cause, ".sensitivity.upon.df", extra.note) # confit
-file.pdf = paste0("GlobalModel/lag", temp.name, ".pdf")
-file.csv = paste0("GlobalModel/lag", temp.name, ".csv")
+if (pollutants == 1) temp.name = paste0("OneBand.singleLag", max.lag)
+if (pollutants == 2) temp.name = paste0("TwoBand.singleLag", max.lag)
+if (!is.na(mobility)) temp.name = paste0(temp.name, ".withMobility")
+temp.name = paste0(temp.name, "[", Sys.time(), "]")
+file.csv = paste0("output/", temp.name, ".csv")
 
 ##################### run global model for single lags #####################
 result.rbind = c()
-for (ilag in lags.to.run) {
-  for (idf.combo in df.combo) {
-    gm = global.model(dff, smooth = smooth, lags=ilag, 
-                      df.date=idf.combo[1], df.tmmx=idf.combo[2], 
-                      df.rmax=idf.combo[2], cause = cause)
-    
-    if (length(gm) != 1) {
-      fit = gm[[1]]
-      fit.CI = gm[[2]]
-      modelFormula.vis = gm[[3]]
-      result = gm[[4]]
+for (cause in causes) {
+  for (ilag in 0:max.lag) {
+    for (idf.combo in df.combo) {
+      gm = model(dff, 
+                 lags=ilag, 
+                 df.date=idf.combo[1], 
+                 df.tmmx=idf.combo[2], 
+                 df.rmax=idf.combo[2], 
+                 cause = cause,
+                 mobility=mobility,
+                 pollutants=pollutants)
       
-      if (is.null(result.rbind)) {
-        result.rbind = result
-      } else {
-        result.rbind=rbind(result.rbind, result)
-      }
-    } else {
-      print(paste("failed: ", gm))
-      }
-   }
-}
-
-result.rbind$coef = as.numeric(result.rbind$coef)
-result.rbind$ci.low = as.numeric(result.rbind$ci.low)
-result.rbind$ci.high = as.numeric(result.rbind$ci.high)
-result.rbind$ilag = as.numeric(result.rbind$ilag)
-result.rbind$df.date = as.numeric(result.rbind$df.date)
-result.rbind$df.tmmx = as.numeric(result.rbind$df.tmmx)
-result.rbind$df.rmax = as.numeric(result.rbind$df.rmax)
-result.rbind$df.combo = as.character(paste0(result.rbind$df.date,result.rbind$df.tmmx,result.rbind$df.rmax))
-write.csv(result.rbind, file.csv)
-
-
-##################### visualize #####################
-
-
-plot.out = list()
-iplot = 1 
-
-for (ilag in lags.to.run) {
-  data.vis = result.rbind[result.rbind$ilag == ilag,]
-  
-  if (sum(is.na(data.vis)) == 0) {
-    p0 = ggplot(data=data.vis, aes(x=(1:dim(data.vis)[1]))) +
-      geom_errorbar(width=.1, aes(ymin=ci.low, ymax=ci.high), colour="red") + 
-      geom_point(aes(y=coef)) + 
-      geom_line(aes(y=coef)) + 
-      xlab("df.combo") + ylab("PM2.5 coefficients") + 
-      ggtitle(paste("lag", ilag)) + 
-      scale_x_continuous(breaks = 1:length(data.vis$df.combo),
-                         labels = data.vis$df.combo) + 
-      geom_hline(yintercept=0, linetype="dashed", color = "blue", alpha=.6)
-    plot.out[[iplot]] = p0
-    iplot = iplot + 1
+      if (length(gm) != 1) {
+        gm = c(gm, lag=ilag, 
+               df.date=idf.combo[1], 
+               df.tmmx=idf.combo[2], 
+               df.rmax=idf.combo[2], 
+               cause=cause)
+        result.rbind=rbind(result.rbind, gm)
+        } else {
+        print("failed")
+        }
+     }
   }
 }
+result.rbind = data.frame(result.rbind)
+result.rbind$mobility=1-is.na(mobility)
+write.csv(result.rbind, file.csv, row.names=FALSE)
 
-pdf(file.pdf, width = 12, height = 3 * length(plot.out))
-do.call('grid.arrange',c(plot.out, ncol = 1, top = "global model"))
-dev.off()
+

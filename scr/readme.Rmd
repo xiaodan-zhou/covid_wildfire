@@ -1,59 +1,35 @@
 ## Code Structure in folder scr/
 
-Model.R
-    'model' regression 
-        1) on pm2.5 values; 2) on pm2.5 baseline and wildfire contribution ???
-        works for sinple or multiple lags, ???
-        w/ or w/o mobility data 
-
-ExeSingleLagModel.R 
-    run default.model for single lag w/o mobility (varies degree of freedom setup)
-    Please transform before saving as csv!
-ExeDistLagModel.R 
-    run default.model for multiple lags w/o mobility (varies degree of freedom setup)
-    Please transform before saving as csv!
-ExeTwoBandSingleLagModel.R 
-    run two.bands.model for single lag w/o mobility (varies degree of freedom setup)
-    Please transform before saving as csv!
-ExeTwoBandDistLagModel.R 
-    run two.bands.model for multiple lags w/o mobility (varies degree of freedom setup)
-    Please transform before saving as csv!
-    
 Utilities.R
-    'load.data'           load data ???
-    'split.pm'            split pm2.5 into baseline and wildfire contribution ???
-    'create.lag.value'    create lags for pm2.5 or baseline or wildfire contribution ???
-    'create.output.name'  create modelling output file names
-    'trans.coef'          transform coefficients in Poisson model ???
-        Please transform before saving as csv!
-        percent of change given 10ug/m3 increases in pm values
-        (how to interpret distributed lag model????????)
-
+    'load.data'           load data 
+    'split.pm'            split pm2.5 into baseline and wildfire contribution 
+    'create.lag.value'    create lags for pm2.5 or baseline or wildfire contribution 
+    'trans.coef'          transform coefficients in Poisson model 
+        
 Visualization script name ....
     read csv1 csv2 
     plot plot plot 
     a lot of formatting here 
     save as pdf ... 
 
-## Modelling output file names
-  ## 
-  OneBand     singleLag21      wMobility
-  OneBand     singleLag21      woMobility
-  ## ?????????????????????????????? ???????????? df????????
-  TwoBand     MultiLag0       wMobility
-  ... 
-  TwoBand     MultiLag21       wMobility
-  ##
-  TwoBand     MultiLag0        woMobility
-  ... 
-  TwoBand     MultiLag21       woMobility
-  
-  output table 
-  df.date df.tmmx df.rmax mobility lag variable coef coef.low coef.high
-  ?????? df.combo
-  save without column name!!!!
-  
-  
+Model.R
+    'model' regression 
+        1) on pm2.5 values; 
+        2) on pm2.5 baseline and wildfire contribution 
+        works for sinple or multiple lags
+        w/ or w/o mobility data 
+
+ExeSingleLagModel.R 
+      OneBand     singleLag21     wMobility      (for cases and deaths, various combinations degree of freedom)
+      OneBand     singleLag21     -              (for cases and deaths, various combinations degree of freedom)
+      TwoBand? 
+      
+ExeDistLagModel.R 
+      OneBand     MultiLag21      wMobility      (for cases and deaths, one combination degree of freedom)
+      OneBand     MultiLag21      -              (for cases and deaths, one combination degree of freedom)
+      TwoBand     MultiLag21      wMobility      (for cases and deaths, one combination degree of freedom)  
+      TwoBand     MultiLag21      -              (for cases and deaths, one combination degree of freedom)
+
 ## Visualization output file names ....
 
 
