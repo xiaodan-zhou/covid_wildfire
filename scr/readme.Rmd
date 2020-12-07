@@ -6,12 +6,6 @@ Utilities.R
     'create.lag.value'    create lags for pm2.5 or baseline or wildfire contribution 
     'trans.coef'          transform coefficients in Poisson model 
         
-Visualization script name ....
-    read csv1 csv2 
-    plot plot plot 
-    a lot of formatting here 
-    save as pdf ... 
-
 Model.R
     'model' regression 
         1) on pm2.5 values; 

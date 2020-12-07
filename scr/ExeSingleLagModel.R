@@ -7,7 +7,7 @@ dff = load.data()
 # dff = dff[dff$FIPS %in% c("6037", "6039"), ]
 
 ### parameter set up
-pollutants = 2
+pollutants = 1
 causes = c("cases", "deaths")
 max.lag = 21
 mobility = NA

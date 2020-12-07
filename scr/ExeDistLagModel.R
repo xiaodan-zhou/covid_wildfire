@@ -4,10 +4,10 @@ source("scr/Model.R")
 dff = load.data()
 
 ## testing 
-dff = dff[dff$FIPS %in% c("6037", "6039"), ]
+# dff = dff[dff$FIPS %in% c("6037", "6039"), ]
 
-### parameter set up
-pollutants = 2
+### parameter set up ~1h for a pollutant scenarios, 4h for 2pollu+1pollu+wMobility+woMibility 
+pollutants = 1
 causes = c("cases", "deaths")
 max.lag = 21
 mobility = NA

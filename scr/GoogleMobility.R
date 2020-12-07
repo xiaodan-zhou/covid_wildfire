@@ -3,7 +3,7 @@
 library(reshape2)
 library(ggplot2)
 library(gridExtra)
-setwd("/Users/mac/Downloads/dataverse_files")
+setwd("/Users/mac/Documents/GitHub/covid_wildfire")
 
 plot.list = list()
 iplot = 1
@@ -37,7 +37,7 @@ pdf.out = "state_overview.pdf"
 # head(dt)
 # write.csv(dt, "combined_percent_change_from_baseline_ST.csv")
 
-dt = read.csv("combined_percent_change_from_baseline_ST.csv")
+dt = read.csv("data/dataverse_Dec2/combined_percent_change_from_baseline_ST.csv")
 dt$date = ymd(dt$date)
 dt = dt[dt$date <= "2020-09-24", ]
 dt = dt[dt$date >= "2020-03-15", ]
@@ -90,12 +90,13 @@ for (istate in unique(dt$NAME)) {
 # head(dt)
 # 
 # write.csv(dt, "combined_percent_change_from_baseline_CO.csv")
-co = read.csv("combined_percent_change_from_baseline_CO.csv")
-co$date = ymd(co$date)
-co = co[co$state %in% c(6), ] #CA only , WA 53, OR 41
+co.full = read.csv("data/dataverse_Dec2/combined_percent_change_from_baseline_CO.csv")
+co.full$date = ymd(co.full$date)
+co = co.full[co.full$state %in% c(53), ] #CA only , WA 53, OR 41
 co = co[co$date <= ymd("2020-09-24"), ]
 co = co[co$date >= ymd("2020-03-15"), ]
 
+summary(co)
 # all grocery in california 
 # &dt$GEOID %in% c(6037, 6073, 6059, 6065, 6071, 6085, 6001, 6067, 6013)
 for (itype in unique(co$type)) {
@@ -112,3 +113,6 @@ do.call('grid.arrange',c(plot.list, ncol = 1, top = "2020-03-15 to 2020-09-24"))
 dev.off()
 
 
+
+
+################################ county imputation ###############################

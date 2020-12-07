@@ -3,27 +3,27 @@ setwd("/Users/mac/Documents/GitHub/covid_wildfire")
 source("scr/Utilities.R")
 
 ################## 
-# r.single = read.csv("output/OneBand.singleLag21[2020-12-06 13:11:57].csv")
-# r.dist = read.csv("output/OneBand.DistLag21[2020-12-06 16:04:22].csv")
-# pollus = list(c("pm", "pm.low", "pm.high"))
+r.single = read.csv("output/OneBand.singleLag21.csv")
+r.dist = read.csv("output/OneBand.DistLag21.csv")
+pollus = list(c("pm", "pm.low", "pm.high"))
 ################## 
 
 ################## 
-r.single = read.csv("output/TwoBand.singleLag21[2020-12-06 13:12:34].csv")
-r.dist = read.csv("output/TwoBand.DistLag21[2020-12-06 13:15:23].csv")
-pollus = list(c("base", "base.low", "base.high"), c("hazard", "hazard.low", "hazard.high"))
+# r.single = read.csv("output/TwoBand.singleLag21.csv")
+# r.dist = read.csv("output/TwoBand.DistLag21.csv")
+# pollus = list(c("base", "base.low", "base.high"), c("hazard", "hazard.low", "hazard.high"))
 ################## 
 
 
 causes = c("cases", "deaths")
 mlags = c(14, 21)
 mobility.options = c(1, 0)
-df.date = 5
+df.date = 6
 df.tmmx = 2
 df.rmax = 2
 
 for (mlag in mlags) {
-  file.pdf = paste0("output/vis1.pollu", length(pollus), ".lag", mlag, "[", Sys.time(), "].pdf")
+  file.pdf = paste0("output/vis1.pollu", length(pollus), ".lag", mlag, "df.", df.date, df.tmmx, "[", Sys.time(), "].pdf")
   plot.out = list()
   iplot = 1
   

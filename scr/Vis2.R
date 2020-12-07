@@ -3,13 +3,13 @@ setwd("/Users/mac/Documents/GitHub/covid_wildfire")
 source("scr/Utilities.R")
 
 ################## 
-r.dist = read.csv("output/OneBand.DistLag21[2020-12-06 16:04:22].csv")
+r.dist = read.csv("output/OneBand.DistLag21.csv")
 r.dist$df.combo = paste0(r.dist$df.date, ",", r.dist$df.tmmx)
 pollus = list(c("pm", "pm.low", "pm.high"))
 ################## 
 
 ################## 
-# r.dist = read.csv("output/TwoBand.DistLag21[2020-12-06 16:17:41].csv")
+# r.dist = read.csv("output/TwoBand.DistLag21.csv")
 # r.dist$df.combo = paste0(r.dist$df.date, ",", r.dist$df.tmmx)
 # pollus = list(c("base", "base.low", "base.high"), c("hazard", "hazard.low", "hazard.high"))
 ################## 
@@ -48,9 +48,7 @@ for (mlag in mlags) {
         ystr = paste0("% ", cause, " change given in \n10ug/m3 increase in PM2.5")
         ttstr = as.character(ipollu[[1]])
         if (mobility==1) ttstr = paste0(ttstr, ", adjusted for mobility")
-        # x.loc = 1:nrows
-        # x.lab = df.combo
-        
+
         p0 = ggplot() +
           geom_errorbar(data=sub.dist, width=.1, 
                         aes_string(x=1:nrows, ymin=ipollu[2], ymax=ipollu[3]), group=1) +
