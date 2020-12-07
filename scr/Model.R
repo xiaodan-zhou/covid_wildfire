@@ -54,11 +54,11 @@ model = function(dff, df.date=8, df.tmmx=3, df.rmax=3, lags=0,
     }
   
   ### if hit any problems in modelling, returns -1 
-  print(summary(fit))
+  print(modelFormula)
   fit = try(eval.parent(call), silent=TRUE)
   if('try-error' %in% class(fit)){
     return("-1") }
-  print(modelFormula)
+  print(summary(fit))
   
   ### output variable names 
   coefs = c()

@@ -4,20 +4,17 @@ source("scr/Model.R")
 dff = load.data()
 
 ## testing 
-# dff = dff[dff$FIPS %in% c("6037", "6039"), ]
+dff = dff[dff$FIPS %in% c("6037", "6039"), ]
 
 ### parameter set up
 pollutants = 2
 causes = c("cases", "deaths")
 max.lag = 21
 mobility = NA
-
-df.date=5
-df.tmmx=2
-df.rmax=2
+df.combo = list(c(3,1), c(4,1), c(5,2), c(6,2), c(7,2), 
+                c(8, 2), c(9,3), c(10,3), c(11,3), c(12,3))
 
 ### output file name
-df.combo = paste0(df.date, df.tmmx, df.rmax)
 if (pollutants == 1) temp.name = paste0("OneBand.DistLag", max.lag)
 if (pollutants == 2) temp.name = paste0("TwoBand.DistLag", max.lag)
 if (!is.na(mobility)) temp.name = paste0(temp.name, ".withMobility")
@@ -28,29 +25,31 @@ file.csv = paste0("output/", temp.name, ".csv")
 result.rbind = c()
 for (cause in causes) {
   for (ilag in 0:max.lag) {
-    gm = model(dff, 
-               lags=0:ilag, 
-               df.date=df.date,
-               df.tmmx=df.tmmx, 
-               df.rmax=df.rmax,
-               cause = cause,
-               mobility=mobility,
-               pollutants=pollutants)
-    
-    if (length(gm) != 1) {
-      gm = c(gm, max.lag=ilag, 
-             cause=cause)
-      result.rbind=rbind(result.rbind, gm)
-    } else {
-      print("failed")
+    for (idf.combo in df.combo) {
+      gm = model(dff, 
+                 lags=0:ilag, 
+                 df.date=idf.combo[1], 
+                 df.tmmx=idf.combo[2], 
+                 df.rmax=idf.combo[2], 
+                 cause = cause,
+                 mobility=mobility,
+                 pollutants=pollutants)
+      
+      if (length(gm) != 1) {
+        gm = c(gm, max.lag=ilag, 
+               df.date=idf.combo[1], 
+               df.tmmx=idf.combo[2], 
+               df.rmax=idf.combo[2], 
+               cause=cause)
+        result.rbind=rbind(result.rbind, gm)
+      } else {
+        print("failed")
+      } 
     }
   }
 }
 
 result.rbind = data.frame(result.rbind)
-result.rbind$df.date = df.date
-result.rbind$df.tmmx = df.tmmx
-result.rbind$df.rmax = df.rmax
 result.rbind$mobility=1-is.na(mobility)
 write.csv(result.rbind, file.csv, row.names=FALSE)
 
