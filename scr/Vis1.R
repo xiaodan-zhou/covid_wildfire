@@ -15,6 +15,7 @@ pollus = list(c("pm", "pm.low", "pm.high"))
 ################## 
 
 
+
 causes = c("cases", "deaths")
 mlags = c(14, 21)
 mobility.options = c(1, 0)
@@ -43,46 +44,71 @@ for (mlag in mlags) {
       sub.dist = sub.dist[sub.dist$max.lag == mlag,]
       
       ### choose cause
-      sub.single = sub.single[sub.single$cause == cause,]
-      sub.dist = sub.dist[sub.dist$cause == cause,]
+      # sub.single = sub.single[sub.single$cause == cause,]
+      # sub.dist = sub.dist[sub.dist$cause == cause,]
       
       ### choose mobility 
       sub.single = sub.single[sub.single$mobility == mobility,]
       sub.dist = sub.dist[sub.dist$mobility == mobility,]
       
+      
       if ((dim(sub.single)[1] == 0)|(dim(sub.dist)[1] == 0))
         next
       
       for (ipollu in pollus) {
-        
-        xstr = paste0("Single Lag Model (Lag 0 - Lag", mlag, ") and the corresponding Unconstrained Distributed-lag Model")
-        if (mobility == 1) xstr = paste0(xstr, ", adjusted for mobility")
-        ystr = paste0("% ", cause, " change given in \n10ug/m3 increase in PM2.5")
-        ttstr = as.character(ipollu[[1]])
+        eps = 0.22
+        xxm = 1:(mlag+1)-eps
+        xxm2 = mlag+3-eps
+        xxp = 1:(mlag+1)+eps
+        xxp2 = mlag+3+eps
         x.loc = c(1:(mlag+1), mlag+3)
-        x.lab = as.character(c(0:mlag, "Unconstrained \nDistributed-lag Model"))
+        x.lab = as.character(c(0:mlag, "Unconstrained \nDistributed-lag"))
+        
+        xstr = paste0("Single Lag Model (Lag 0 - Lag", mlag, ") \n and Unconstrained Distributed-lag Model")
+        if (mobility == 1) xstr = paste0(xstr, ", adjusted for mobility")
+        ystr = paste0("% change given in \n10ug/m3 increase in PM2.5")
+        ttstr = as.character(ipollu[[1]])
         
         p0 = ggplot() +
-          geom_errorbar(data=sub.single, width=.1, 
-                        aes_string(x=1:(mlag+1), ymin=ipollu[2], ymax=ipollu[3])) +
-          geom_point(data=sub.single, 
-                     aes_string(x=1:(mlag+1), y=ipollu[1])) +
-          geom_errorbar(data=sub.dist, width=.1, 
-                        aes_string(x=mlag+3, ymin=ipollu[2], ymax=ipollu[3]), group=1) +
-          geom_point(data=sub.dist, 
-                     aes_string(x=mlag+3, y=ipollu[1]), group=1) + 
+          geom_errorbar(data=sub.single[sub.single$cause == "cases",], width=.1, 
+                        aes_string(x=xxm, ymin=ipollu[2], ymax=ipollu[3]), col="black") +
+          geom_errorbar(data=sub.dist[sub.dist$cause == "cases",], width=.1, 
+                        aes_string(x=xxm2, ymin=ipollu[2], ymax=ipollu[3]), col="black", group=1) +
+          geom_point(data=sub.single[sub.single$cause == "cases",], 
+                     aes_string(x=xxm, y=ipollu[1], 
+                                color=shQuote("incidences"))) +
+          geom_point(data=sub.dist[sub.dist$cause == "cases",], 
+                     aes_string(x=xxm2, y=ipollu[1], 
+                                color=shQuote("incidences")), group=1) + 
+          geom_errorbar(data=sub.single[sub.single$cause == "deaths",], width=.1, 
+                        aes_string(x=xxp, ymin=ipollu[2], ymax=ipollu[3]), col="black") +
+          geom_errorbar(data=sub.dist[sub.dist$cause == "deaths",], width=.1, 
+                        aes_string(x=xxp2, ymin=ipollu[2], ymax=ipollu[3]), col="black", group=1) +
+          geom_point(data=sub.single[sub.single$cause == "deaths",], 
+                     aes_string(x=xxp, y=ipollu[1], 
+                                fill=shQuote("mortality")), shape=21) +
+          geom_point(data=sub.dist[sub.dist$cause == "deaths",], 
+                     aes_string(x=xxp2, y=ipollu[1],
+                                fill=shQuote("mortality")), shape=21, group=1) +
           theme_bw() + 
           theme(panel.grid.major = element_blank(), 
-                panel.grid.minor = element_blank()) +
+                panel.grid.minor = element_blank(),
+                legend.title = element_blank(), 
+                text = element_text(size=12),
+                legend.position = c(.3, .8),
+                legend.box = "horizontal", 
+                legend.text = element_text(size = 12, colour = "black")) +
           xlab(xstr) + ylab(ystr) + ggtitle(ttstr) +
-          scale_x_continuous(breaks = x.loc, labels = x.lab) +
+          scale_x_continuous(breaks = x.loc, labels = x.lab) + 
+          scale_fill_manual(name="", values=c( mortality="white")) +
+          scale_color_manual(name="", values=c(incidences="black")) + 
           geom_hline(yintercept=0, linetype="dashed", alpha=.6)
-        
+        p0
         plot.out[[iplot]] = p0
         iplot = iplot + 1
       }
     }
-  }
+  } 
   pdf(file.pdf, width = 8, height = 3 * length(plot.out))
   do.call('grid.arrange',c(plot.out, ncol = 1, top = ""))
   dev.off()
