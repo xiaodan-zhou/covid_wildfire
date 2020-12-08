@@ -52,6 +52,14 @@ load.data = function() {
     df$pmhazard[irow] = pm.splitted[[2]]
   }
   
+  ## add mobility data 
+  mb = read.csv("data/dataverse_Dec2/combined_percent_change_from_baseline_CO_westcoast.csv")
+  mb$date = ymd(mb$date)
+  mb$GEOID = as.factor(mb$GEOID)
+  df = merge(df, mb, by.x=c("date", "FIPS"), by.y=c("date", "GEOID"), all.x=T)
+  
+  rm(hms, mb)
+  
   ### fire day should shift with lag, no need to do it here  
   return(df)
 }

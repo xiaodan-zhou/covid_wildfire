@@ -9,9 +9,16 @@ cause = "cases"
 df.date=5
 df.tmmx=2
 df.rmax=2
+lags=5
+pollutants = 1
+mobility=T
+smooth="ns"
+group="FIPS"
+control=glm.control(epsilon = 1e-10, maxit = 10000)
+
 
 # dff = dff[dff$FIPS %in% c("6037", "6039"), ]
-gm = model(dff, df.date=df.date, df.tmmx=df.tmmx, df.rmax=df.rmax, lags=5, pollutants = 1, cause = cause)
+gm = model(dff, df.date=df.date, df.tmmx=df.tmmx, df.rmax=df.rmax, lags=5, pollutants = 1, cause = cause, mobility=T)
 gm
 # pm   pm.low  pm.high 
 # 3.100662 2.425400 3.752054 

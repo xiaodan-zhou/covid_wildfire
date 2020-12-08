@@ -2,8 +2,18 @@ model = function(dff, df.date=8, df.tmmx=3, df.rmax=3, lags=0,
                  cause="cases", pollutants = 1, mobility = NA, 
                  smooth="ns", group="FIPS", control=glm.control(epsilon = 1e-10, maxit = 10000)) {
   # TODO
-  if (!is.na(mobility)) stop("mobility data not available yet!")
-  
+  FIPS.with.mobility = c(41003, 41005, 41017, 41019, 41029, 41033, 41039, 41043, 41047, 41051,
+                         41067, 41071, 53005, 53011, 53015, 53033, 53035, 53041, 53053, 53057,
+                         53061, 53063, 53067, 53073, 53077, 6001, 6007, 6013, 6017, 6019, 6023,
+                         6025, 6029, 6031, 6037, 6039, 6041, 6047, 6053, 6055, 6057, 6059, 6061,
+                         6065, 6067, 6071, 6073, 6075, 6077, 6079, 6081, 6083, 6085, 6087, 6089,
+                         6095, 6097, 6099, 6101, 6107, 6111, 6113)
+  FIPS.with.mobility = as.factor(FIPS.with.mobility)
+  if (!is.na(mobility)) {
+    dff$cases[dff$FIPS %in% FIPS.with.mobility] = NA
+    dff$deaths[dff$FIPS %in% FIPS.with.mobility] = NA
+  }
+
   ## get lag values for pollutants
   if (pollutants == 1) {
     pollutants.name = "pm"
@@ -17,6 +27,7 @@ model = function(dff, df.date=8, df.tmmx=3, df.rmax=3, lags=0,
     lag.data2 = "hazard"
   }
   
+  
   ### formula
   f = substitute(~ smooth(date_num, df.date) + smooth(tmmx, df.tmmx) + 
                    smooth(rmax, df.rmax) + dayofweek,
@@ -26,8 +37,8 @@ model = function(dff, df.date=8, df.tmmx=3, df.rmax=3, lags=0,
   rhs = as.character(f)
   
   ### add mobility
-  if (!is.na(mobility)) 
-    rhs[-1] = paste(rhs[-1], mobility, sep = "+")
+  if (!is.na(mobility))
+    rhs[-1] = paste(rhs[-1], "work", "retail", "residential", "grocery", "park", "transit", sep = "+") # TODO
   
   ### add FIPS
   if (dim(unique(dff[group]))[1] > 1) 
@@ -57,7 +68,7 @@ model = function(dff, df.date=8, df.tmmx=3, df.rmax=3, lags=0,
   print(modelFormula)
   fit = try(eval.parent(call), silent=TRUE)
   if('try-error' %in% class(fit)){
-    return("-1") }
+    return(-1) }
   print(summary(fit))
   
   ### output variable names 

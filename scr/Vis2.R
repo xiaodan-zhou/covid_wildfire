@@ -3,9 +3,16 @@ setwd("/Users/mac/Documents/GitHub/covid_wildfire")
 source("scr/Utilities.R")
 
 ################## 
-r.dist = read.csv("output/OneBand.DistLag21.csv")
-r.dist$df.combo = paste0(r.dist$df.date, ",", r.dist$df.tmmx)
-pollus = list(c("pm", "pm.low", "pm.high"))
+# r.dist = read.csv("output/OneBand.DistLag21.csv")
+# r.dist$df.combo = paste0(r.dist$df.date, ",", r.dist$df.tmmx)
+# pollus = list(c("pm", "pm.low", "pm.high"))
+################## 
+
+################## 
+# r.dist = read.csv("output/OneBand.DistLag21.withMobility.v1.csv")
+# r.dist$df.combo = paste0(r.dist$df.date, ",", r.dist$df.tmmx)
+# pollus = list(c("pm", "pm.low", "pm.high"))
+# mobility=T
 ################## 
 
 ################## 
@@ -14,6 +21,15 @@ pollus = list(c("pm", "pm.low", "pm.high"))
 # pollus = list(c("base", "base.low", "base.high"), c("hazard", "hazard.low", "hazard.high"))
 ################## 
 
+################## 
+r.dist = read.csv("output/TwoBand.DistLag21.withMobility.v1.csv")
+r.dist$df.combo = paste0(r.dist$df.date, ",", r.dist$df.tmmx)
+pollus = list(c("base", "base.low", "base.high"), c("hazard", "hazard.low", "hazard.high"))
+mobility=T
+################## 
+
+
+
 causes = c("cases", "deaths")
 mlags = 21
 mobility.options = c(1, 0)
@@ -21,6 +37,7 @@ mobility.options = c(1, 0)
 
 for (mlag in mlags) {
   file.pdf = paste0("output/vis2.pollu", length(pollus), ".df.unconstrained.[", Sys.time(), "].pdf")
+  if (mobility==T) file.pdf = paste0("output/vis2.pollu", length(pollus), ".df.unconstrained.wMobility[", Sys.time(), "].pdf")
   plot.out = list()
   iplot = 1
   
@@ -44,10 +61,10 @@ for (mlag in mlags) {
       for (ipollu in pollus) {
         
         xstr = paste0("Unconstrained Distributed-lag Model with different degrees of freedom")
-        if (mobility == 1) xstr = paste0(xstr, ", adjusted for mobility")
+        if (mobility == T) xstr = paste0(xstr, ", adjusted for mobility")
         ystr = paste0("% ", cause, " change given in \n10ug/m3 increase in PM2.5")
         ttstr = as.character(ipollu[[1]])
-        if (mobility==1) ttstr = paste0(ttstr, ", adjusted for mobility")
+        if (mobility == T) ttstr = paste0(ttstr, ", adjusted for mobility")
 
         p0 = ggplot() +
           geom_errorbar(data=sub.dist, width=.1, 

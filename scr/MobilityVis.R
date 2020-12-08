@@ -92,7 +92,7 @@ for (istate in unique(dt$NAME)) {
 # write.csv(dt, "combined_percent_change_from_baseline_CO.csv")
 co.full = read.csv("data/dataverse_Dec2/combined_percent_change_from_baseline_CO.csv")
 co.full$date = ymd(co.full$date)
-co = co.full[co.full$state %in% c(53), ] #CA only , WA 53, OR 41
+co = co.full[co.full$state %in% c(53, 31, 6), ] #CA only , WA 53, OR 41
 co = co[co$date <= ymd("2020-09-24"), ]
 co = co[co$date >= ymd("2020-03-15"), ]
 

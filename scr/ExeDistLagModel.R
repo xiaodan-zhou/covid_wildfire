@@ -7,10 +7,10 @@ dff = load.data()
 # dff = dff[dff$FIPS %in% c("6037", "6039"), ]
 
 ### parameter set up ~1h for a pollutant scenarios, 4h for 2pollu+1pollu+wMobility+woMibility 
-pollutants = 1
+pollutants = 2
 causes = c("cases", "deaths")
 max.lag = 21
-mobility = NA
+mobility = T
 df.combo = list(c(3,1), c(4,1), c(5,2), c(6,2), c(7,2), 
                 c(8, 2), c(9,3), c(10,3), c(11,3), c(12,3))
 

@@ -9,11 +9,24 @@ source("scr/Utilities.R")
 ################## 
 
 ################## 
-r.single = read.csv("output/TwoBand.singleLag21.csv")
-r.dist = read.csv("output/TwoBand.DistLag21.csv")
-pollus = list(c("base", "base.low", "base.high"), c("hazard", "hazard.low", "hazard.high"))
+r.single = read.csv("output/OneBand.singleLag21.withMobility.v1.csv")
+r.dist = read.csv("output/OneBand.DistLag21.withMobility.v1.csv")
+pollus = list(c("pm", "pm.low", "pm.high"))
+mobility=T
 ################## 
 
+################## 
+# r.single = read.csv("output/TwoBand.singleLag21.csv")
+# r.dist = read.csv("output/TwoBand.DistLag21.csv")
+# pollus = list(c("base", "base.low", "base.high"), c("hazard", "hazard.low", "hazard.high"))
+################## 
+
+################## 
+# r.single = read.csv("output/TwoBand.singleLag21.withMobility.v1.csv")
+# r.dist = read.csv("output/TwoBand.DistLag21.withMobility.v1.csv")
+# pollus = list(c("base", "base.low", "base.high"), c("hazard", "hazard.low", "hazard.high"))
+# mobility=T
+################## 
 
 
 causes = c("cases", "deaths")
@@ -25,6 +38,7 @@ df.rmax = 2
 
 for (mlag in mlags) {
   file.pdf = paste0("output/vis1.pollu", length(pollus), ".lag", mlag, "df.", df.date, df.tmmx, "[", Sys.time(), "].pdf")
+  if (mobility==T) file.pdf = paste0("output/vis1.pollu", length(pollus), ".lag", mlag, "df.", df.date, df.tmmx, ".wMobility[", Sys.time(), "].pdf")
   plot.out = list()
   iplot = 1
   
@@ -110,3 +124,4 @@ for (mlag in mlags) {
   do.call('grid.arrange',c(plot.out, ncol = 1, top = ""))
   dev.off()
 }
+
