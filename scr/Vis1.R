@@ -134,7 +134,7 @@ for (i.file in input.file.lists) {
                 legend.text = element_text(size = 12, colour = "black")) +
           xlab(xstr) + ylab(ystr) + ggtitle(ttstr) +
           scale_x_continuous(breaks = x.loc, labels = x.lab) + 
-          scale_fill_manual(name="", values=c( mortality="white")) +
+          scale_fill_manual(name="", values=c(mortality="white")) +
           scale_color_manual(name="", values=c(incidences="black")) + 
           geom_hline(yintercept=0, linetype="dotted")
         p0
