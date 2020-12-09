@@ -19,6 +19,13 @@ input.file.lists = list.append(input.file.lists,
 input.file.lists = list.append(input.file.lists, 
                                  "output/TwoBand.DistLag21.withMobility.v1.csv")
 
+
+### set up 
+causes = c("cases", "deaths")
+mlags = c(14, 21)
+mobility.options = c(1, 0)
+
+
 for (i.file in input.file.lists) {
   input.file = i.file[[1]]
   
@@ -34,16 +41,12 @@ for (i.file in input.file.lists) {
                   c("hazard", "hazard.low", "hazard.high", "PM2.5 Driven by Wildfire"))
   } else pollus = list(c("pm", "pm.low", "pm.high", "PM2.5"))
   
-  ### 
-  causes = c("cases", "deaths")
-  mlags = 21
-  mobility.options = c(1, 0)
   
   for (mlag in mlags) {
-    # file.pdf = paste0("output/vis2.pollu", length(pollus), ".df.unconstrained.pdf")
-    # if (wmobility==T) file.pdf = paste0("output/vis2.pollu", length(pollus), ".df.unconstrained.wMobility.pdf")
-    file.pdf = paste0("output/vis2.pollu", length(pollus), ".df.unconstrained.[", Sys.time(), "].pdf")
-    if (wmobility==T) file.pdf = paste0("output/vis2.pollu", length(pollus), ".df.unconstrained.wMobility[", Sys.time(), "].pdf")
+    file.pdf = paste0("output/vis2.pollu", length(pollus), ".lag", mlag, ".df.unconstrained.pdf")
+    if (wmobility==T) file.pdf = paste0("output/vis2.pollu", length(pollus), ".lag", mlag, ".df.unconstrained.wMobility.pdf")
+    # file.pdf = paste0("output/vis2.pollu", length(pollus), ".lag", mlag, ".df.unconstrained.[", Sys.time(), "].pdf")
+    # if (wmobility==T) file.pdf = paste0("output/vis2.pollu", length(pollus), ".lag", mlag, ".df.unconstrained.wMobility[", Sys.time(), "].pdf")
     plot.out = list()
     iplot = 1
     
@@ -69,7 +72,7 @@ for (i.file in input.file.lists) {
           xstr = paste0("Unconstrained Distributed-lag Model\n with different degrees of freedom")
           if (mobility == T) xstr = paste0(xstr, ", adjusted for mobility")
           ystr = paste0("% ", cause, " change given in \n10ug/m3 increase in PM2.5")
-          ttstr = as.character(ipollu[[4]])
+          ttstr = paste0(ipollu[[4]], " ", mlag, "lags")
   
           p0 = ggplot() +
             geom_errorbar(data=sub.dist, width=.2, 
