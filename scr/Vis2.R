@@ -2,33 +2,40 @@
 setwd("/Users/mac/Documents/GitHub/covid_wildfire")
 source("scr/Utilities.R")
 
+# this is sensitive to file names 
+# split.file.name = unlist(strsplit(input.file, "[.]"))
+# if ("withMobility" %in% split.file.name) {
+#   pollus = list(c("base", "base.low", "base.high"), c("hazard", "hazard.low", "hazard.high"))
+# } else pollus = list(c("pm", "pm.low", "pm.high"))
+
 ################## 
-# r.dist = read.csv("output/OneBand.DistLag21.csv")
-# r.dist$df.combo = paste0(r.dist$df.date, ",", r.dist$df.tmmx)
+# input.file = "output/OneBand.DistLag21.csv"
+# r.dist = read.csv(input.file)
 # pollus = list(c("pm", "pm.low", "pm.high"))
 ################## 
 
 ################## 
-# r.dist = read.csv("output/OneBand.DistLag21.withMobility.v1.csv")
-# r.dist$df.combo = paste0(r.dist$df.date, ",", r.dist$df.tmmx)
+# input.file = "output/TwoBand.DistLag21.csv"
+# r.dist = read.csv(input.file)
+# pollus = list(c("base", "base.low", "base.high"), c("hazard", "hazard.low", "hazard.high"))
+################## 
+
+################## 
+# input.file = "output/OneBand.DistLag21.withMobility.v1.csv"
+# r.dist = read.csv(input.file)
 # pollus = list(c("pm", "pm.low", "pm.high"))
 # mobility=T
 ################## 
 
 ################## 
-# r.dist = read.csv("output/TwoBand.DistLag21.csv")
-# r.dist$df.combo = paste0(r.dist$df.date, ",", r.dist$df.tmmx)
+# input.file = "output/TwoBand.DistLag21.withMobility.v1.csv"
+# r.dist = read.csv(input.file)
 # pollus = list(c("base", "base.low", "base.high"), c("hazard", "hazard.low", "hazard.high"))
+# mobility=T
 ################## 
 
-################## 
-r.dist = read.csv("output/TwoBand.DistLag21.withMobility.v1.csv")
+
 r.dist$df.combo = paste0(r.dist$df.date, ",", r.dist$df.tmmx)
-pollus = list(c("base", "base.low", "base.high"), c("hazard", "hazard.low", "hazard.high"))
-mobility=T
-################## 
-
-
 
 causes = c("cases", "deaths")
 mlags = 21
