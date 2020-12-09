@@ -128,3 +128,10 @@ create.lag.value = function(dff, value="pm25", group="FIPS", lags=1) {
 trans.coef = function(ls, pm.delta = 10) {
   return((exp(ls * pm.delta) - 1) * 100)
 }
+
+############################################################################
+list.append = function(ls, element) {
+  i = length(ls)
+  ls[[i+1]] = element
+  return(ls)
+}
