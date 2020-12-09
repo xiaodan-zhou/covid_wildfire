@@ -8,35 +8,8 @@ setwd("/Users/mac/Documents/GitHub/covid_wildfire")
 plot.list = list()
 iplot = 1
 pdf.out = "state_overview.pdf"
-################################ state ###############################
-# groc = read.csv("grocery_and_pharmacy_percent_change_from_baseline_ST.csv")
-# park = read.csv("parks_percent_change_from_baseline_ST.csv")
-# resi = read.csv("residential_percent_change_from_baseline_ST.csv")
-# reta = read.csv("retail_and_recreation_percent_change_from_baseline_ST.csv")
-# tran = read.csv("transit_stations_percent_change_from_baseline_ST.csv")
-# work = read.csv("workplaces_percent_change_from_baseline_ST.csv")
-# 
-# dim(groc) == dim(park)
-# dim(groc) == dim(resi)
-# dim(groc) == dim(reta)
-# dim(groc) == dim(tran)
-# dim(groc) == dim(work)
-# 
-# groc$type = "grocery"
-# park$type = "park"
-# resi$type = "residential"
-# reta$type = "retail"
-# tran$type = "transit"
-# work$type = "work"
-# 
-# dt = rbind(groc, park, resi, reta, tran, work)
-# dt = melt(dt, id.vars=c("X", "type", "STATE", "NAME"))
-# dt$date = ymd(substr(dt$variable, 2, 20))
-# dt$mobility = dt$value 
-# dt = dt[, c("STATE", "NAME", "date", "mobility", "type")]
-# head(dt)
-# write.csv(dt, "combined_percent_change_from_baseline_ST.csv")
 
+################################ state ###############################
 dt = read.csv("data/dataverse_Dec2/combined_percent_change_from_baseline_ST.csv")
 dt$date = ymd(dt$date)
 dt = dt[dt$date <= "2020-09-24", ]
@@ -60,36 +33,6 @@ for (istate in unique(dt$NAME)) {
 # iplot = iplot + 1
 
 ############################### county ###############################
-# groc = read.csv("grocery_and_pharmacy_percent_change_from_baseline_CO.csv")
-# park = read.csv("parks_percent_change_from_baseline_CO.csv")
-# resi = read.csv("residential_percent_change_from_baseline_CO.csv")
-# reta = read.csv("retail_and_recreation_percent_change_from_baseline_CO.csv")
-# tran = read.csv("transit_stations_percent_change_from_baseline_CO.csv")
-# work = read.csv("workplaces_percent_change_from_baseline_CO.csv")
-# 
-# dim(groc) == dim(park)
-# dim(groc) == dim(resi)
-# dim(groc) == dim(reta)
-# dim(groc) == dim(tran)
-# dim(groc) == dim(work)
-# 
-# groc$type = "grocery"
-# park$type = "park"
-# resi$type = "residential"
-# reta$type = "retail"
-# tran$type = "transit"
-# work$type = "work"
-# 
-# dt = rbind(groc, park, resi, reta, tran, work)
-# dt = melt(dt, id.vars=c("X", "type", "COUNTY", "NAME", "addr"))
-# dt$date = ymd(substr(dt$variable, 2, 20))
-# dt$GEOID = dt$COUNTY
-# dt$mobility = dt$value
-# dt$state = round(dt$COUNTY / 1000, 0)
-# dt = dt[, c("GEOID", "NAME", "date", "mobility", "type", "state")]
-# head(dt)
-# 
-# write.csv(dt, "combined_percent_change_from_baseline_CO.csv")
 co.full = read.csv("data/dataverse_Dec2/combined_percent_change_from_baseline_CO.csv")
 co.full$date = ymd(co.full$date)
 co = co.full[co.full$state %in% c(53, 31, 6), ] #CA only , WA 53, OR 41
@@ -115,4 +58,24 @@ dev.off()
 
 
 
-################################ county imputation ###############################
+
+############################### visualize ###############################
+# pdf.out = "output/county.mobility.pdf"
+# plot.list = list()
+# iplot = 1
+# for (ifips in unique(dff$FIPS)) {
+#   dsub = dff[(dff$kp == 1)&(dff$FIPS == ifips), ]
+#   if (dim(dsub)[1]!=0) {
+#     p4 = ggplot(dsub) + 
+#       # geom_line(aes(date, cases)) +
+#       # geom_line(aes(date, deaths)) +
+#       geom_line(aes(date, work)) +
+#       geom_line(aes(date, retail)) + theme_bw()
+#     plot.list[[iplot]] = p4
+#     iplot = iplot + 1
+#   }
+# }
+# 
+# pdf(pdf.out, width = 12, height = iplot * 3)
+# do.call('grid.arrange',c(plot.list, ncol = 1, top = "2020-03-15 to 2020-09-24"))
+# dev.off()

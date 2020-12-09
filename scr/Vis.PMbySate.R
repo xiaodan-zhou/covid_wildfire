@@ -8,8 +8,6 @@ df = df[df$date <= "2020-09-24", ]
 df$weeks = cut(df$date, breaks="week")
 
 ### by week, log 
-
-
 x.lab = unique(reorder(df$weeks,df$date))
 x.lab = paste0(month(x.lab), "/", day(x.lab))
 p0 = ggplot(data=df) + 
