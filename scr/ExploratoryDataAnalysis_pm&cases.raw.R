@@ -9,14 +9,14 @@ df = df[df$date <= "2020-09-24", ]
 ########################### top counties ################################
 ### set up 
 n.col.grid = 6
-file.name = paste0("output/pm&cases&deaths.top10.pdf")
+file.name = paste0("output/pm&cases&deaths.top10z.pdf")
 fips.unique = unique(df$FIPS[order(df$population, decreasing=TRUE)])[1:10]
 
 ### TODO ???????????????????
-df$start = as.Date("2020-03-15")
-df$end = as.Date("2020-03-15")
-df$start[!is.na(df$pmhazard)&(df$pmhazard > 0)] = df$date[!is.na(df$pmhazard)&(df$pmhazard > 0)] - 1
-df$end[!is.na(df$pmhazard)&(df$pmhazard > 0)] = df$date[!is.na(df$pmhazard)&(df$pmhazard > 0)] + 1
+df$start.hazard = as.Date("2020-03-15")
+df$end.hazard = as.Date("2020-03-15")
+df$start.hazard[!is.na(df$pmhazard)&(df$pmhazard > 0)] = df$date[!is.na(df$pmhazard)&(df$pmhazard > 0)] - 1
+df$end.hazard[!is.na(df$pmhazard)&(df$pmhazard > 0)] = df$date[!is.na(df$pmhazard)&(df$pmhazard > 0)] + 1
 
 
 # g_legend<-function(a.gplot){
@@ -34,7 +34,7 @@ for (ifips in fips.unique) {
 
   ### visualize PM2.5
   p1 = ggplot() + 
-    geom_rect(aes(xmin = df.selected$start, xmax = df.selected$end,
+    geom_rect(data=df.selected, aes(xmin = start.hazard, xmax = end.hazard,
                   ymin = -Inf, ymax = Inf), fill = "grey", colour =NA, alpha = 1) + 
     geom_point(data=df.selected, aes_string(x="date", y="pm25", color=shQuote("PM25")), size = .1) +
     theme_bw() + 
@@ -59,8 +59,8 @@ for (ifips in fips.unique) {
   
   ### visualize number of cases
   p2 = ggplot() +
-    geom_rect(aes(xmin = df.selected$start, xmax = df.selected$end,
-                  ymin = -Inf, ymax = Inf), fill = "grey", colour =NA, alpha = 1) + 
+    geom_rect(data=df.selected, aes(xmin = start.hazard, xmax = end.hazard,
+                                    ymin = -Inf, ymax = Inf), fill = "grey", colour =NA, alpha = 1) + 
     geom_point(data=df.selected, aes_string(x="date", y="cases", color=shQuote("Cases")), size = .1) +
     theme_bw() + 
     theme(panel.grid.major = element_blank(), 
@@ -85,8 +85,8 @@ for (ifips in fips.unique) {
   
   ### visualize number of cases
   p3 = ggplot() +
-    geom_rect(aes(xmin = df.selected$start, xmax = df.selected$end,
-                  ymin = -Inf, ymax = Inf), fill = "grey", colour = NA, alpha = 1) + 
+    geom_rect(data=df.selected, aes(xmin = start.hazard, xmax = end.hazard,
+                                    ymin = -Inf, ymax = Inf), fill = "grey", colour =NA, alpha = 1) + 
     geom_point(data=df.selected, aes_string(x="date", y="deaths", color=shQuote("Deaths")), size = .1) +
     theme_bw() + 
     theme(panel.grid.major = element_blank(), 
