@@ -136,3 +136,9 @@ list.append = function(ls, element) {
   return(ls)
 }
 
+############################################################################
+my.acf = function(ls, lag.max=21) {
+  acf.value = acf(ls, lag.max=lag.max, na.action = na.pass, plot=F)
+  acf.df = data.frame(lag = acf.value$lag, value = acf.value$acf)
+  return(acf.df)
+}

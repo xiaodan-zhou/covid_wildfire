@@ -18,6 +18,9 @@ model = function(dff, df.date=8, df.tmmx=3, df.rmax=3, lags=0,
   if (pollutants == 1) {
     pollutants.name = "pm"
     pm = as.matrix(create.lag.value(dff=dff, value="pm25", group=group, lags=lags))
+    ## special: cases ~ pmbase 
+    ## pollutants.name = "pm"
+    ## pm = as.matrix(create.lag.value(dff=dff, value="pmbase", group=group, lags=lags))
     lag.data1 = "pm" # as.character(as.name(substitute(base))) # deparse(substitute(base))  
   } else {
     pollutants.name = c("base", "hazard")
@@ -37,8 +40,8 @@ model = function(dff, df.date=8, df.tmmx=3, df.rmax=3, lags=0,
   rhs = as.character(f)
   
   ### add mobility
-  if (!is.na(mobility))
-    rhs[-1] = paste(rhs[-1], "work", "retail", "residential", "grocery", "park", "transit", sep = "+") # TODO
+  if (!is.na(mobility)&(mobility==T))
+    rhs[-1] = paste(rhs[-1], "work", "retail", "residential", "grocery", "park", "transit", sep = "+") 
   
   ### add FIPS
   if (dim(unique(dff[group]))[1] > 1) 

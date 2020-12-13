@@ -3,16 +3,19 @@ source("scr/Utilities.R")
 source("scr/Model.R")
 dff = load.data()
 
+## special: cases ~ pmbase 
+# dff = dff[dff$pmhazard == 0 | is.na(dff$pmhazard), ]
+
 ## testing 
 # dff = dff[dff$FIPS %in% c("6037", "6039"), ]
 
 ### parameter set up
-pollutants = 2
+pollutants = 1
 causes = c("cases", "deaths")
 max.lag = 21
-mobility = T
+mobility = NA # NA F 
 df.combo = list(c(3,1), c(4,1), c(5,2), c(6,2), c(7,2), 
-                c(8, 2), c(9,3), c(10,3), c(11,3), c(12,3))
+               c(8, 2), c(9,3), c(10,3), c(11,3), c(12,3))
 
 ### output file name
 if (pollutants == 1) temp.name = paste0("OneBand.singleLag", max.lag)
@@ -52,5 +55,3 @@ for (cause in causes) {
 result.rbind = data.frame(result.rbind)
 result.rbind$mobility=1-is.na(mobility)
 write.csv(result.rbind, file.csv, row.names=FALSE)
-
-

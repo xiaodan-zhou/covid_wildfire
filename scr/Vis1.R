@@ -137,7 +137,7 @@ for (i.file in input.file.lists) {
           scale_fill_manual(name="", values=c(mortality="white")) +
           scale_color_manual(name="", values=c(incidences="black")) + 
           geom_hline(yintercept=0, linetype="dotted")
-        p0
+        
         plot.out[[iplot]] = p0
         iplot = iplot + 1
       }

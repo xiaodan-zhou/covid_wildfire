@@ -3,6 +3,8 @@ source("scr/Utilities.R")
 source("scr/Model.R")
 dff = load.data()
 
+## special: cases ~ pmbase 
+# dff = dff[dff$pmhazard == 0 | is.na(dff$pmhazard), ]
 ## testing 
 # dff = dff[dff$FIPS %in% c("6037", "6039"), ]
 
@@ -10,7 +12,7 @@ dff = load.data()
 pollutants = 1
 causes = c("cases", "deaths")
 max.lag = 21
-mobility = T
+mobility = NA
 df.combo = list(c(3,1), c(4,1), c(5,2), c(6,2), c(7,2), 
                 c(8, 2), c(9,3), c(10,3), c(11,3), c(12,3))
 
