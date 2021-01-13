@@ -94,9 +94,22 @@ round(colSums(mb.missing.fips[, c(2:7)]) / dim(mb.missing.fips)[1], 2)
 # 46.65       31.81       55.89       40.79       49.41       58.75 
 
 ############################### apply the selection 62 counties ###############################
-kp.row = mb.missing.fips$FIPS[(mb.missing.fips$work<=30)&(mb.missing.fips$retail<=30)]
+kp.row = mb.missing.fips$FIPS[(mb.missing.fips$work<=30)&
+                                (mb.missing.fips$retail<=30)&
+                                (mb.missing.fips$grocery<=30)&
+                                (mb.missing.fips$residential<=30)]
 dff$kp = as.factor(as.character((dff$FIPS %in% kp.row)*1))
-write.csv(kp.row, "output.kp.row.csv")
+# write.csv(kp.row, "output.kp.row.csv")
+
+mb.missing.fips.new = data.frame(
+  dff[dff$kp==1,] %>% group_by(FIPS) %>% summarise(grocery = sum(is.na(grocery)) / length(grocery) * 100,
+                                       work = sum(is.na(work)) / length(work) * 100,
+                                       transit = sum(is.na(transit)) / length(transit) * 100,
+                                       retail = sum(is.na(retail)) / length(retail) * 100,
+                                       residential = sum(is.na(residential)) / length(residential) * 100,
+                                       park = sum(is.na(park)) / length(park) * 100))
+
+round(colSums(mb.missing.fips.new[, c(2:7)]) / dim(mb.missing.fips.new)[1], 2)
 
 # c(41003, 41005, 41017, 41019, 41029, 41033, 41039, 41043, 41047, 41051, 
 #   41067, 41071, 53005, 53011, 53015, 53033, 53035, 53041, 53053, 53057, 
@@ -108,19 +121,43 @@ write.csv(kp.row, "output.kp.row.csv")
 
 ############################### summarize the population ###############################
 tt = data.frame(dff %>% group_by(kp, date) %>% summarise(s=sum(population)))
-tt %>% group_by(kp) %>% summarise(s=mean(s))
-
+tt = data.frame(tt %>% group_by(kp) %>% summarise(s=mean(s)))
+pop.kp = tt$s[tt$kp==1]
+pop.rm = tt$s[tt$kp==0]
+print(pop.kp)
+print(pop.rm)
+print(pop.kp / (pop.kp + pop.rm))
 
 ############################### summarize the correlation ###############################
-complt = complete.cases(dff[,c("cases", "deaths", "grocery", "work", "transit", "retail", "residential")])
+vars = c("cases", "deaths", "pm25", "pmbase", "pmhazard", "grocery", "work","retail", "residential", "park", "transit")
+## remove the weekday effect 
+complt = complete.cases(dff[,vars])
 dfsub = dff[(dff$kp=="1")&complt,]
-sum.cor = matrix(0, nrow=7, ncol=7)
+# f0 = glm(data=dfsub, "grocery ~ dayofweek", family = gaussian)
+# dfsub$grocery = f0$fitted.values
+# 
+# f0 = glm(data=dfsub, "work ~ dayofweek", family = gaussian)
+# dfsub$work = f0$fitted.values
+# 
+# f0 = glm(data=dfsub, "retail ~ dayofweek", family = gaussian)
+# dfsub$retail = f0$fitted.values
+# 
+# f0 = glm(data=dfsub, "residential ~ dayofweek", family = gaussian)
+# dfsub$residential = f0$fitted.values
+# 
+# f0 = glm(data=dfsub, "park ~ dayofweek", family = gaussian)
+# dfsub$park = f0$fitted.values
+# 
+# f0 = glm(data=dfsub, "transit ~ dayofweek", family = gaussian)
+# dfsub$transit = f0$fitted.values
+sum.cor = matrix(0, nrow=length(vars), ncol=length(vars))
 for (id in unique(dfsub$FIPS)) {
-  sum.cor = sum.cor + as.matrix(cor(as.matrix(dfsub[dfsub$FIPS == id, 
-                                                    c("cases", "deaths", "grocery", "work", "transit", "retail", "residential")])))
+  cors = cor(as.matrix(dfsub[dfsub$FIPS == id, vars]))
+  if (!anyNA(cors)) sum.cor = sum.cor + as.matrix(cor(as.matrix(dfsub[dfsub$FIPS == id, vars]), method="spearman")) # vars
 }
 sum.cor = sum.cor/length(unique(dfsub$FIPS))
-sum.cor
+round(sum.cor, 2)
+rm(dfsub)
 
 # WRONG!!!
 # cor(as.matrix(dff[(dff$kp=="1")&complt, c("cases", "deaths", "grocery", "work", "transit", "retail", "residential")]))

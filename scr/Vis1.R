@@ -5,7 +5,7 @@ source("scr/Utilities.R")
 library(latex2exp)
 
 input.file.lists = list()
-input.file.lists[[1]] = c("output/OneBand.singleLag21.wMobility.csv",
+input.file.lists[[1]] = c("output/single_lag_model_maxlag21_mobility.csv",
                           "output/OneBand.DistLag21.wMobility.csv")
 
 ### set up 

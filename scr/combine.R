@@ -78,7 +78,10 @@ pop = pop[, c("FIPS", "population")]
 
 ################################ get PM2.5 ################################ 
 # From AirNow, via Ben Sabath
-pm = read.csv('daily_pm_2020.csv')
+# pm = read.csv('daily_pm_2020.csv')
+# Update Jan 7 
+pm = read.csv('daily_pm_2020_update.csv')
+
 pm = pm %>% rename(date=day, FIPS=fips)
 pm$FIPS = substr(100000 + pm$FIPS, 2, 6)
 pm = filter(pm, grepl('^06|^53|^41', FIPS)) 
@@ -90,7 +93,7 @@ pm = data.frame(pm %>% group_by(date, FIPS) %>%
                   summarize(pm25 = median(pm25), Long = mean(X), Lat = mean(Y)))
 
 # there is no missing 
-# st %>% group_by(FIPS) %>%
+# pm %>% group_by(FIPS) %>%
 #   arrange(date) %>%
 #   mutate(pm25 = na_interpolation(pm25))
 
@@ -113,7 +116,10 @@ print(paste("there are", sum(pm$pm25 < 0),
 # write.csv(climate, "climate.csv")
 # rm(pr_, tmmx_, srad_, sph_, rmax_)
 
-climate = read.csv("climate.csv")
+# climate = read.csv("climate.csv")
+# update Jan 7 
+climate = read.csv("new_weather.csv")
+names(climate)[names(climate) == "GEOID"] = "FIPS"
 climate$FIPS = substr(100000 + climate$FIPS, 2, 6)
 climate$date = ymd(gsub('X', '', climate$date))
 
@@ -139,14 +145,16 @@ if (sum(covid_county$deaths < 0) > 0) {
 print(sum(covid_county$deaths < 0, na.rm = T))
 
 # cut covid data at 2020-09-24 and 2020-03-15
-covid_county = covid_county[covid_county$date <= "2020-09-24",]
+max.date = min(max(pm$date), max(climate$date))
+covid_county = covid_county[covid_county$date <= max.date,]
+covid_county = covid_county[covid_county$date >= "2020-03-15",]
 
 # mark cases cumu_cases deaths cumu_deaths before "2020-03-15" as NA
 ### covid_county = covid_county[covid_county$date >= "2020-03-15",]
-covid_county$cases[covid_county$date < "2020-03-15"] = NA
-covid_county$deaths[covid_county$date < "2020-03-15"] = NA
-covid_county$cumu_cases[covid_county$date < "2020-03-15"] = NA
-covid_county$cumu_deaths[covid_county$date < "2020-03-15"] = NA
+# covid_county$cases[covid_county$date < "2020-03-15"] = NA
+# covid_county$deaths[covid_county$date < "2020-03-15"] = NA
+# covid_county$cumu_cases[covid_county$date < "2020-03-15"] = NA
+# covid_county$cumu_deaths[covid_county$date < "2020-03-15"] = NA
 print(sum(is.na(covid_county$cases)))
 print(sum(is.na(covid_county$deaths)))
 
@@ -160,4 +168,7 @@ covid_county$date = covid_county$date_str
 covid_county = covid_county[covid_county$population != 0, ]
 
 
-write.csv(covid_county, 'moddat_xz1_rerun.csv', row.names=F)
+# write.csv(covid_county, 'moddat_xz1_rerun.csv', row.names=F)
+# Update Jan 7 
+write.csv(covid_county, 'moddat_Jan2021.csv', row.names=F)
+

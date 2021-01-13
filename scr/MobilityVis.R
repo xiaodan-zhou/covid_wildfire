@@ -56,9 +56,6 @@ do.call('grid.arrange',c(plot.list, ncol = 1, top = "2020-03-15 to 2020-09-24"))
 dev.off()
 
 
-
-
-
 ############################### visualize ###############################
 # pdf.out = "output/county.mobility.pdf"
 # plot.list = list()
