@@ -6,10 +6,10 @@ dff = load.data()
 
 ### set up
 cause = "cases"
-df.date=5
+df.date=6
 df.tmmx=2
 df.rmax=2
-lags=5
+lags=0:21
 pollutants = 1
 mobility=T
 smooth="ns"
@@ -17,8 +17,11 @@ group="FIPS"
 control=glm.control(epsilon = 1e-10, maxit = 10000)
 
 
+
+
 # dff = dff[dff$FIPS %in% c("6037", "6039"), ]
-gm = model(dff, df.date=df.date, df.tmmx=df.tmmx, df.rmax=df.rmax, lags=5, pollutants = 1, cause = cause, mobility=T)
+gm = model(dff, df.date=df.date, df.tmmx=df.tmmx, df.rmax=df.rmax, lags=lags, 
+           pollutants = pollutants, cause = cause, mobility=mobility)
 gm
 # pm   pm.low  pm.high 
 # 3.100662 2.425400 3.752054 
@@ -33,32 +36,7 @@ gm = model(dff, df.date=df.date, df.tmmx=df.tmmx, df.rmax=df.rmax, lags=1, pollu
 gm = model(dff, df.date=df.date, df.tmmx=df.tmmx, df.rmax=df.rmax, lags=5, pollutants = 1, cause = cause)
 gm
 
-# #####################################################
-# setwd("/Users/mac/Documents/GitHub/covid_wildfire")
-# source("scr/Utilities.R")
-# source("scr/GlobalModel.R")
-# dff = load.data.xz1()
-# 
-# ### set up
-# lags.to.run = 0:14
-# smooth="ns"
-# cause = "deaths"
-# 
-# pollutant="pm25"
-# group="FIPS"
-# control=glm.control(epsilon = 1e-10, maxit = 10000)
-# 
-# df.date=5
-# df.tmmx=2
-# df.rmax=2
-# lag = 1
-# pm.threshold = 20
-#  
-# gm = global.model4(dff, smooth = smooth, lags=lag,
-#                    df.date=df.date, df.tmmx=df.tmmx,
-#                    df.rmax=df.rmax, cause = cause)
-#     
-    
+
 
 # ############################ check trend of fireday#########################
 # setwd("/Users/mac/Documents/GitHub/covid_wildfire")
