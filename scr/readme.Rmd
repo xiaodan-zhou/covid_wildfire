@@ -7,22 +7,17 @@ Utilities.R
     'trans.coef'          transform coefficients in Poisson model 
         
 Model.R
-    'model' regression 
-        1) on pm2.5 values; 
-        2) on pm2.5 baseline and wildfire contribution 
+    'model' regression on pm2.5 values; 
         works for sinple or multiple lags
         w/ or w/o mobility data 
 
 ExeSingleLagModel.R 
       OneBand     singleLag21     wMobility      (for cases and deaths, various combinations degree of freedom)
       OneBand     singleLag21     -              (for cases and deaths, various combinations degree of freedom)
-      TwoBand? 
-      
+ 
 ExeDistLagModel.R 
       OneBand     MultiLag21      wMobility      (for cases and deaths, one combination degree of freedom)
       OneBand     MultiLag21      -              (for cases and deaths, one combination degree of freedom)
-      TwoBand     MultiLag21      wMobility      (for cases and deaths, one combination degree of freedom)  
-      TwoBand     MultiLag21      -              (for cases and deaths, one combination degree of freedom)
 
 Vis1.R
     x-axis is lag number
@@ -30,10 +25,11 @@ Vis1.R
 Vis2.R
     x-axis is degree of freedom number
 
-Vis3.R // SummarizeData.R
+Vis3.R
+
+SummarizeData.R
 
 ## Tests.R
-
 
 ## some exploration and visualization 
     combine.R (clean data!!!)
