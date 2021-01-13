@@ -13,7 +13,7 @@ load.data = function() {
   
   ### read data 
   setwd("/Users/mac/Documents/GitHub/covid_wildfire")
-  in.path = "data/moddat_xz1_rerun.csv"
+  in.path = "data/moddat_Jan2021.csv"
   df = read.csv(in.path)
   
   print(paste(dim(df)[1], "records in the dataset"))
@@ -41,7 +41,9 @@ load.data = function() {
   hms$hazardmap[is.na(hms$hazardmap)] = 0
   hms$GEOID = as.factor(as.character(hms$GEOID))
   df = merge(df, hms, by.x=c("date", "FIPS"), by.y=c("date", "GEOID"), all.x=T)
-
+  # df = df[df$date <= max(hms$date), ]
+  rm(hms)
+  
   ## create the pm2.5 baseline and hazardline according to hazardmap 
   df$pmbase = NA
   df$pmhazard = NA
@@ -52,13 +54,19 @@ load.data = function() {
     df$pmhazard[irow] = pm.splitted[[2]]
   }
   
-  ## add mobility data 
-  mb = read.csv("data/dataverse_Dec2/combined_percent_change_from_baseline_CO_westcoast.csv")
-  mb$date = ymd(mb$date)
-  mb$GEOID = as.factor(mb$GEOID)
-  df = merge(df, mb, by.x=c("date", "FIPS"), by.y=c("date", "GEOID"), all.x=T)
+  ## facebook mobility  
+  # mb = read.csv("data/dataverse_Dec2/combined_percent_change_from_baseline_CO_westcoast.csv")
+  # mb$date = ymd(mb$date)
+  # mb$GEOID = as.factor(mb$GEOID)
+  # df = merge(df, mb, by.x=c("date", "FIPS"), by.y=c("date", "GEOID"), all.x=T)
+  # rm(mb)
   
-  rm(hms, mb)
+  mb = read.csv("data/movement-range.csv")
+  mb$date = ymd(mb$date)
+  mb$GEOID = as.factor(mb$fips)
+  df = merge(df, mb, by.x=c("date", "FIPS"), by.y=c("date", "GEOID"), all.x=T)
+  df = df[df$date <= max(mb$date), ]
+  rm(mb)
   
   ### fire day should shift with lag, no need to do it here  
   return(df)
