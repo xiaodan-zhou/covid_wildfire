@@ -9,11 +9,11 @@ library(stats)
 library(meta)
   
 ############################################################################
-load.data.xz1 = function() {
+load.data = function() {
   
   ### read data 
   setwd("/Users/mac/Documents/GitHub/covid_wildfire")
-  in.path = "data/moddat_xz1_rerun.csv"
+  in.path = "data/moddat_Jan2021.csv"
   df = read.csv(in.path)
   
   print(paste(dim(df)[1], "records in the dataset"))
@@ -41,7 +41,9 @@ load.data.xz1 = function() {
   hms$hazardmap[is.na(hms$hazardmap)] = 0
   hms$GEOID = as.factor(as.character(hms$GEOID))
   df = merge(df, hms, by.x=c("date", "FIPS"), by.y=c("date", "GEOID"), all.x=T)
-
+  # df = df[df$date <= max(hms$date), ]
+  rm(hms)
+  
   ## create the pm2.5 baseline and hazardline according to hazardmap 
   df$pmbase = NA
   df$pmhazard = NA
@@ -51,6 +53,20 @@ load.data.xz1 = function() {
     df$pmbase[irow] = pm.splitted[[1]]
     df$pmhazard[irow] = pm.splitted[[2]]
   }
+  
+  ## facebook mobility  
+  # mb = read.csv("data/dataverse_Dec2/combined_percent_change_from_baseline_CO_westcoast.csv")
+  # mb$date = ymd(mb$date)
+  # mb$GEOID = as.factor(mb$GEOID)
+  # df = merge(df, mb, by.x=c("date", "FIPS"), by.y=c("date", "GEOID"), all.x=T)
+  # rm(mb)
+  
+  mb = read.csv("data/movement-range.csv")
+  mb$date = ymd(mb$date)
+  mb$GEOID = as.factor(mb$fips)
+  df = merge(df, mb, by.x=c("date", "FIPS"), by.y=c("date", "GEOID"), all.x=T)
+  df = df[df$date <= max(mb$date), ]
+  rm(mb)
   
   ### fire day should shift with lag, no need to do it here  
   return(df)
@@ -97,72 +113,40 @@ split.pm = function(pm25, hazardmap) {
 }
   
 
-
 ############################################################################
-add.lag = function(dff, value="pm25", group="FIPS", lags=1) {
+create.lag.value = function(dff, value="pm25", group="FIPS", lags=1) {
   ### return all lagged 'value' as listed in 'lags', after grouping value by 'group'
   ### assumes df is ordered in time!!! 
   ### dplyr version 0.8.5
   ### output name pm25, pm25.l1, pm25.l2
   lag.names = c()
-  
   for (i in lags) {
-    new.var = ifelse(i == 0, value, paste0(value, ".l", i))
+    new.var = paste0(".l", i)
     lag.names = c(lag.names, new.var)
     dff = dff %>% 
       dplyr::group_by(.dots = group) %>% 
       dplyr::mutate(!!new.var := dplyr::lag(!!as.name(value), n = i, default = NA))
     dff = data.frame(dff)
   }
-  return(list(dff[lag.names], lag.names))
+  return(dff[lag.names])
 
 }
 
 ############################################################################
-#### define smoke as two consecutive days with PM2.5 higher than the pre-defined threshold ####
-add.smoke = function(dff, value="pm25", group="FIPS", lag=1, pm.threshold=20) {
-  if (length(lag) > 1) stop("add.smoke only works for 1 lag")
-  
-  unique.groups = unique(as.list(dff[group])[[1]])
-  ndays = dim(dff)[1] / length(unique.groups)
-  
-  ### transform matrix
-  tx1 = diag(x = 1, nrow=ndays, ncol=ndays, names = TRUE)
-  for (i in 1:(ndays-1)) tx1[i, i+1] = 1
-  
-  tx2 = diag(x = 1, nrow=ndays, ncol=ndays, names = TRUE)
-  for (i in 2:ndays) tx2[i, i-1] = 1
-  
-  ### get smoke day 
-  dff["fireday"] = NA
-  for (ig in unique.groups) {
-    values = (dff[dff[group] == ig, ][value] >= pm.threshold) * 1
-    values[is.na(values)] = 0
-    w1 = t(t(values) %*% tx1 >= 2) * 1
-    w2 = t(t(values) %*% tx2 >= 2) * 1
-    dff["fireday"][dff[group] == ig] = (w1|w2) * 1
-  }
-  
-  ### get lagged smoke day
-  new.var = ifelse(lag == 0, "fireday", paste0("fireday", ".l", lag))
-  dff = dff %>%
-    dplyr::group_by(.dots = group) %>%
-    dplyr::mutate(!!new.var := dplyr::lag(fireday, n = lag, default = NA))
-  dff = data.frame(dff)
-
-  return(list(dff[new.var], new.var))
+trans.coef = function(ls, pm.delta = 10) {
+  return((exp(ls * pm.delta) - 1) * 100)
 }
 
 ############################################################################
-add.hazard = function(dff, value="hazardmap", group="FIPS", lag=1, hazard.threshold=27) {
-  if (length(lag) > 1) stop("add.hazard only works for 1 lag")
-  i = lag
-  new.var = ifelse(i == 0, value, paste0(value, ".l", i))
-  dff = dff %>% 
-    dplyr::group_by(.dots = group) %>% 
-    dplyr::mutate(!!new.var := dplyr::lag(!!as.name(value), n = i, default = NA))
-  dff = data.frame(dff)
-  # dff[new.var] = as.factor(as.character((dff[new.var] >= hazard.threshold) * 1))           TODO 
-  return(list(dff[new.var], new.var))
+list.append = function(ls, element) {
+  i = length(ls)
+  ls[[i+1]] = element
+  return(ls)
 }
-  
+
+############################################################################
+my.acf = function(ls, lag.max=21) {
+  acf.value = acf(ls, lag.max=lag.max, na.action = na.pass, plot=F)
+  acf.df = data.frame(lag = acf.value$lag, value = acf.value$acf)
+  return(acf.df)
+}

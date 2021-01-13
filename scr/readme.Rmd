@@ -1,36 +1,45 @@
-The key function is in GlobalModel.R
-It is called in Global_RunSingleModel.R, Global_RunSingleModel_Sensitivity.R 
-and Global_RunSmokedayModel.R, Global_RunSmokedayModel_Sensitivity.R
-to create out key outputs. 
-
 ## Code Structure in folder scr/
 
 Utilities.R
-  function to load data
-  function to create pollutant lags
-  function to define smoke day and create lags 
-  
-GlobalModel.R
-  function 1) single model regressing on pm2.5 values 
-  function 2) single model regressing on interaction item of pm2.5 value and smoke day covariate  
-  function 3) single model regressing on smoke day covariate
-  above functions are validated for single-lag scenario only  
-  
-Global_RunSingleModel.R
-Global_RunSingleModel_Sensitivity.R
-  run model 1) and visualize 
+    'load.data'           load data 
+    'split.pm'            split pm2.5 into baseline and wildfire contribution 
+    'create.lag.value'    create lags for pm2.5 or baseline or wildfire contribution 
+    'trans.coef'          transform coefficients in Poisson model 
+        
+Model.R
+    'model' regression on pm2.5 values; 
+        works for sinple or multiple lags
+        w/ or w/o mobility data 
 
-Global_RunInteractionModel.R
-  run model 2) and visualize
+ExeSingleLagModel.R 
+      OneBand     singleLag21     wMobility      (for cases and deaths, various combinations degree of freedom)
+      OneBand     singleLag21     -              (for cases and deaths, various combinations degree of freedom)
+ 
+ExeDistLagModel.R 
+      OneBand     MultiLag21      wMobility      (for cases and deaths, one combination degree of freedom)
+      OneBand     MultiLag21      -              (for cases and deaths, one combination degree of freedom)
 
-Global_RunSmokedayModel.R
-Global_RunSmokedayModel_Sensitivity.R
-  run model 3) and visualize 
+Vis1.R
+    x-axis is lag number
+    
+Vis2.R
+    x-axis is degree of freedom number
 
-LocalModel.R
-LocalRun.R
+Vis3.R
 
+SummarizeData.R
 
+## Tests.R
+
+## some exploration and visualization 
+    combine.R (clean data!!!)
+    GoogleMobility.R
+    HazardSmokeSystem.R
+    SummarizeData.R
+    calfire.R
+    Exploratory...
+    (total)TestCount.R
+    
 ## Data Description 
 
 # https://developers.google.com/earth-engine/datasets/catalog/IDAHO_EPSCOR_TERRACLIMATE#bands
