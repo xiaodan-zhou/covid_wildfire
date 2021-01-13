@@ -5,21 +5,22 @@ dff = load.data()
 
 ## special: cases ~ pmbase 
 # dff = dff[dff$pmhazard == 0 | is.na(dff$pmhazard), ]
+## special: by state 
+# dff = dff[dff$state.x != "CA", ]
 ## testing 
 # dff = dff[dff$FIPS %in% c("6037", "6039"), ]
 
-### parameter set up ~1h for a pollutant scenarios, 4h for 2pollu+1pollu+wMobility+woMibility 
 pollutants = 1
 causes = c("cases", "deaths")
 max.lag = 21
-mobility = NA
-df.combo = list(c(3,1), c(4,1), c(5,2), c(6,2), c(7,2), 
-                c(8, 2), c(9,3), c(10,3), c(11,3), c(12,3))
+mobility = T # NA F
+df.combo = list(c(3,1), c(4,1), c(5,2), c(6,2), c(7,2),
+                c(8, 2), c(9,3), c(10,3), c(11,3), c(12,3)) 
 
 ### output file name
-if (pollutants == 1) temp.name = paste0("OneBand.DistLag", max.lag)
-if (pollutants == 2) temp.name = paste0("TwoBand.DistLag", max.lag)
-if (!is.na(mobility)) temp.name = paste0(temp.name, ".withMobility")
+if (pollutants == 2) stop("should not use this")
+temp.name = paste0("unconstrained_model_maxlag", max.lag) 
+if (!is.na(mobility)&(mobility==T)) temp.name = paste0(temp.name, "_mobility")
 temp.name = paste0(temp.name, "[", Sys.time(), "]")
 file.csv = paste0("output/", temp.name, ".csv")
 

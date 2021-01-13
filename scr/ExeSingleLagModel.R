@@ -5,7 +5,8 @@ dff = load.data()
 
 ## special: cases ~ pmbase 
 # dff = dff[dff$pmhazard == 0 | is.na(dff$pmhazard), ]
-
+## special: by state 
+# dff = dff[dff$state.x == "CA", ]
 ## testing 
 # dff = dff[dff$FIPS %in% c("6037", "6039"), ]
 
@@ -13,14 +14,14 @@ dff = load.data()
 pollutants = 1
 causes = c("cases", "deaths")
 max.lag = 21
-mobility = NA # NA F 
+mobility = T # NA F 
 df.combo = list(c(3,1), c(4,1), c(5,2), c(6,2), c(7,2), 
-               c(8, 2), c(9,3), c(10,3), c(11,3), c(12,3))
+                c(8, 2), c(9,3), c(10,3), c(11,3), c(12,3))
 
 ### output file name
-if (pollutants == 1) temp.name = paste0("OneBand.singleLag", max.lag)
-if (pollutants == 2) temp.name = paste0("TwoBand.singleLag", max.lag)
-if (!is.na(mobility)) temp.name = paste0(temp.name, ".withMobility")
+if (pollutants == 2) stop("should not use this")
+temp.name = paste0("single_lag_model_maxlag", max.lag) 
+if (!is.na(mobility)&(mobility==T)) temp.name = paste0(temp.name, "_mobility")
 temp.name = paste0(temp.name, "[", Sys.time(), "]")
 file.csv = paste0("output/", temp.name, ".csv")
 
@@ -29,7 +30,7 @@ result.rbind = c()
 for (cause in causes) {
   for (ilag in 0:max.lag) {
     for (idf.combo in df.combo) {
-      gm = model(dff, 
+      gm = model(dff,  
                  lags=ilag, 
                  df.date=idf.combo[1], 
                  df.tmmx=idf.combo[2], 
