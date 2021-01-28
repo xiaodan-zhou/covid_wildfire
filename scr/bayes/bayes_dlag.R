@@ -101,6 +101,8 @@ for(i in 1:ncol(mcmc_un[[1]]))
   acf(mcmc_un[[1]][,i], main = colnames(mcmc_un[[1]])[i])
 dev.off()
 
+save(mcmc_un, file = "output/mcmc_un.RData")
+
 ### Constrained Model
 
 # hyperparameter change
@@ -132,6 +134,8 @@ pdf(file = "output/bdlag_acf_c.pdf")
 for(i in 1:ncol(mcmc_c[[1]]))
   acf(mcmc_c[[1]][,i], main = colnames(mcmc_c[[1]])[i])
 dev.off()
+
+save(mcmc_un, file = "output/mcmc_c.RData")
 
 ### Output
 
