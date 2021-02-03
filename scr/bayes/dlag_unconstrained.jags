@@ -33,7 +33,8 @@ model {
   
   for (k in 1:(l+1)){
   
-    sigma[k] ~ dgamma(1/2, 4767718463370843)
+    sigma[k] ~ dgamma(1/2, 1e-6)
+    test[k] <- Omega[k,k]
     
     for (j in 1:(l+1)){
     
