@@ -1,0 +1,48 @@
+
+model {
+  
+  for (i in 1:n) {
+    
+    # likelihood
+    for (j in 1:m) {
+  
+      log(lambda[i,j]) <- alpha[i] + log(pop[i]) + Z[j,1:p]%*%beta[1:p] +
+          X[i,max(1,j-l):j]%*%theta[i,max(1,l-j+2):(l+1)]
+      
+      # Poisson Model
+      Y[i,j] ~ dpois(lambda[i,j])
+    
+    }
+    
+    # random effects
+    alpha[i] ~ dnorm(mu, tau)
+    gamma[i,1:(q+1)] ~ dmnorm(delta[1:(q+1)], Omega[1:(q+1),1:(q+1)])
+    
+    # transformations
+    theta[i,1:(l+1)] <- U[1:(l+1),1:(q+1)]%*%gamma[i,1:(q+1)]
+    H[i] <- exp(sum(theta[i,1:(l+1)])*10) - 1
+    
+  }
+  
+  eta[1:(l+1)] <- U[1:(l+1),1:(q+1)]%*%delta[1:(q+1)]
+  
+  # priors
+  mu ~ dnorm(0, 1e-10)
+  beta[1:p] ~ dmnorm(b[1:p], S[1:p,1:p])
+  delta[1:(q+1)] ~ dmnorm(a[1:(q+1)], R[1:(q+1),1:(q+1)])
+  tau ~ dgamma(0.001, 0.001)
+  Omega[1:(q+1),1:(q+1)] ~ dwish(V[1:(q+1),1:(q+1)], q + 2)
+  
+  for (k in 1:(q+1)){
+  
+    sigma[k] ~ dgamma(1/2, 1e-10)
+    
+    for (j in 1:(q+1)){
+    
+      V[j,k] <- ifelse(j == k, 1/(4*sigma[k]), 0)
+    
+    }
+  
+  }
+  
+}
