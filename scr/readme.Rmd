@@ -1,8 +1,10 @@
 ## Code Structure in folder scr/
 
+Combined.R
+    up all data together 'moddat_Feb2021.csv'
+
 Utilities.R
-    'load.data'           load data 
-    'split.pm'            split pm2.5 into baseline and wildfire contribution 
+    'load.data'           load data
     'create.lag.value'    create lags for pm2.5 or baseline or wildfire contribution 
     'trans.coef'          transform coefficients in Poisson model 
         
@@ -12,47 +14,27 @@ Model.R
         w/ or w/o mobility data 
 
 ExeSingleLagModel.R 
-      OneBand     singleLag21     wMobility      (for cases and deaths, various combinations degree of freedom)
-      OneBand     singleLag21     -              (for cases and deaths, various combinations degree of freedom)
+      OneBand     singleLag21     wMobility 
+      OneBand     singleLag21     -         
  
 ExeDistLagModel.R 
-      OneBand     MultiLag21      wMobility      (for cases and deaths, one combination degree of freedom)
-      OneBand     MultiLag21      -              (for cases and deaths, one combination degree of freedom)
+      OneBand     MultiLag21      wMobility  
+      OneBand     MultiLag21      -       
 
 Vis1.R
-    x-axis is lag number
+    x-axis is lag number, single lag
     
 Vis2.R
     x-axis is degree of freedom number
 
 Vis3.R
+    x-axis is lag number, single lag + distributed lag 
 
-SummarizeData.R
-
-## Tests.R
-
-## some exploration and visualization 
-    combine.R (clean data!!!)
-    GoogleMobility.R
-    HazardSmokeSystem.R
-    SummarizeData.R
-    calfire.R
-    Exploratory...
-    (total)TestCount.R
+Mapping.R 
+    mapping
+  
+Vis.PMbySate.R
+    visualize pm2.5 series by state 
     
-## Data Description 
-
-# https://developers.google.com/earth-engine/datasets/catalog/IDAHO_EPSCOR_TERRACLIMATE#bands
-# https://developers.google.com/earth-engine/datasets/catalog/IDAHO_EPSCOR_GRIDMET?hl=es#bands
-Name	Units	Min	  Max	    Description
-pr	  mm	  0*	  7245*   Precipitation accumulation
-srad	W/m^2 0*	  5477*	  Downward surface shortwave radiation
-tmmx	K	    -670*	576*	  Maximum temperature
-rmax	%	    1.05*	100*    Maximum relative humidity
-sph	  kg/kg	0*	  0.02*   Specific humidity
-
-Name	      Units	    Min	  Max	    Description
-cases       people                  Confirmed COVID cases            
-deaths      people                  Deaths of COVID
-population  people
-pm25        ug/m^3
+Vis.pm&cases&deaths.top10.R
+    visualize pm2.4 death cases series of top counties 

@@ -1,9 +1,14 @@
-setwd("/Users/mac/Documents/GitHub/covid_wildfire")
+library(rstudioapi)
+project.dir = dirname(dirname(rstudioapi::getActiveDocumentContext()$path))
+setwd(project.dir)
 source("scr/Utilities.R")
 
 input.file.lists = list()
+# input.file.lists[[1]] = c("output/unconstrained_df622.csv",
+#                           "output/unconstrained_model_maxlag21_mobility.csv")
 input.file.lists[[1]] = c("output/unconstrained_df622.csv",
-                          "output/OneBand.DistLag21.wMobility.csv")
+                          "output/unconstrained_model_maxlag21.csv")
+
 
 df.date = 6
 df.tmmx = 2
@@ -20,7 +25,7 @@ for (i.file in input.file.lists) {
   for (mlag in mlags) {
     for (cause in causes) {
       for (mobility in mobility.options) {
-        file.pdf = paste0("output/unconstrained_df", df.date, df.tmmx, df.rmax, "_", cause)
+        file.pdf = paste0("output/unconstrained_lag", mlag, "_df", df.date, df.tmmx, df.rmax, "_", cause)
         if (mobility) file.pdf = paste0(file.pdf, "_mobility")
         file.pdf = paste0(file.pdf, "[", Sys.time(), "]")
         file.pdf = paste0(file.pdf, ".pdf")

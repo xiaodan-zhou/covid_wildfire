@@ -249,6 +249,7 @@ df$pm25[df$pm25 < 0] = 0
 
 # replace null in pm 2020 with historical data
 summary(df$pm25)
+df$pm25_raw = df$pm25
 df$pm25[is.na(df$pm25)] = df$pm25_history[is.na(df$pm25)]
 summary(df$pm25)
 
