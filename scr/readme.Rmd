@@ -1,12 +1,12 @@
 ## Code Structure in folder scr/
 
 Combined.R
-    up all data together 'moddat_Feb2021.csv'
+  put all types of data together 'moddat_Feb2021.csv'
 
 Utilities.R
     'load.data'           load data
     'create.lag.value'    create lags for pm2.5 or baseline or wildfire contribution 
-    'trans.coef'          transform coefficients in Poisson model 
+    'trans.coef'          exponential transform the coefficients in Poisson model 
         
 Model.R
     'model' regression on pm2.5 values; 
@@ -31,10 +31,18 @@ Vis3.R
     x-axis is lag number, single lag + distributed lag 
 
 Mapping.R 
-    mapping
+    mapping counties
   
-Vis.PMbySate.R
-    visualize pm2.5 series by state 
+Vis.PMbyState.R
+    visualize pm2.5 series by state
+    visualize the gap between pm2.5 2020 and historical data by state
     
 Vis.pm&cases&deaths.top10.R
-    visualize pm2.4 death cases series of top counties 
+    visualize pm2.5 death cases series by counties
+
+Vis.pm.vs.historical.R
+   visualize the gap between pm2.5 2020 and historical data by counties
+
+SummarizeData.R
+    get descriptive data for paper writing
+    
