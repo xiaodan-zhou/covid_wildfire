@@ -37,7 +37,7 @@ colnames(Z) <- paste("Z", 1:p, sep = "")
 
 # random effects
 alpha <- rnorm(n, -10, 2) # random intercept
-eta <- log(lags + 1)*sin(lags*pi/4)/10
+eta <- log((l - lags) + 1)*sin((l - lags)*pi/4)/10
 theta <- t(replicate(n, rnorm(l + 1, eta, sqrt(0.01)))) # lagged PM2.5 coefficients
 
 Y <- matrix(NA, n, m)
@@ -172,31 +172,31 @@ save(mcmc_sim_c, file = "output/mcmc_sim_c.RData")
 
 ### plot some stuff
 
-plot_list <- list()
-j <- 1
 
 plot_list <- lapply(c(1,25,50,75,100), function(i, ...){
 
   theta.c <- mcmc_sim_c[[1]][,grep(paste0("theta\\[",i,","), colnames(mcmc_sim_c[[1]]))]
   theta.c.mu <- colMeans(theta.c)
   theta.c.cp <- apply(theta.c, 2, hpd)
-  gmat.c <- data.frame(theta.c.mu, t(theta.c.cp), l - lags)
-  names(gmat.c) <- c("theta", "hpd_l", "hpd_u", "lags")
+  gmat.c <- data.frame(theta.c.mu, t(theta.c.cp), l - lags, model = "Constrained")
+  names(gmat.c) <- c("theta", "hpd_l", "hpd_u", "lags", "model")
   
   theta.un <- mcmc_sim_un[[1]][,grep(paste0("theta\\[",i,","), colnames(mcmc_sim_un[[1]]))]
   theta.un.mu <- colMeans(theta.un)
   theta.un.cp <- apply(theta.un, 2, hpd)
-  gmat.un <- data.frame(theta.un.mu, t(theta.un.cp), x = l - lags)
-  names(gmat.un) <- c("theta", "hpd_l", "hpd_u", "lags")
+  gmat.un <- data.frame(theta.un.mu, t(theta.un.cp), x = l - lags, model = "Unconstrained")
+  names(gmat.un) <- names(gmat.c)
   
-  ggplot() + 
-    geom_pointrange(aes(x = lags, y = theta, color = "Constrained", ymax = hpd_u, ymin = hpd_l), data = gmat.c) + 
-    geom_pointrange(aes(x = lags, y = theta, color = "Unconstrained", ymax = hpd_u, ymin = hpd_l), data = gmat.un) +
-    geom_point(aes(x = l - lags, y = theta[i,]), inherit.aes = FALSE) +
-    labs(title = paste("County", i), x = "Lag Days", y = "Coefficient Value") +
-    scale_color_manual(name = "Model",
-                       breaks = c("Constrained", "Unconstrained"),
-                       values = c("Constrained" = "blue", "Unconstrained" = "red") )
+  gmat.tru <- data.frame(theta[i,], theta[i,], theta[i,], x = l - lags, model = "True Value")
+  names(gmat.tru) <- names(gmat.c)
+  
+  gmat <- rbind(gmat.c, gmat.un, gmat.tru)
+  gmat$model <- factor(gmat$model, levels = c("Unconstrained", "Constrained", "True Value"))
+  
+  ggplot(aes(x = lags, y = theta, color = model, ymax = hpd_u, ymin = hpd_l), data = gmat) + 
+    geom_pointrange(position = position_dodge(width = 0.5)) +
+    labs(title = paste("County", i), x = "Lag Days", y = "Coefficient Value", color = "Model") + 
+    scale_color_manual(values = c("Unconstrained" = "blue", "Constrained" = "red", "True Value" = "black"))
   
 })
 
@@ -204,26 +204,28 @@ eta.c <- mcmc_sim_c[[1]][,sapply(1:15, function(z, ...) grep(paste0("eta\\[",z,"
 eta.c.mu <- colMeans(eta.c)
 eta.c.cp <- apply(eta.c, 2, hpd)
 
-gmat.c <- data.frame(eta.c.mu, t(eta.c.cp), l - lags)
-names(gmat.c) <- c("eta", "hpd_l", "hpd_u", "lags")
+gmat.c <- data.frame(eta.c.mu, t(eta.c.cp), l - lags, model = "Constrained")
+names(gmat.c) <- c("eta", "hpd_l", "hpd_u", "lags", "model")
 
 eta.un <- mcmc_sim_un[[1]][,sapply(1:15, function(z, ...) grep(paste0("eta\\[",z,"\\]"), colnames(mcmc_sim_un[[1]])))]
 eta.un.mu <- colMeans(eta.un)
 eta.un.cp <- apply(eta.un, 2, hpd)
 
-gmat.un <- data.frame(eta.un.mu, t(eta.un.cp), l - lags)
-names(gmat.un) <- c("eta", "hpd_l", "hpd_u", "lags")
+gmat.un <- data.frame(eta.un.mu, t(eta.un.cp), l - lags, model = "Unconstrained")
+names(gmat.un) <- names(gmat.c)
+
+gmat.tru <- data.frame(eta, eta, eta, x = l - lags, model = "True Value")
+names(gmat.tru) <- names(gmat.c)
+
+gmat <- rbind(gmat.c, gmat.un, gmat.tru)
+gmat$model <- factor(gmat$model, levels = c("Unconstrained", "Constrained", "True Value"))
 
 eta_plot <- ggplot() + 
-  geom_pointrange(aes(x = lags, y = eta, color = "Constrained", ymax = hpd_u, ymin = hpd_l), data = gmat.c) + 
-  geom_pointrange(aes(x = lags, y = eta, color = "Unconstrained", ymax = hpd_u, ymin = hpd_l), data = gmat.un) +
-  geom_point(aes(x = l - lags, y = eta), inherit.aes = FALSE) +
-  labs(title = "Combined Counties", x = "Lag Days", y = "Coefficient Value") +
-  scale_color_manual(name = "Model",
-                     breaks = c("Constrained", "Unconstrained"),
-                     values = c("Constrained" = "blue", "Unconstrained" = "red") )
+  geom_pointrange(aes(x = lags, y = eta, color = model, ymax = hpd_u, ymin = hpd_l), data = gmat, position = position_dodge(width=0.5)) +
+  labs(title = "Combined Counties", x = "Lag Days", y = "Coefficient Value", color = "Model") +
+  scale_color_manual(values = c("Unconstrained" = "blue", "Constrained" = "red", "True Value" = "black"))
 
-pdf(file = "output/sim_fit.pdf")  
+png(filename = "output/sim_fit.png", width = 700, height = 700)  
 ggarrange(plot_list[[1]], plot_list[[2]], plot_list[[3]], plot_list[[4]], plot_list[[5]], eta_plot, ncol=2, nrow=3, common.legend = TRUE, legend="bottom")
 dev.off()
 
