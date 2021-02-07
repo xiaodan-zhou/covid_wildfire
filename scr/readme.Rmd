@@ -46,3 +46,10 @@ Vis.pm.vs.historical.R
 SummarizeData.R
     get descriptive data for paper writing
     
+### moddat_Feb2021.csv
+pm25_history  the median average of PM2.5 during 2016-2019
+pm25_raw      the PM2.5 for 2020 without filling missing 
+pm25          the missing values in pm25_raw been filled using pm25_history
+wildfire      the boolean index of wildfire days, according to the smoke phenomenon (hazardmap)
+pm_wildfire   the wildfire contributed PM2.5, estimtated as (pm25 - pm25_history) during wildfire days; in non-wildfire days, the value is 0. 
+

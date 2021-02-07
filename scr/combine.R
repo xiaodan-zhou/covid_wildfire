@@ -149,9 +149,10 @@ pm_long$day = day(as.POSIXlt(pm_long$date, format="%Y-%m-%d"))
 pm_long$md = paste0(pm_long$month, "-", pm_long$day)
 
 pm_long = data.frame(pm_long %>% group_by(md, FIPS) %>% 
-                       summarise(pm25_history = median(pm25, na.rm=T)))
+                       summarise(pm25_history = median(pm25, na.rm=T), 
+                                 pm25_history_max = max(pm25, na.rm=T)))
 
-pm_long = pm_long[c("md", "pm25_history", "FIPS")]
+pm_long = pm_long[c("md", "pm25_history", "pm25_history_max", "FIPS")]
 
 
 
@@ -207,10 +208,7 @@ pm.na.wildfire = data.frame(df[!is.na(df$hazardmap),] %>% group_by(FIPS) %>%
                               summarise(count=sum((is.na(pm25))*(hazardmap==27))))
 
 c95 = pm.na.wildfire$FIPS[pm.na.wildfire$count==0]
-
 length(c95)
-
-dim(df[df$FIPS %in% c95, ])
 
 # FIPS = 41011, 41053, 41057 have missing overlap (2020, previous)
 for (ifips in c95) {
@@ -227,7 +225,9 @@ dim(df[df$FIPS %in% c95, ])
 
 df = df[df$FIPS %in% c95, ]
 
+# check 
 sum(is.na(df$pm25)*is.na(df$pm25_history))
+rm(c95, ifips, krow, subset, pm.na.wildfire)
 
 # 89 counties that have no missing pm2.5 during wildfire days and little missing during non-wildfire days
 # pm.na = df %>% group_by(FIPS) %>% summarise(na = sum(is.na(pm25)))
@@ -247,6 +247,8 @@ df$deaths[df$deaths < 0] = NA
 sum(df$pm25<0, na.rm=T) # 7 out of 34181 records
 df$pm25[df$pm25 < 0] = 0
 
+rm(irow, jrow)
+
 # replace null in pm 2020 with historical data
 summary(df$pm25)
 df$pm25_raw = df$pm25
@@ -264,16 +266,56 @@ irow = df$FIPS %in% mobility.na$FIPS[mobility.na$count > 0]
 df$relative_change_feb[irow] = NA
 df$ratio_travelers[irow] = NA
 
+rm(mobility.na, irow)
+
 ################################ wildifre contribution to pm2.5 2020 ################################
-# wildfire period
-irow = (df$hazardmap==27)&(!is.na(df$hazardmap))
-df$pm_wildfire = NA
-df$pm_wildfire[!is.na(df$hazardmap)] = 0
-df$pm_wildfire[irow] = max(df$pm25[irow] - df$pm25_history[irow], 0)
+### wildfire period scenario one 
+df$wildfire = NA
+df$wildfire = (df$hazardmap==27)&(!is.na(df$hazardmap))
+rows1 = (df$wildfire==T)&(!is.na(df$wildfire))
 
-summary(df$pm_wildfire)
+df$pm_wildfire = 0
+df$pm_wildfire[pm_wildfire] = pmax(df$pm25[pm_wildfire] - df$pm25_history[pm_wildfire], 0)
 
-summary(df)
+# check 
+sum(rows1)
+rm(rows1)
+
+### wildfire period scenario two
+# manually classify non-wildfire day with high pm as wildfire day
+# df$wf1 = df$wf_index
+# th = 66
+# df$wf2 = df$wf1
+# df$wf2[(df$wf1==F)&(df$pm25>=th)] = T
+# rows2 = (df$wf2==T)&(!is.na(df$wf2))
+# 
+# df$pm_wf2 = 0
+# df$pm_wf2[rows2] = pmax(df$pm25[rows2] - df$pm25_history[rows2], 0)
+# 
+# # check 
+# sum((df$wf1==F)&(df$pm25>=th))
+# sum(rows2)
+# rm(rows2, th)
+# plot(df$pm_wf1, df$pm_wf2)
+
+
+### wildfire period scenario three
+# manually classify wildfire day with how pm as non-wildfire day
+# th = 15
+# df$wf3 = df$wf1
+# df$wf3[(df$wf1==T)&(df$pm25<=th)] = F
+# rows3 = (df$wf3==T)&(!is.na(df$wf3))
+# 
+# df$pm_wf3 = 0
+# df$pm_wf3[rows3] = pmax(df$pm25[rows3] - df$pm25_history[rows3], 0)
+# 
+# sum((df$wf1==T)&(df$pm25<=th))
+# rm(rows3, th)
+# plot(df$pm_wf1, df$pm_wf3)
+
+# ggplot() + geom_point(aes(df$pm25, df$pm_wf1), alpha=.1) + xlim(c(0, 66)) + ylim(c(0, 66))
+# ggplot() + geom_point(aes(df$pm25, df$pm_wf1), alpha=.1) + xlim(c(0, 30)) + ylim(c(0, 30))
+# ggplot() + geom_point(aes(log(df$pm25+.001), log(df$pm_wf3+.001)), alpha=.1)
 
 ################################ save data ################################ 
 write.csv(df, 'moddat_Feb2021.csv', row.names=F)
