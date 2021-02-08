@@ -149,10 +149,9 @@ pm_long$day = day(as.POSIXlt(pm_long$date, format="%Y-%m-%d"))
 pm_long$md = paste0(pm_long$month, "-", pm_long$day)
 
 pm_long = data.frame(pm_long %>% group_by(md, FIPS) %>% 
-                       summarise(pm25_history = median(pm25, na.rm=T), 
-                                 pm25_history_max = max(pm25, na.rm=T)))
+                       summarise(pm25_history_raw = median(pm25, na.rm=T)))
 
-pm_long = pm_long[c("md", "pm25_history", "pm25_history_max", "FIPS")]
+pm_long = pm_long[c("md", "pm25_history", "FIPS")]
 
 
 
@@ -202,7 +201,7 @@ df$date_str = df$date
 
 
 
-################################ filter 95 ################################ 
+################################ filter counties ################################ 
 # 95 counties that have no missing pm2.5 during wildfire days 
 pm.na.wildfire = data.frame(df[!is.na(df$hazardmap),] %>% group_by(FIPS) %>% 
                               summarise(count=sum((is.na(pm25))*(hazardmap==27))))
@@ -231,18 +230,24 @@ rm(c95, ifips, krow, subset, pm.na.wildfire)
 
 ################################ handle missing ################################ 
 # cases and deaths
-irow = (df$cases < 0) # |is.na(df$cases)
-jrow = (df$deaths < 0) # |is.na(df$deaths)
-sum(irow) # 177 out of 34181 records
-sum(jrow) # 147 out of 34181 records
+irow = (df$cases < 0)  
+jrow = (df$deaths < 0)  
+sum(irow)  
+sum(jrow)  
 df$cases[df$cases < 0] = NA
 df$deaths[df$deaths < 0] = NA
 
 # negative pm2.5
-sum(df$pm25<0, na.rm=T) # 7 out of 34181 records
+sum(df$pm25<0, na.rm=T) # 7 records
 df$pm25[df$pm25 < 0] = 0
 
 rm(irow, jrow)
+
+# negative historical pm2.5
+summary(df$pm25_history[df$pm25_history<0], na.rm=T) # 3 records
+df$pm25_history_raw = df$pm25_history
+df$pm25_history[df$pm25_history < 0] = 0
+
 
 # replace null in pm 2020 with historical data
 summary(df$pm25)
@@ -250,14 +255,16 @@ df$pm25_raw = df$pm25
 df$pm25[is.na(df$pm25)] = df$pm25_history[is.na(df$pm25)]
 summary(df$pm25)
 
-# mobility
+
+# identify 6 counties with missing in mobility, mark all mobility in thme NA
 mobility.na = data.frame(df %>% group_by(FIPS) %>% summarise(count=sum(is.na(relative_change_feb))))
 mobility.na[mobility.na$count > 0,]
-# pop[pop$FIPS %in% mobility.na$FIPS[mobility.na$count > 0], ]
 
-# TODO 
-mobility.na$FIPS[mobility.na$count > 0]
-irow = df$FIPS %in% mobility.na$FIPS[mobility.na$count > 0]
+c6 = mobility.na$FIPS[mobility.na$count > 0]
+c6
+unique(dff$population[dff$FIPS %in% c6])
+
+irow = df$FIPS %in% c6
 df$relative_change_feb[irow] = NA
 df$ratio_travelers[irow] = NA
 
@@ -270,7 +277,8 @@ df$wildfire = (df$hazardmap==27)&(!is.na(df$hazardmap))
 rows1 = (df$wildfire==T)&(!is.na(df$wildfire))
 
 df$pm_wildfire = 0
-df$pm_wildfire[pm_wildfire] = pmax(df$pm25[pm_wildfire] - df$pm25_history[pm_wildfire], 0)
+df$pm_wildfire[rows1] = pmax(df$pm25[rows1] - df$pm25_history[rows1], 0)
+df$pm_ambient = df$pm25 - df$pm_wildfire
 
 # check 
 sum(rows1)

@@ -157,3 +157,12 @@ summary(dff$pm25[(dff$wildfire==T)])
 summary(dff$pm_wildfire[(dff$wildfire==T)])
 summary(dff$pm_ambient[(dff$wildfire==T)])
 summary(dff$pm25[(dff$wildfire==F)])
+
+for (istate in unique(dff$State)) {
+  subset = dff[dff$State == istate, ]
+  print(istate)
+  print(summary(subset$pm25[(subset$wildfire==T)]))
+  print(summary(subset$pm_wildfire[(subset$wildfire==T)]))
+  print(summary(subset$pm_ambient[(subset$wildfire==T)]))
+  print(summary(subset$pm25[(subset$wildfire==F)]))
+}

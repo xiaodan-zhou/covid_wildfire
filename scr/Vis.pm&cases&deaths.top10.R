@@ -25,8 +25,8 @@ df$end.hazard3[irow] = df$date[irow] + 1
 ########################### top counties ################################
 ### set up 
 n.col.grid = 6
-file.name = paste0("output/pm_cases_deaths_top6.pdf")
-fips.unique = unique(df$FIPS[order(df$population, decreasing=TRUE)])[1:6]
+file.name = paste0("output/pm_cases_deaths___.pdf")
+fips.unique = unique(df$FIPS[order(df$population, decreasing=TRUE)])# [1:6]
 point.size = 0.3
 
 plot.list = list()
@@ -37,15 +37,15 @@ for (ifips in fips.unique) {
 
   ### visualize PM2.5
   p1 = ggplot() + 
+    geom_point(data=df.selected, aes_string(x="date", y="pm25", color=shQuote("PM25")), size = point.size) +
     geom_rect(data=df.selected, aes(xmin = start27, xmax = end27,
                                     ymin = pm25_history, ymax = pm25), fill = "orange", colour = "orange", alpha = 1) +
     # geom_rect(data=df.selected, aes(xmin = start27, xmax = end27,
-    #               ymin = -Inf, ymax = Inf), fill = "grey", colour =NA, alpha = 1) + 
+                  # ymin = -Inf, ymax = Inf), fill = "grey", colour =NA, alpha = 1) +
     # geom_rect(data=df.selected, aes(xmin = start.hazard2, xmax = end.hazard2,
     #                                 ymin = pm25, ymax = pm25_history), fill = "red", colour =NA, alpha = 1) +
     # geom_rect(data=df.selected, aes(xmin = start.hazard3, xmax = end.hazard3,
-    #                                 ymin = pm25_history, ymax = pm25), fill = "blue", colour = NA, alpha = 1) +
-    geom_point(data=df.selected, aes_string(x="date", y="pm25", color=shQuote("PM25")), size = point.size) +
+    #                                 ymin = pm25_history, ymax = pm25), fill = "orange", colour = NA, alpha = 1) +
     theme_bw() + 
     theme(panel.grid.major = element_blank(), 
           panel.grid.minor = element_blank(),
