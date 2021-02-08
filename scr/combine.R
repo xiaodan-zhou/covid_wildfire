@@ -229,11 +229,6 @@ df = df[df$FIPS %in% c95, ]
 sum(is.na(df$pm25)*is.na(df$pm25_history))
 rm(c95, ifips, krow, subset, pm.na.wildfire)
 
-# 89 counties that have no missing pm2.5 during wildfire days and little missing during non-wildfire days
-# pm.na = df %>% group_by(FIPS) %>% summarise(na = sum(is.na(pm25)))
-# c89 = pm.na$FIPS[(pm.na$na < 31)&(pm.na$na != 21)]
-# length(c89)
-
 ################################ handle missing ################################ 
 # cases and deaths
 irow = (df$cases < 0) # |is.na(df$cases)
