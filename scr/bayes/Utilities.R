@@ -13,7 +13,7 @@ load.data = function() {
   
   ### read data 
   setwd("D:/GitHub/covid_wildfire")
-  in.path = "data/moddat_Jan2021.csv"
+  in.path = "data/moddat_Feb2021.csv"
   df = read.csv(in.path)
   
   print(paste(dim(df)[1], "records in the dataset"))
@@ -70,6 +70,7 @@ load.data = function() {
   
   ### fire day should shift with lag, no need to do it here  
   return(df)
+  
 }
 
 
