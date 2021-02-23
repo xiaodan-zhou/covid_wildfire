@@ -1,4 +1,6 @@
-setwd("/Users/mac/Documents/GitHub/covid_wildfire")
+library(rstudioapi)
+project.dir = dirname(dirname(rstudioapi::getActiveDocumentContext()$path))
+setwd(project.dir)
 source("scr/Utilities.R")
 library(sf)
 library(viridis)

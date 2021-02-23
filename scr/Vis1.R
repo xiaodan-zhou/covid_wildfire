@@ -1,6 +1,8 @@
 ### single lag model up to 14/21, with the unconstrained model on the right side
 ### output name example simple_n_unconstrained_lag14_df622_cases_mobility.pdf
-setwd("/Users/mac/Documents/GitHub/covid_wildfire")
+library(rstudioapi)
+project.dir = dirname(dirname(rstudioapi::getActiveDocumentContext()$path))
+setwd(project.dir)
 source("scr/Utilities.R")
 library(latex2exp)
 
