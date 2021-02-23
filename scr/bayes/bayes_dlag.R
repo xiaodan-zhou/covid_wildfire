@@ -1,174 +1,169 @@
 library(abind)
 library(tidyr)
-library(imputeTS)
 library(splines)
+library(pscl)
 library(rjags)
 
 remove(list = ls())
 
-### Data Cleaning
+load.module('glm')
+
+### Data Loading
 
 setwd("D:/Github/covid_wildfire")
-source("scr/bayes/utilities.R")
+source("scr/Utilities.R")
 source("scr/bayes/model.R")
 source("scr/bayes/bayes_fun.R")
+dff <- load.data()
+dff$FIPS <- as.numeric(as.character(dff$FIPS))
+
+dff$pm_counter <- dff$pm25
+dff$pm_counter[dff$pm_wildfire != 0] <- dff$pm25_history[dff$pm_wildfire != 0]
+
+# for sensitivity
+# dff <- dff[dff$pop > quantile(dff$population, 0.75),]
+# dff <- dff[dff$date > ymd("2020-05-01"),]
+
+### Data Cleaning
+
 dff_tmp <- load.data()
 dff_tmp$FIPS <- as.numeric(as.character(dff_tmp$FIPS))
 dff_tmp$date_num <- dff_tmp$date_num
 
-
-FIPS_keep <- c(41001,41003,41009,41011,41013,41017,41019,41023,41025,41029,41031,
-               41033,41035,41037,41043,41047,41051,41053,41057,41059,41061,41063,
-               41067,53001,53003,53005,53007,53009,53011,53013,53015,53021,53025,
-               53027,53029,53031,53033,53035,53037,53041,53045,53047,53049,53053,
-               53057,53061,53063,53065,53067,53071,53073,53075,53077,6001,6007,6009,
-               6011,6013,6019,6021,6025,6027,6029,6037,6039,6041,6043,6045,6047,6051,
-               6053,6055,6057,6059,6061,6063,6065,6067,6069,6071,6073,6075,6077,6079,6081,
-               6083,6085,6087,6095,6097,6099,6101,6107,6111,6113)
-
-dff_tmp <- dff_tmp[dff_tmp$FIPS %in% FIPS_keep,]
-
-impute <- read.csv("data/daily_pm_longterm_median.csv")
-names(impute) <- c("FIPS", "yday", "pm25_historic", "date")
-impute$date <- ymd(impute$date)
-
-dff <- left_join(dff_tmp, impute, by = c("date", "FIPS"))
-dff$pm25[is.na(dff$pm25)] <- dff$pm25_history[is.na(dff$pm25)]
-
 # Create Exposure Matrix
 X_long <- data.frame(date_num = dff$date_num, FIPS = dff$FIPS, pm25 = dff$pm25)
-X_tmp <- spread(X_long, date_num, pm25)
-X_tmp <- X_tmp[order(X_tmp$FIPS),]
+X_tmp <- tidyr::spread(X_long, date_num, pm25)
+X <- X_tmp[order(X_tmp$FIPS),]
 
-# Create Covariate Array
-Z_long <- data.frame(FIPS = dff$FIPS, date_num = dff$date_num, tmmx = dff$tmmx, rmax = dff$rmax, d = dff$dayofweek)
-Z_long <- Z_long[order(Z_long$date_num, Z_long$FIPS),]
+# PM counterfactual
+X_counter_long <- data.frame(date_num = dff$date_num, FIPS = dff$FIPS, pm25 = dff$pm_counter)
+X_counter_tmp <- tidyr::spread(X_counter_long, date_num, pm25)
+X_counter <- X_counter_tmp[order(X_counter_tmp$FIPS),]
 
-# calendar day, tmmx, and rmax are predicted with natural spline basis
-Z_bs <- with(Z_long, data.frame(FIPS = FIPS, date_num, model.matrix(~ 0 + d), 
-                                bspline(date_num, 4), tmmx = bspline(tmmx, 2), rmax = bspline(rmax, 2)))
-
-Z_tmp <- Z_bs[Z_bs$date_num == 1,]
-Z_tmp <- Z_tmp[order(Z_tmp$FIPS),]
-
-# Split variable by date_num
-for (i in 2:max(unique(dff$date_num))){
-  
-  Z_0 <- Z_bs[Z_bs$date_num == i,]
-  Z_0 <- Z_0[order(Z_0$FIPS),]
-  
-  Z_tmp <- abind(Z_tmp, Z_0, along = 3)
-  
-}
+# wildfire change
+X_wildfire_long <- data.frame(date_num = dff$date_num, FIPS = dff$FIPS, pm25 = dff$pm_wildfire)
+X_wildfire_tmp <- tidyr::spread(X_wildfire_long, date_num, pm25)
+X_wildfire <- X_wildfire_tmp[order(X_wildfire_tmp$FIPS),]
 
 # Population Size
 pop_long <- data.frame(FIPS = dff$FIPS, pop = dff$population)
 pop_tmp <- pop_long[!duplicated(pop_long$FIPS),]
-pop_tmp <- pop_tmp[order(pop_tmp$FIPS),]
+pop <- pop_tmp[order(pop_tmp$FIPS),]
 
-# Create Outcome Matrix
-Y_long <- data.frame(date_num = dff$date_num, FIPS = dff$FIPS, cases = dff$cases)
-Y_tmp <- spread(Y_long, date_num, cases)
-Y_tmp <- Y_tmp[order(Y_tmp$FIPS),]
+# Create Outcome Matrices
+Y_long_cases <- data.frame(date_num = dff$date_num, FIPS = dff$FIPS, cases = dff$cases)
+Y_tmp_cases <- tidyr::spread(Y_long_cases, date_num, cases)
+Y_cases <- Y_tmp_cases[order(Y_tmp_cases$FIPS),]
 
-# remove counties with mostly (or completely) missing exposures
-keep <- rowSums(is.na(X_tmp[,-1])) <= 0.9*ncol(X_tmp[,-1])
-X <- X_tmp[keep,-1]
-Y <- Y_tmp[keep,-1]
-Z <- Z_tmp[keep,-c(1:2),]
-pop <- pop_tmp[keep,-1]
+Y_long_death <- data.frame(date_num = dff$date_num, FIPS = dff$FIPS, death = dff$death)
+Y_tmp_death <- tidyr::spread(Y_long_death, date_num, death)
+Y_deaths <- Y_tmp_death[order(Y_tmp_death$FIPS),]
+
+# Create Covariate Array
+Z_long <- data.frame(FIPS = dff$FIPS, date_num = dff$date_num, tmmx = dff$tmmx, rmax = dff$rmax, dayofweek = dff$dayofweek)
+Z_long <- Z_long[order(Z_long$date_num, Z_long$FIPS),]
+
+# calendar day, tmmx, and rmax are fitted with natural spline basis
+Z_bs <- with(Z_long, data.frame(FIPS = FIPS, date_num = date_num, 
+                                tmmx = ns(tmmx, 2), rmax = ns(rmax, 2),
+                                model.matrix(~ dayofweek)[,-1]))
+
+Z_tmp <- Z_bs[Z_bs$date_num == min(dff$date_num),]
+Z <- Z_tmp[order(Z_tmp$FIPS),]
+
+# split array by date_num
+for (i in (min(dff$date_num) + 1):max(dff$date_num)){
+  
+  Z_tmp <- Z_bs[Z_bs$date_num == i,]
+  Z_tmp <- Z_tmp[order(Z_tmp$FIPS),]
+  
+  Z <- abind(Z, Z_tmp, along = 3)
+
+}
+
+total_cases <- rowSums(Y_cases[,-1], na.rm = TRUE)
+total_deaths <- rowSums(Y_deaths[,-1], na.rm = TRUE)
+
+### Begin Bayesian analysis
 
 # Data Dimensions
-n <- nrow(X)
-m <- ncol(X)
-p <- dim(Z)[2]
 l <- 14 # desired max lag
-df <- 4 # number of spline basis functions for PM2.5
-
-# Impute missing values
-X_imp <- t(apply(X, 1, na_interpolation, option = "spline"))
-Y_imp <- round(t(apply(Y, 1, na_interpolation, option = "spline")))
-Y_imp[which(Y_imp < 0)] <- 0
-
-### Unconstrained Model
+n <- nrow(X)
+m <- ncol(X) - 1
+o <- 6
+p <- dim(Z)[2] - 2 # covariate dimension
+q <- 4 # number of spline basis functions for PM2.5 + 1 for intercept
 
 # hyperparameters
-a <- rep(0, l+1)
+a <- rep(0, q)
 b <- rep(0, p)
-R <- diag(1e-5, l+1)
-S <- diag(1e-5, p)
+c <- rep(0, o)
+R <- diag(1e-6, q)
+S <- diag(1e-6, p)
+V <- diag(1e-6, o)
+sig <- rep(1e4, q) # scaled gamma/wishart scale
 
+U <- matrix(ns(c(l:0), df = q, intercept = TRUE), nrow = l+1, ncol = q)  # natural spline basis constraint
+W <- matrix(ns(min(dff$date_num):max(dff$date_num), df = o), ncol = o)
+
+# get initial values for MCMC
+gm_cases <- pm_model(dff, lags=0:l, df.date=o, df.tmmx=2, df.rmax=2, cause = "cases", fullDist = TRUE, model = "constrained")
+gm_deaths <- pm_model(dff, lags=0:l, df.date=o, df.tmmx=2, df.rmax=2, cause = "deaths", fullDist = TRUE, model = "constrained")
+
+### Cases Model
+  
 # JAGS call
-jagsDat_un <- list(n = n, m = m, l = l, p = p, 
-                X = X_imp, Y = Y_imp, Z = Z, pop = pop,
-                a = a, b = b, R = R, S = S)
+jagsDat_cases <- list(n = n, m = m, l = l, o = o, p = p, q = q, 
+                      X = X[,-1], Y = Y_cases[,-1], Z = Z[,-c(1:2),],
+                      U = U, W = W, pop = pop[,2], X_counter = X_counter[,-1],
+                      a = a, b = b, c = c, R = R, S = S, V = V, sig = sig)
 
-jmod_un <- jags.model(file = "scr/dlag_unconstrained.jags", data = jagsDat_un, 
-                   n.chains = 1, n.adapt = 10000, quiet = FALSE,
-                   inits = function() list("sig2" = 1))
-mcmc_un <- coda.samples(jmod_un, variable.names = c("beta", "mu", "sig2", "theta", "H"), 
-                     n.iter = 100000, thin = 100, na.rm = TRUE)
+jmod_cases <- jags.model(file = "scr/bayes/dlag_fit.jags", data = jagsDat_cases, n.chains = 1, n.adapt = 100000, quiet = FALSE,
+                         inits = function() list("mu.nb" = gm_cases$mu.nb.init, "mu.bin" = gm_cases$mu.bin.init,
+                                                 "xi" = gm_cases$xi.init, "phi" = gm_cases$phi.init, "zeta" = gm_cases$zeta.init,
+                                                 "beta" = gm_cases$beta.init, "delta" = gm_cases$delta.init))
+mcmc_cases <- coda.samples(jmod_cases,n.iter = 100000, thin = 100, na.rm = TRUE,
+                           variable.names = c("beta",  "xi", "zeta", "tau.nb", "mu.nb", "tau.bin", "mu.bin",
+                                              "theta", "eta", "phi", "omega", "lambda", "rho"))
 
 # check mixing
-pdf(file = "output/bdlag_trace_un.pdf")
-plot(mcmc_un)
+pdf(file = "D:/Dropbox (Personal)/Projects/Wildfires/Output/bayes/trace_cases.pdf")
+plot(mcmc_cases)
 dev.off()
 
 # check autocorrelation
-pdf(file = "output/bdlag_acf_un.pdf")
-for(i in 1:ncol(mcmc_un[[1]]))
-  acf(mcmc_un[[1]][,i], main = colnames(mcmc_un[[1]])[i])
+pdf(file = "D:/Dropbox (Personal)/Projects/Wildfires/Output/bayes/acf_cases.pdf")
+for(i in 1:ncol(mcmc_cases[[1]]))
+  acf(mcmc_cases[[1]][,i], main = colnames(mcmc_cases[[1]])[i])
 dev.off()
 
-save(mcmc_un, file = "output/mcmc_un.RData")
-
-### Constrained Model
-
-# hyperparameter change
-a <- rep(0, df)
-
-# basis and penalty matrix
-D <- diff(diag(df), differences = 2)
-Q <- t(D) %*% D + diag(1e-3,df)
-U <- bspline(c(l:0), K = df) # penalized spline basis matrix
+save(mcmc_cases, file = "D:/Dropbox (Personal)/Projects/Wildfires/Output/bayes/mcmc_cases.RData")
+  
+### Deaths Model
 
 # JAGS call
-jagsDat_c <- list(n = n, m = m, l = l, p = p, df = df, 
-                  X = X_imp, Y = Y_imp, Z = Z, U = U, pop = pop,
-                  a = a, b = b, Q = Q, S = S)
+jagsDat_deaths <- list(n = n, m = m, l = l, o = o, p = p, q = q, 
+                      X = X[,-1], Y = Y_deaths[,-1], Z = Z[,-c(1:2),], 
+                      U = U, W = W, pop = pop[,2], X_counter = X_counter[,-1], 
+                      a = a, b = b, c = c, R = R, S = S, V = V, sig = sig)
 
-jmod_c <- jags.model(file = "scr/dlag_constrained.jags", data = jagsDat_c, 
-                   n.chains = 1, n.adapt = 10000, quiet = FALSE,
-                   inits = function() list("tau2" = 1, "sig2" = 1))
-mcmc_c <- coda.samples(jmod_c, variable.names = c("beta", "mu", "sig2", "theta", "rr"), 
-                     n.iter = 100000, thin = 100, na.rm = TRUE)
+jmod_deaths <- jags.model(file = "scr/bayes/dlag_fit.jags", data = jagsDat_deaths, n.chains = 1, n.adapt = 100000, quiet = FALSE,
+                          inits = function() list("mu.nb" = gm_deaths$mu.nb.init, "mu.bin" = gm_deaths$mu.bin.init,
+                                                  "xi" = gm_deaths$xi.init, "phi" = gm_deaths$phi.init, "zeta" = gm_deaths$zeta.init,
+                                                  "beta" = gm_deaths$beta.init, "delta" = gm_deaths$delta.init))
+mcmc_deaths <- coda.samples(jmod_deaths, n.iter = 100000, thin = 100, na.rm = TRUE,
+                            variable.names = c("beta",  "xi", "zeta", "tau.nb", "mu.nb", "tau.bin", "mu.bin",
+                                               "theta", "eta", "phi", "omega", "lambda", "rho"))
 
 # check mixing
-pdf(file = "output/bdlag_trace_c.pdf")
-plot(mcmc_c)
+pdf(file = "D:/Dropbox (Personal)/Projects/Wildfires/Output/bayes/trace_deaths.pdf")
+plot(mcmc_deaths)
 dev.off()
 
 # check autocorrelation
-pdf(file = "output/bdlag_acf_c.pdf")
-for(i in 1:ncol(mcmc_c[[1]]))
-  acf(mcmc_c[[1]][,i], main = colnames(mcmc_c[[1]])[i])
+pdf(file = "D:/Dropbox (Personal)/Projects/Wildfires/Output/bayes/acf_deaths.pdf")
+for(i in 1:ncol(mcmc_deaths[[1]]))
+  acf(mcmc_deaths[[1]][,i], main = colnames(mcmc_deaths[[1]])[i])
 dev.off()
 
-save(mcmc_un, file = "output/mcmc_c.RData")
-
-### Output
-
-theta <- mcmc_c[[1]][,grep("theta", colnames(mcmc_c[[1]]))]
-theta.mu <- colMeans(theta)
-theta.cp <- apply(theta, 2, hpd)
-lag.vals <- 14:0
-gmat <- data.frame(theta.mu, t(theta.cp), lag.vals)
-names(gmat) <- c("theta", "hpd_l", "hpd_u", "lags")
-
-lo <- predict(loess(theta ~ lags, data = gmat), newdata = seq(0, 14, by = 0.01))
-lo_l <- predict(loess(hpd_l ~ lags, data = gmat), newdata = seq(0, 14, by = 0.01))
-lo_u <- predict(loess(hpd_u ~ lags, data = gmat), newdata = seq(0, 14, by = 0.01))
-
-lmat <- data.frame(x = seq(0, 14, by = 0.01), lo, lo_l, lo_u)
-
-plot(predict(loess(theta ~ lags, data = lmat), newdata = seq(0, 14, by = 0.01)), type = "l", lwd = 2)
+save(mcmc_deaths, file = "D:/Dropbox (Personal)/Projects/Wildfires/Output/bayes/mcmc_deaths.RData")

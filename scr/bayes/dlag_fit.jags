@@ -1,0 +1,71 @@
+
+model {
+  
+  for (i in 1:n) {
+    
+    # count likelihood
+    for (j in 1:m) {
+      
+      # zero Model
+      zero[i,j] ~ dbern(psi[i,j])
+      logit(psi[i,j]) <- alpha.bin[i] + W[j,1:o]%*%zeta[1:o]
+      
+      # count model
+      Y[i,j] ~ dnegbin(pi[i,j], phi)
+      
+      log(lambda[i,j]) <- alpha.nb[i] + log(pop[i]) + W[j,1:o]%*%xi[1:o] + 
+          Z[i,1:p,j]%*%beta[1:p] + X[i,max(1,j-l):j]%*%theta[i,max(1,l-j+2):(l+1)]
+      
+      pi[i,j] <- (1-zero[i,j])*(phi/(phi + lambda[i,j])) + zero[i,j]*0.9999
+      
+      # counterfactual prediction
+      log(rho[i,j]) <- alpha.nb[i] + log(pop[i]) + W[j,1:o]%*%xi[1:o] +
+          Z[i,1:p,j]%*%beta[1:p] + X_counter[i,max(1,j-l):j]%*%theta[i,max(1,l-j+2):(l+1)]
+      
+    }
+    
+    # distributed lag coefs
+    theta[i,1:(l+1)] <- U[1:(l+1),1:q]%*%gamma[i,1:q]
+    
+  }
+  
+  # random effects
+  for (i in 1:n) {
+    
+    alpha.nb[i] ~ dnorm(mu.nb, tau.nb)
+    alpha.bin[i] ~ dnorm(mu.bin, tau.bin)
+    
+    for (k in 1:q){
+      
+      gamma[i,k] ~ dnorm(delta[k], omega[k])
+      
+    }
+  
+  }
+  
+  ## priors
+  # random interecept
+  mu.nb ~ dnorm(0, 1e-10)
+  mu.bin ~ dnorm(0, 1e-10)
+  tau.nb ~ dscaled.gamma(sig[1], 2)
+  tau.bin ~ dscaled.gamma(sig[1], 2)
+  
+  # zero and count model
+  beta[1:p] ~ dmnorm(b[1:p], S[1:p,1:p])
+  xi[1:o] ~ dmnorm(c[1:o], V[1:o,1:o])
+  zeta[1:o] ~ dmnorm(c[1:o], V[1:o,1:o])
+  phi ~ dunif(0,50)
+  
+  # distributed lags
+  delta[1:q] ~ dmnorm(a[1:q], R[1:q,1:q])
+  
+  for (k in 1:q) {
+  
+    omega[k] ~ dscaled.gamma(sig[k], 2)
+  
+  }
+  
+  # posterior mean of theta[i,k]
+  eta[1:(l+1)] <- U[1:(l+1),1:q]%*%delta[1:q]
+  
+}

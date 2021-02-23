@@ -11,7 +11,7 @@ library(meta)
 
 ############################################################################
 load.data = function() {
-  setwd("/Users/mac/Documents/GitHub/covid_wildfire")
+  setwd("D:/GitHub/covid_wildfire")
   in.path = "data/moddat_Feb2021.csv"
   df = read.csv(in.path)
   
@@ -19,7 +19,7 @@ load.data = function() {
   df$date = ymd(df$date)
   df$dayofweek = as.factor(df$dayofweek)
   df$FIPS = as.factor(as.character(df$FIPS))
-  df$state = as.factor(df$state)
+  df$State = as.factor(df$State)
   df = arrange(df, date)
   return(df)
 }
