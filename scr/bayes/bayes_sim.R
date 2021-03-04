@@ -26,42 +26,53 @@ l <- 14 # lag days
 p <- 4 # number of spline basis functions for calendar days
 q <- 4 # number of spline basis functions for lagged PM2.5
 
-set.seed(42)
-
 lags <- 0:l
 time <- 0:(m - 1)
 
-pop <- floor(runif(n, 10000, 1000000)) # population offset
+# set.seed(42)
+# 
+# pop <- floor(runif(n, 10000, 1000000)) # population offset
+# 
+# X <- t(replicate(n, 8 + arima.sim(list(ma = 0.5), n = m)))
+# Z <- ns(time, df = p)
+# colnames(Z) <- paste("Z", 1:p, sep = "")
+# 
+# # random effects
+# alpha <- rnorm(n, -10, 2) # random intercept
+# eta <- log((l - lags) + 1)*sin((l - lags)*pi/4)/10
+# theta <- t(replicate(n, rnorm(l + 1, eta, sqrt(0.01)))) # lagged PM2.5 coefficients
+# psi <- rbeta(n, 2, 5)
+# 
+# # overdispersion
+# phi <- 1.5
+# 
+# Y <- matrix(NA, n, m)
+# 
+# for (j in 1:m) {
+# 
+#   for (i in 1:n)
+#     lin_pred <- c(X[i,max(1,j-l):j, drop = FALSE]%*%theta[i,max(1,l-j+2):(l+1)])
+# 
+#   A <- rbinom(n, 1, psi)
+#   lambda <- exp(alpha + time[j]*sin(pi*time[j]/100)/1000 + log(pop) + lin_pred)
+#   pi <- phi/(phi + (1 - A)*lambda)
+# 
+#   Y[,j] <- rnbinom(n, phi, pi)
+# 
+# }
+# 
+# save(theta, file = "D:/Dropbox (Personal)/Projects/Wildfires/Output/simulation/theta_sim.RData")
+# save(eta, file = "D:/Dropbox (Personal)/Projects/Wildfires/Output/simulation/eta_sim.RData")
+# save(X, file = "D:/Dropbox (Personal)/Projects/Wildfires/Output/simulation/X_sim.RData")
+# save(Y, file = "D:/Dropbox (Personal)/Projects/Wildfires/Output/simulation/Y_sim.RData")
+# save(Z, file = "D:/Dropbox (Personal)/Projects/Wildfires/Output/simulation/Z_sim.RData")
+# save(pop, file = "D:/Dropbox (Personal)/Projects/Wildfires/Output/simulation/pop_sim.RData")
 
-X <- t(replicate(n, 8 + arima.sim(list(ma = 0.5), n = m)))
-Z <- ns(time, df = p)
-colnames(Z) <- paste("Z", 1:p, sep = "")
-
-# random effects
-alpha <- rnorm(n, -10, 2) # random intercept
-eta <- log((l - lags) + 1)*sin((l - lags)*pi/4)/10
-theta <- t(replicate(n, rnorm(l + 1, eta, sqrt(0.01)))) # lagged PM2.5 coefficients
-psi <- rbeta(n, 2, 5)
-
-# overdispersion
-phi <- 1.5
-
-Y <- matrix(NA, n, m)
-
-for (j in 1:m) {
-  
-  for (i in 1:n)
-    lin_pred <- c(X[i,max(1,j-l):j, drop = FALSE]%*%theta[i,max(1,l-j+2):(l+1)])
-  
-  A <- rbinom(n, 1, psi)
-  lambda <- exp(alpha + time[j]*sin(pi*time[j]/100)/1000 + log(pop) + lin_pred)
-  pi <- phi/(phi + (1 - A)*lambda)
-  
-  Y[,j] <- rnbinom(n, phi, pi)
-  
-}
-
-save(theta, file = "D:/Dropbox (Personal)/Projects/Wildfires/Output/simulation/theta_sim.RData")
+load("D:/Dropbox (Personal)/Projects/Wildfires/Output/simulation/theta_sim.RData")
+load("D:/Dropbox (Personal)/Projects/Wildfires/Output/simulation/X_sim.RData")
+load("D:/Dropbox (Personal)/Projects/Wildfires/Output/simulation/Y_sim.RData")
+load("D:/Dropbox (Personal)/Projects/Wildfires/Output/simulation/Z_sim.RData")
+load("D:/Dropbox (Personal)/Projects/Wildfires/Output/simulation/pop_sim.RData")
 
 # hyperparameters
 a <- rep(0, l+1)
@@ -112,11 +123,11 @@ eta.init <- fit_un$coefficients$count[grep("l", names(fit_un$coefficients$count)
 phi.init <- 1
 
 jmod_un <- jags.model(file = "scr/bayes/dlag_unconstrained.jags", data = jagsDat_un, 
-                      n.chains = 1, n.adapt = 20000, quiet = FALSE,
+                      n.chains = 1, n.adapt = 10000, quiet = FALSE,
                       inits = function() list("phi" = phi.init, "eta" = eta.init, 
                                               "mu" = mu.init, "beta" = beta.init))
 mcmc_sim_un <- coda.samples(jmod_un, variable.names = c("beta", "theta", "eta", "sigma", "mu", "tau", "phi", "psi"), 
-                            n.iter = 100000, thin = 100, na.rm = TRUE)
+                            n.iter = 50000, thin = 50, na.rm = TRUE)
 
 # check mixing
 pdf(file = "D:/Dropbox (Personal)/Projects/Wildfires/Output/simulation/sim_trace_un.pdf")
@@ -160,11 +171,11 @@ delta.init <- fit_c$coefficients$count[grep("U", names(fit_c$coefficients$count)
 phi.init <- 1
 
 jmod_c <- jags.model(file = "scr/bayes/dlag_constrained.jags", data = jagsDat_c,
-                     n.chains = 1, n.adapt = 20000, quiet = FALSE,
+                     n.chains = 1, n.adapt = 10000, quiet = FALSE,
                      inits = function() list("phi" = phi.init, "delta" = delta.init, 
                                              "mu" = mu.init, "beta" = beta.init))
 mcmc_sim_c <- coda.samples(jmod_c, variable.names = c("beta", "theta", "eta", "delta", "sigma", "mu", "tau", "phi", "psi"), 
-                           n.iter = 100000, thin = 100, na.rm = TRUE)
+                           n.iter = 50000, thin = 100, na.rm = TRUE)
 
 # check mixing
 pdf(file = "D:/Dropbox (Personal)/Projects/Wildfires/Output/simulation/sim_trace_c.pdf")

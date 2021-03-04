@@ -23,12 +23,12 @@ model {
   # random effects
   for (i in 1:n) {
     
-    alpha[i] ~ dnorm(mu, tau2)
+    alpha[i] ~ dnorm(mu, tau)
     psi[i] ~ dbeta(1,1)
     
     for (k in 1:(l+1)) {
     
-      theta[i,k] ~ dnorm(eta[k], omega2[k])
+      theta[i,k] ~ dnorm(eta[k], omega[k])
       
     }
   
@@ -37,8 +37,7 @@ model {
   # priors
   # random interecept
   mu ~ dnorm(0, 1e-10)
-  tau ~ dunif(0, 50)
-  tau2 <- pow(tau, 2)
+  tau ~ dscaled.gamma(sig[1], 2)
   
   # zero and count model
   beta[1:p] ~ dmnorm(b[1:p], S[1:p,1:p])
@@ -49,9 +48,8 @@ model {
   
   for (k in 1:(l+1)) {
   
-    omega[k] ~ dunif(0,50)
-    omega2[k] <- pow(omega[k], 2)
-    sigma2[k] <- 1/omega2[k]
+    omega[k] ~ dscaled.gamma(sig[k], 2)
+    sigma[k] <- 1/omega[k]
   
   }
   
