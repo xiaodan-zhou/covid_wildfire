@@ -7,7 +7,7 @@ pm_model <- function(dff, df.date = 6, df.tmmx = 2, df.rmax = 2, lags = 0:14, mo
   if (model == "constrained") {
     
     X.l <- create.lag.value(dff, value = "pm25", group = group, lags = lags)
-    U <- matrix(ns(c(lags), df = 4, intercept = TRUE), nrow = length(lags), ncol = 4) # natural spline basis matrix
+    U <- matrix(ns(c(lags), df = 3, intercept = TRUE), nrow = length(lags), ncol = 3) # natural spline basis matrix
     lagpm <- as.matrix(X.l) %*% as.matrix(U)
 
     
@@ -31,8 +31,8 @@ pm_model <- function(dff, df.date = 6, df.tmmx = 2, df.rmax = 2, lags = 0:14, mo
   rhs[-1] = paste(rhs[-1], lag.data, sep = " + ")
   
   ### add Zero model
-  rhs[-1] = paste0(rhs[-1], " | ", smooth, "(date_num, ", df.date, ")")
-  # rhs[-1] = paste0(rhs[-1], " | 1 ")
+  # rhs[-1] = paste0(rhs[-1], " | ", smooth, "(date_num, ", df.date, ")")
+  rhs[-1] = paste0(rhs[-1], " | 1")
   
   ### add cause
   modelFormula = as.formula(paste(cause, paste(rhs, collapse = "")))
@@ -49,7 +49,7 @@ pm_model <- function(dff, df.date = 6, df.tmmx = 2, df.rmax = 2, lags = 0:14, mo
   ### output variable names 
   if(!fullDist & model == "constrained"){
     
-    var.names <- paste0("count_lagpm", 1:4) 
+    var.names <- paste0("count_lagpm", 1:3) 
     mean.dlm <- sum(U%*%(coef(fit)[var.names]))
     lincomb <- rep(1, length(lags))
     std.dlm <- as.vector(sqrt(t(lincomb) %*% U %*% vcov(fit)[var.names, var.names] %*% t(U) %*% lincomb))
@@ -83,37 +83,29 @@ pm_model <- function(dff, df.date = 6, df.tmmx = 2, df.rmax = 2, lags = 0:14, mo
     
   } else if (fullDist & model == "constrained") {
     
-    mu.nb.init <- c(fit$coefficients$count[1])
+    mu.init <- c(fit$coefficients$count[1])
     beta.init <- c(fit$coefficients$count[c(grep("tmmx", names(fit$coefficients$count)),
                                           grep("rmax", names(fit$coefficients$count)), 
                                           grep("dayof", names(fit$coefficients$count)))])
     xi.init <- c(fit$coefficients$count[grep("date_num", names(fit$coefficients$count))])
     delta.init <- c(fit$coefficients$count[grep("lagpm", names(fit$coefficients$count))])
-    
-    mu.bin.init <- c(fit$coefficients$zero[1])
-    zeta.init <- c(fit$coefficients$zero[grep("date_num", names(fit$coefficients$zero))])
     phi.init <- fit$theta
     
-    out <- list(mu.nb.init = mu.nb.init, mu.bin.init = mu.bin.init, xi.init = xi.init, phi.init = phi.init,
-                zeta.init = zeta.init, beta.init = beta.init, delta.init = delta.init)
+    out <- list(mu.init = mu.init, xi.init = xi.init, phi.init = phi.init, beta.init = beta.init, delta.init = delta.init)
     
     return(out)
     
   } else {
     
-    mu.nb.init <- fit$coefficients$count[1]
+    mu.init <- fit$coefficients$count[1]
     beta.init <- fit$coefficients$count[c(grep("tmmx", names(fit$coefficients$count)),
                                           grep("rmax", names(fit$coefficients$count)), 
                                           grep("dayof", names(fit$coefficients$count)))]
     xi.init <- fit$coefficients$count[grep("date_num", names(fit$coefficients$count))]
-    gamma.init <- fit$coefficients$count[grep("lagpm", names(fit$coefficients$count))]
-    
-    mu.bin.init <- fit$coefficients$zero[1]
-    zeta.init <- fit$coefficients$zero[grep("date_num", names(fit$coefficients$zero))]
+    eta.init <- fit$coefficients$count[grep("lagpm", names(fit$coefficients$count))]
     phi.init <- fit$theta
     
-    out <- list(mu.nb.init = mu.nb.init, mu.bin.init = mu.bin.init, xi.init = xi.init, phi.init = phi.init,
-                zeta.init = zeta.init, beta.init = beta.init, gamma.init = gamma.init)
+    out <- list(mu.init = mu.init, xi.init = xi.init, phi.init = phi.init, beta.init = beta.init, eta.init = eta.init)
     
   }
   

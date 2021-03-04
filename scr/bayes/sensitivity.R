@@ -39,8 +39,8 @@ county <- cty.selected$county[order(cty.selected$FIPS)]
 
 ### Posterior Distributions of Cumulative Effect
 
-load("output/bayes/mcmc_cases.RData")
-load("output/bayes/mcmc_deaths.RData")
+load("D:/Dropbox (Personal)/Projects/Wildfires/Output/bayes/mcmc_cases.RData")
+load("D:/Dropbox (Personal)/Projects/Wildfires/Output/bayes/mcmc_deaths.RData")
 
 ## By County
 
@@ -99,7 +99,7 @@ cum_deaths <- mutate(subset(out_deaths, county != "Combined"), county = fct_reor
   coord_flip() +
   labs(title = "Cumulative Percent Change - Deaths", x = "County", y = "Percentage Change in COVID-19 Deaths Cumulatively\nAfter a 10 Unit Increase in PM25\nConsecutively for 14 Days")
 
-png(filename = "output/bayes/county_sensitivity.png", width = 1000, height = 1000)  
+png(filename = "D:/Dropbox (Personal)/Projects/Wildfires/Output/bayes/county_sensitivity.png", width = 1000, height = 1000)  
 ggarrange(cum_cases, cum_deaths, ncol = 2, nrow = 1,common.legend = TRUE, legend="bottom")
 dev.off()
 
@@ -124,14 +124,14 @@ deaths_long$variable <- factor(deaths_long$variable, levels = c(paste0(15:1), ""
 
 lag_cases <- ggplot(aes(x = variable, y = value, color = estimate), data = cases_long) +
   geom_boxplot() +
-  ylim(-75,75) +
+  ylim(-50,50) +
   theme(plot.title = element_text(hjust = 0.5)) +
   labs(title = "Percent Change by Lag Day - Cases", color = "Estimate",
        x = "Lag Days", y = "Percentage Change in COVID-19 Cases \nWith a 10 Unit Increase in PM25")
 
 lag_deaths <- ggplot(aes(x = variable, y = value, color = estimate), data = deaths_long) +
   geom_boxplot() +
-  ylim(-25,25) +
+  ylim(-50,50) +
   theme(plot.title = element_text(hjust = 0.5)) +
   labs(title = "Percent Change by Lag Day - Deaths", color = "Estimate",
        x = "Lag Days", y = "Percentage Change in COVID-19 Deaths \nAfter a 10 Unit Increase in PM25")
@@ -187,3 +187,15 @@ nxs_deaths_plot <- mutate(cty.selected, county = fct_reorder(county, desc(excess
 png(filename = "output/bayes/nxs_sensitivity.png", width = 1000, height = 1000)  
 ggarrange(nxs_cases_plot, nxs_deaths_plot, ncol = 2, nrow = 1, common.legend = TRUE, legend = "bottom")
 dev.off()
+
+## covariance
+
+load("D:/Dropbox (Personal)/Projects/Wildfires/Output/bayes/mcmc_cases.RData")
+load("D:/Dropbox (Personal)/Projects/Wildfires/Output/bayes/mcmc_deaths.RData")
+
+var_cases <- mcmc_cases[[1]][,paste0("omega[",1:4,"]")]
+
+par(mfrow = c(2,2))
+
+for (i in 1:4)
+  plot(1:nrow(var_cases), 1/var_cases[,i], type = "l", ylab = paste0("sigma", i), xlab = "Index")

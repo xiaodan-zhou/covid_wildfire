@@ -40,11 +40,6 @@ X_counter_long <- data.frame(date_num = dff$date_num, FIPS = dff$FIPS, pm25 = df
 X_counter_tmp <- tidyr::spread(X_counter_long, date_num, pm25)
 X_counter <- X_counter_tmp[order(X_counter_tmp$FIPS),]
 
-# wildfire change
-X_wildfire_long <- data.frame(date_num = dff$date_num, FIPS = dff$FIPS, pm25 = dff$pm_wildfire)
-X_wildfire_tmp <- tidyr::spread(X_wildfire_long, date_num, pm25)
-X_wildfire <- X_wildfire_tmp[order(X_wildfire_tmp$FIPS),]
-
 # Population Size
 pop_long <- data.frame(FIPS = dff$FIPS, pop = dff$population)
 pop_tmp <- pop_long[!duplicated(pop_long$FIPS),]
@@ -92,16 +87,16 @@ n <- nrow(X)
 m <- ncol(X) - 1
 o <- 6
 p <- dim(Z)[2] - 2 # covariate dimension
-q <- 4 # number of spline basis functions for PM2.5 + 1 for intercept
+q <- 3 # number of spline basis functions for PM2.5 + 1 for intercept
 
 # hyperparameters
 a <- rep(0, q)
 b <- rep(0, p)
 c <- rep(0, o)
-R <- diag(1e-6, q)
-S <- diag(1e-6, p)
-V <- diag(1e-6, o)
-sig <- rep(1e4, q) # scaled gamma/wishart scale
+R <- diag(1e-10, q)
+S <- diag(1e-10, p)
+V <- diag(1e-10, o)
+sig <- rep(1e5, q) # scaled gamma/wishart scale
 
 U <- matrix(ns(c(l:0), df = q, intercept = TRUE), nrow = l+1, ncol = q)  # natural spline basis constraint
 W <- matrix(ns(min(dff$date_num):max(dff$date_num), df = o), ncol = o)
@@ -115,16 +110,15 @@ gm_deaths <- pm_model(dff, lags=0:l, df.date=o, df.tmmx=2, df.rmax=2, cause = "d
 # JAGS call
 jagsDat_cases <- list(n = n, m = m, l = l, o = o, p = p, q = q, 
                       X = X[,-1], Y = Y_cases[,-1], Z = Z[,-c(1:2),],
-                      U = U, W = W, pop = pop[,2], X_counter = X_counter[,-1],
+                      U = U, W = W, pop = pop[,-1], X_counter = X_counter[,-1],
                       a = a, b = b, c = c, R = R, S = S, V = V, sig = sig)
 
 jmod_cases <- jags.model(file = "scr/bayes/dlag_fit.jags", data = jagsDat_cases, n.chains = 1, n.adapt = 100000, quiet = FALSE,
-                         inits = function() list("mu.nb" = gm_cases$mu.nb.init, "mu.bin" = gm_cases$mu.bin.init,
-                                                 "xi" = gm_cases$xi.init, "phi" = gm_cases$phi.init, "zeta" = gm_cases$zeta.init,
+                         inits = function() list("mu" = gm_cases$mu.init, "xi" = gm_cases$xi.init, "phi" = 1,
                                                  "beta" = gm_cases$beta.init, "delta" = gm_cases$delta.init))
 mcmc_cases <- coda.samples(jmod_cases,n.iter = 100000, thin = 100, na.rm = TRUE,
-                           variable.names = c("beta",  "xi", "zeta", "tau.nb", "mu.nb", "tau.bin", "mu.bin",
-                                              "theta", "eta", "phi", "omega", "lambda", "rho"))
+                           variable.names = c("beta",  "xi", "mu", "tau", "theta", "eta", 
+                                              "phi", "psi", "sigma", "lambda", "rho"))
 
 # check mixing
 pdf(file = "D:/Dropbox (Personal)/Projects/Wildfires/Output/bayes/trace_cases.pdf")
@@ -144,16 +138,15 @@ save(mcmc_cases, file = "D:/Dropbox (Personal)/Projects/Wildfires/Output/bayes/m
 # JAGS call
 jagsDat_deaths <- list(n = n, m = m, l = l, o = o, p = p, q = q, 
                       X = X[,-1], Y = Y_deaths[,-1], Z = Z[,-c(1:2),], 
-                      U = U, W = W, pop = pop[,2], X_counter = X_counter[,-1], 
+                      U = U, W = W, pop = pop[,-1], X_counter = X_counter[,-1], 
                       a = a, b = b, c = c, R = R, S = S, V = V, sig = sig)
 
 jmod_deaths <- jags.model(file = "scr/bayes/dlag_fit.jags", data = jagsDat_deaths, n.chains = 1, n.adapt = 100000, quiet = FALSE,
-                          inits = function() list("mu.nb" = gm_deaths$mu.nb.init, "mu.bin" = gm_deaths$mu.bin.init,
-                                                  "xi" = gm_deaths$xi.init, "phi" = gm_deaths$phi.init, "zeta" = gm_deaths$zeta.init,
+                          inits = function() list("mu" = gm_deaths$mu.init, "xi" = gm_deaths$xi.init, "phi" = 1,
                                                   "beta" = gm_deaths$beta.init, "delta" = gm_deaths$delta.init))
 mcmc_deaths <- coda.samples(jmod_deaths, n.iter = 100000, thin = 100, na.rm = TRUE,
-                            variable.names = c("beta",  "xi", "zeta", "tau.nb", "mu.nb", "tau.bin", "mu.bin",
-                                               "theta", "eta", "phi", "omega", "lambda", "rho"))
+                            variable.names = c("beta",  "xi", "mu", "tau", "theta", "eta",
+                                               "phi", "psi", "sigma", "lambda", "rho"))
 
 # check mixing
 pdf(file = "D:/Dropbox (Personal)/Projects/Wildfires/Output/bayes/trace_deaths.pdf")
