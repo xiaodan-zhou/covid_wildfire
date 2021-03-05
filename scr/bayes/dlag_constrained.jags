@@ -11,12 +11,10 @@ model {
       
       pi[i,j] <- (1-zero[i,j])*(phi/(phi + lambda[i,j])) + zero[i,j]*0.9999
   
-      log(lambda[i,j]) <- alpha.count[i] + log(pop[i]) + Z[j,1:p]%*%xi[1:p] +
+      log(lambda[i,j]) <- alpha[i] + log(pop[i]) + Z[j,1:p]%*%xi[1:p] +
           X[i,max(1,j-l):j]%*%theta[i,max(1,l-j+2):(l+1)]
 
-      
-      # zero Model
-      logit(psi[i]) <- alpha.zero[i]
+      # zero model
       zero[i,j] ~ dbern(psi[i])
     
     }
@@ -29,8 +27,8 @@ model {
   # random effects
   for (i in 1:n) {
     
-    alpha.count[i] ~ dnorm(mu.count, tau.count)
-    alpha.zero[i] ~ dnorm(mu.zero, tau.zero)
+    alpha[i] ~ dnorm(mu, tau)
+    psi[i] ~ dbeta(1,1)
     
     for (k in 1:q) {
     
@@ -42,10 +40,8 @@ model {
   
   ## priors
   # random interecept
-  mu.zero ~ dnorm(0, 1e-10)
-  tau.zero ~ dscaled.gamma(sig[1], 2)
-  mu.count ~ dnorm(0, 1e-10)
-  tau.count ~ dscaled.gamma(sig[1], 2)
+  mu ~ dnorm(0, 1e-10)
+  tau ~ dscaled.gamma(sig[1], 2)
   
   # zero and count model
   xi[1:p] ~ dmnorm(b[1:p], S[1:p,1:p])

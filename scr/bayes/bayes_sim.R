@@ -40,7 +40,7 @@ colnames(Z) <- paste("Z", 1:p, sep = "")
 alpha <- rnorm(n, -10, 1.3) # random intercept
 eta <- log((l - lags) + 1)*sin((l - lags)*pi/4)/10
 theta <- t(replicate(n, rnorm(l + 1, eta, sqrt(0.01)))) # lagged PM2.5 coefficients
-psi <- plogis(rnorm(n, -1.75, 0.9))
+psi <- plogis(10 - log(pop))
 
 # overdispersion
 phi <- 1.5
@@ -49,8 +49,10 @@ Y <- matrix(NA, n, m)
 
 for (j in 1:m) {
 
+  lin_pred <- rep(NA, n)
+  
   for (i in 1:n)
-    lin_pred <- c(X[i,max(1,j-l):j, drop = FALSE]%*%theta[i,max(1,l-j+2):(l+1)])
+    lin_pred[i] <- c(X[i,max(1,j-l):j, drop = FALSE]%*%theta[i,max(1,l-j+2):(l+1)])
 
   A <- rbinom(n, 1, psi)
   lambda <- exp(alpha + time[j]*sin(pi*time[j]/100)/1000 + log(pop) + lin_pred)
@@ -125,9 +127,7 @@ jmod_un <- jags.model(file = "scr/bayes/dlag_unconstrained.jags", data = jagsDat
                       n.chains = 1, n.adapt = 10000, quiet = FALSE,
                       inits = function() list("phi" = phi.init, "eta" = eta.init, 
                                               "mu" = mu.init, "xi" = xi.init))
-mcmc_sim_un <- coda.samples(jmod_un, variable.names = c("theta", "eta", "sigma", "xi", 
-                                                        "mu.zero", "tau.zero", 
-                                                        "mu.count", "tau.count", "phi"), 
+mcmc_sim_un <- coda.samples(jmod_un, variable.names = c("theta", "eta", "sigma", "xi", "mu", "tau", "phi", "psi"), 
                             n.iter = 50000, thin = 50, na.rm = TRUE)
 
 # check mixing
@@ -171,9 +171,7 @@ jmod_c <- jags.model(file = "scr/bayes/dlag_constrained.jags", data = jagsDat_c,
                      n.chains = 1, n.adapt = 10000, quiet = FALSE,
                      inits = function() list("phi" = phi.init, "delta" = delta.init, 
                                              "mu" = mu.init, "xi" = xi.init))
-mcmc_sim_c <- coda.samples(jmod_c, variable.names = c("theta", "eta", "delta", "sigma", "xi", 
-                                                      "mu.zero", "tau.zero", 
-                                                      "mu.count", "tau.count", "phi"), 
+mcmc_sim_c <- coda.samples(jmod_c, variable.names = c("theta", "eta", "delta", "sigma", "xi", "mu", "tau", "phi", "psi"), 
                            n.iter = 50000, thin = 100, na.rm = TRUE)
 
 # check mixing
