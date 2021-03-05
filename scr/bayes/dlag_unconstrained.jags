@@ -8,12 +8,14 @@ model {
       
       # count model
       Y[i,j] ~ dnegbin(pi[i,j], phi)
-  
-      log(lambda[i,j]) <- alpha[i] + log(pop[i]) + Z[j,1:p]%*%beta[1:p] +
+      
+      pi[i,j] <- (1-zero[i,j])*(phi/(phi + lambda[i,j])) + zero[i,j]*0.9999
+      
+      log(lambda[i,j]) <- alpha.count[i] + log(pop[i]) + Z[j,1:p]%*%xi[1:p] +
           X[i,max(1,j-l):j]%*%theta[i,max(1,l-j+2):(l+1)]
       
-      # NB Model
-      pi[i,j] <- (1-zero[i,j])*(phi/(phi + lambda[i,j])) + zero[i,j]*0.9999
+      # zero Model
+      logit(psi[i]) <- alpha.zero[i]
       zero[i,j] ~ dbern(psi[i])
     
     }
@@ -23,8 +25,8 @@ model {
   # random effects
   for (i in 1:n) {
     
-    alpha[i] ~ dnorm(mu, tau)
-    psi[i] ~ dbeta(1,1)
+    alpha.count[i] ~ dnorm(mu.count, tau.count)
+    alpha.zero[i] ~ dnorm(mu.zero, tau.zero)
     
     for (k in 1:(l+1)) {
     
@@ -36,11 +38,13 @@ model {
   
   # priors
   # random interecept
-  mu ~ dnorm(0, 1e-10)
-  tau ~ dscaled.gamma(sig[1], 2)
+  mu.zero ~ dnorm(0, 1e-10)
+  tau.zero ~ dscaled.gamma(sig[1], 2)
+  mu.count ~ dnorm(0, 1e-10)
+  tau.count ~ dscaled.gamma(sig[1], 2)
   
   # zero and count model
-  beta[1:p] ~ dmnorm(b[1:p], S[1:p,1:p])
+  xi[1:p] ~ dmnorm(b[1:p], S[1:p,1:p])
   phi ~ dunif(0,50)
   
   # distributed lags
