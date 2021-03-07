@@ -7,7 +7,7 @@ pm_model <- function(dff, df.date = 6, df.tmmx = 2, df.rmax = 2, lags = 0:14, mo
   if (model == "constrained") {
     
     X.l <- create.lag.value(dff, value = "pm25", group = group, lags = lags)
-    U <- matrix(ns(c(lags), df = 3, intercept = TRUE), nrow = length(lags), ncol = 3) # natural spline basis matrix
+    U <- matrix(ns(c(lags), df = 5, intercept = TRUE), nrow = length(lags), ncol = 5) # natural spline basis matrix
     lagpm <- as.matrix(X.l) %*% as.matrix(U)
 
     
@@ -49,7 +49,7 @@ pm_model <- function(dff, df.date = 6, df.tmmx = 2, df.rmax = 2, lags = 0:14, mo
   ### output variable names 
   if(!fullDist & model == "constrained"){
     
-    var.names <- paste0("count_lagpm", 1:3) 
+    var.names <- paste0("count_lagpm", 1:5) 
     mean.dlm <- sum(U%*%(coef(fit)[var.names]))
     lincomb <- rep(1, length(lags))
     std.dlm <- as.vector(sqrt(t(lincomb) %*% U %*% vcov(fit)[var.names, var.names] %*% t(U) %*% lincomb))

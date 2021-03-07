@@ -8,12 +8,12 @@ model {
       
       Y[i,j] ~ dnegbin(pi[i,j], phi)
       
+      pi[i,j] <- (1-zero[i,j])*(phi/(phi + lambda[i,j])) + zero[i,j]*0.9999
+      
       log(lambda[i,j]) <- alpha[i] + log(pop[i]) + W[j,1:o]%*%xi[1:o] + 
           Z[i,1:p,j]%*%beta[1:p] + X[i,max(1,j-l):j]%*%theta[i,max(1,l-j+2):(l+1)]
       
-      pi[i,j] <- (1-zero[i,j])*(phi/(phi + lambda[i,j])) + zero[i,j]*0.9999
-      
-      # zero Model
+      # zero model
       zero[i,j] ~ dbern(psi[i])
       
       # counterfactual prediction

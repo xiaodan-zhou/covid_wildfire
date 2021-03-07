@@ -87,7 +87,7 @@ n <- nrow(X)
 m <- ncol(X) - 1
 o <- 6
 p <- dim(Z)[2] - 2 # covariate dimension
-q <- 3 # number of spline basis functions for PM2.5 + 1 for intercept
+q <- 5 # number of spline basis functions for PM2.5 + 1 for intercept
 
 # hyperparameters
 a <- rep(0, q)

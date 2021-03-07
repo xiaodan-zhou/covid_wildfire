@@ -24,7 +24,7 @@ n <- 100 # number of counties
 m <- 250 # days
 l <- 14 # lag days
 p <- 4 # number of spline basis functions for calendar days
-q <- 4 # number of spline basis functions for lagged PM2.5
+q <- 5 # number of spline basis functions for lagged PM2.5
 
 lags <- 0:l
 time <- 0:(m - 1)
@@ -50,7 +50,7 @@ Y <- matrix(NA, n, m)
 for (j in 1:m) {
 
   lin_pred <- rep(NA, n)
-  
+
   for (i in 1:n)
     lin_pred[i] <- c(X[i,max(1,j-l):j, drop = FALSE]%*%theta[i,max(1,l-j+2):(l+1)])
 
@@ -61,19 +61,6 @@ for (j in 1:m) {
   Y[,j] <- rnbinom(n, phi, pi)
 
 }
-
-save(theta, file = "D:/Dropbox (Personal)/Projects/Wildfires/Output/simulation/theta_sim.RData")
-save(eta, file = "D:/Dropbox (Personal)/Projects/Wildfires/Output/simulation/eta_sim.RData")
-save(X, file = "D:/Dropbox (Personal)/Projects/Wildfires/Output/simulation/X_sim.RData")
-save(Y, file = "D:/Dropbox (Personal)/Projects/Wildfires/Output/simulation/Y_sim.RData")
-save(Z, file = "D:/Dropbox (Personal)/Projects/Wildfires/Output/simulation/Z_sim.RData")
-save(pop, file = "D:/Dropbox (Personal)/Projects/Wildfires/Output/simulation/pop_sim.RData")
-
-load("D:/Dropbox (Personal)/Projects/Wildfires/Output/simulation/theta_sim.RData")
-load("D:/Dropbox (Personal)/Projects/Wildfires/Output/simulation/X_sim.RData")
-load("D:/Dropbox (Personal)/Projects/Wildfires/Output/simulation/Y_sim.RData")
-load("D:/Dropbox (Personal)/Projects/Wildfires/Output/simulation/Z_sim.RData")
-load("D:/Dropbox (Personal)/Projects/Wildfires/Output/simulation/pop_sim.RData")
 
 # hyperparameters
 a <- rep(0, l+1)
@@ -244,14 +231,14 @@ dev.off()
 
 ### table some stuff
 
-load("output/mcmc_sim_un.RData")
-load("output/mcmc_sim_c.RData")
+load("D:/Dropbox (Personal)/Projects/Wildfires/Output/simulation/mcmc_sim_un.RData")
+load("D:/Dropbox (Personal)/Projects/Wildfires/Output/simulation/mcmc_sim_c.RData")
 
 eta.un <- mcmc_sim_un[[1]][,paste0("eta[",1:15,"]")]
 eta.c <- mcmc_sim_c[[1]][,paste0("eta[",1:15,"]")]
-sigma <- mcmc_sim_un[[1]][,sigma("eta[",1:15,"]")]
+sigma <- mcmc_sim_un[[1]][,paste0("sigma[",1:15,"]")]
 
-est_out <- round(rbind(rev(eta), rev(eta.init), rev(colMeans(eta.un)), rev(c(U%*%delta.init)), rev(colMeans(eta.c)), rev(sigma)), 3)
-rownames(est_out) <- c("Truth", "Unconstrained REML", "Unconstrained Bayes", "Constrained REML", "Constrained Bayes", "Theta Variance")
+est_out <- round(rbind(rev(eta), rev(colMeans(eta.un)), rev(colMeans(eta.c)), rev(colMeans(sigma))), 3)
+rownames(est_out) <- c("Truth", "Unconstrained Bayes", "Constrained Bayes", "Theta Variance")
 
 write.csv(est_out, file = "D:/Dropbox (Personal)/Projects/Wildfires/Output/simulation/sim_out.csv")
