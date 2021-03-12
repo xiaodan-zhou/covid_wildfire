@@ -20,15 +20,10 @@ dff$FIPS <- as.numeric(as.character(dff$FIPS))
 dff$pm_counter <- dff$pm25
 dff$pm_counter[dff$pm_wildfire != 0] <- dff$pm25_history[dff$pm_wildfire != 0]
 
-# for sensitivity
-# dff <- dff[dff$pop > quantile(dff$population, 0.75),]
-# dff <- dff[dff$date > ymd("2020-05-01"),]
+# for mobility
+dff <- subset(dff, !(FIPS %in% c(6051, 41023, 41025, 41037, 41063, 53013)))
 
 ### Data Cleaning
-
-dff_tmp <- load.data()
-dff_tmp$FIPS <- as.numeric(as.character(dff_tmp$FIPS))
-dff_tmp$date_num <- dff_tmp$date_num
 
 # Create Exposure Matrix
 X_long <- data.frame(date_num = dff$date_num, FIPS = dff$FIPS, pm25 = dff$pm25)
@@ -55,12 +50,14 @@ Y_tmp_death <- tidyr::spread(Y_long_death, date_num, death)
 Y_deaths <- Y_tmp_death[order(Y_tmp_death$FIPS),]
 
 # Create Covariate Array
-Z_long <- data.frame(FIPS = dff$FIPS, date_num = dff$date_num, tmmx = dff$tmmx, rmax = dff$rmax, dayofweek = dff$dayofweek)
+Z_long <- data.frame(FIPS = dff$FIPS, date_num = dff$date_num, tmmx = dff$tmmx, rmax = dff$rmax, 
+                     mobility = dff$relative_change_feb, dayofweek = dff$dayofweek)
 Z_long <- Z_long[order(Z_long$date_num, Z_long$FIPS),]
 
 # calendar day, tmmx, and rmax are fitted with natural spline basis
 Z_bs <- with(Z_long, data.frame(FIPS = FIPS, date_num = date_num, 
-                                tmmx = ns(tmmx, 2), rmax = ns(rmax, 2),
+                                tmmx = ns(tmmx, 2), rmax = ns(rmax, 2), 
+                                mobility = mobility,
                                 model.matrix(~ dayofweek)[,-1]))
 
 Z_tmp <- Z_bs[Z_bs$date_num == min(dff$date_num),]
@@ -102,8 +99,8 @@ U <- matrix(ns(c(l:0), df = q, intercept = TRUE), nrow = l+1, ncol = q)  # natur
 W <- matrix(ns(min(dff$date_num):max(dff$date_num), df = o), ncol = o)
 
 # get initial values for MCMC
-gm_cases <- pm_model(dff, lags=0:l, df.date=o, df.tmmx=2, df.rmax=2, cause = "cases", fullDist = TRUE, model = "constrained")
-gm_deaths <- pm_model(dff, lags=0:l, df.date=o, df.tmmx=2, df.rmax=2, cause = "deaths", fullDist = TRUE, model = "constrained")
+gm_cases <- pm_model(dff, lags=0:l, df.date=o, df.tmmx=2, df.rmax=2, cause = "cases", fullDist = TRUE, mobility = TRUE, model = "constrained")
+gm_deaths <- pm_model(dff, lags=0:l, df.date=o, df.tmmx=2, df.rmax=2, cause = "deaths", fullDist = TRUE, mobility = TRUE, model = "constrained")
 
 ### Cases Model
   
@@ -121,17 +118,17 @@ mcmc_cases <- coda.samples(jmod_cases,n.iter = 100000, thin = 100, na.rm = TRUE,
                                               "phi", "psi", "sigma", "lambda", "rho"))
 
 # check mixing
-pdf(file = "D:/Dropbox (Personal)/Projects/Wildfires/Output/bayes/trace_cases.pdf")
+pdf(file = "D:/Dropbox (Personal)/Projects/Wildfires/Output/bayes/trace_cases_mobility.pdf")
 plot(mcmc_cases)
 dev.off()
 
 # check autocorrelation
-pdf(file = "D:/Dropbox (Personal)/Projects/Wildfires/Output/bayes/acf_cases.pdf")
+pdf(file = "D:/Dropbox (Personal)/Projects/Wildfires/Output/bayes/acf_cases_mobility.pdf")
 for(i in 1:ncol(mcmc_cases[[1]]))
   acf(mcmc_cases[[1]][,i], main = colnames(mcmc_cases[[1]])[i])
 dev.off()
 
-save(mcmc_cases, file = "D:/Dropbox (Personal)/Projects/Wildfires/Output/bayes/mcmc_cases.RData")
+save(mcmc_cases, file = "D:/Dropbox (Personal)/Projects/Wildfires/Output/bayes/mcmc_cases_mobility.RData")
   
 ### Deaths Model
 
@@ -149,14 +146,14 @@ mcmc_deaths <- coda.samples(jmod_deaths, n.iter = 100000, thin = 100, na.rm = TR
                                                "phi", "psi", "sigma", "lambda", "rho"))
 
 # check mixing
-pdf(file = "D:/Dropbox (Personal)/Projects/Wildfires/Output/bayes/trace_deaths.pdf")
+pdf(file = "D:/Dropbox (Personal)/Projects/Wildfires/Output/bayes/trace_deaths_mobility.pdf")
 plot(mcmc_deaths)
 dev.off()
 
 # check autocorrelation
-pdf(file = "D:/Dropbox (Personal)/Projects/Wildfires/Output/bayes/acf_deaths.pdf")
+pdf(file = "D:/Dropbox (Personal)/Projects/Wildfires/Output/bayes/acf_deaths_mobility.pdf")
 for(i in 1:ncol(mcmc_deaths[[1]]))
   acf(mcmc_deaths[[1]][,i], main = colnames(mcmc_deaths[[1]])[i])
 dev.off()
 
-save(mcmc_deaths, file = "D:/Dropbox (Personal)/Projects/Wildfires/Output/bayes/mcmc_deaths.RData")
+save(mcmc_deaths, file = "D:/Dropbox (Personal)/Projects/Wildfires/Output/bayes/mcmc_deaths_mobility.RData")

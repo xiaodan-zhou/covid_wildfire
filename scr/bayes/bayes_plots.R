@@ -6,6 +6,8 @@ library(forcats)
 
 rm(list = ls())
 
+### Load Data
+
 setwd("D:/Github/covid_wildfire")
 source("scr/Utilities.R")
 source("scr/bayes/bayes_fun.R")
@@ -38,11 +40,13 @@ cty.selected$county <- paste(cty.selected$NAME, ", ", cty.selected$STATE, sep = 
 
 county <- cty.selected$county[order(cty.selected$FIPS)]
   
-### Posterior Distributions of Cumulative Effect
+## MCMC
 
 load("D:/Dropbox (Personal)/Projects/Wildfires/Output/bayes/mcmc_cases.RData")
 load("D:/Dropbox (Personal)/Projects/Wildfires/Output/bayes/mcmc_deaths.RData")
 lags <- 14:0
+
+### Posterior Distributions of Cumulative Effect
 
 ## By County
 
@@ -88,7 +92,6 @@ cum_cases <- mutate(subset(out_cases, county != "Combined"), county = fct_reorde
   geom_boxplot() +
   ylim(-120,120) +
   theme(plot.title = element_text(hjust = 0.5)) +
-  geom_hline(yintercept = mean(out_cases$cum[out_cases$county == "Combined"]), color = "red") +
   geom_hline(yintercept = 0, color = "blue") + 
   coord_flip() +
   labs(title = "Cases", x = "County", y = "Percentage Change in COVID-19 Cumulative Cases\nAfter a 10 Unit Increase in PM25\nConsecutively for 14 Days")
@@ -98,7 +101,6 @@ cum_deaths <- mutate(subset(out_deaths, county != "Combined"), county = fct_reor
   geom_boxplot() +
   ylim(-120,120) +
   theme(plot.title = element_text(hjust = 0.5)) +
-  geom_hline(yintercept = mean(out_deaths$cum[out_deaths$county == "Combined"]), color = "red") +
   geom_hline(yintercept = 0, color = "blue") + 
   coord_flip() +
   labs(title = "Deaths", x = "County", y = "Percentage Change in COVID-19 Cumulative Deaths\nAfter a 10 Unit Increase in PM25\nConsecutively for 14 Days")
@@ -157,7 +159,9 @@ for (i in 1:92) {
   Y_death_mat <- matrix(as.numeric(rep(Y_deaths[i,-1], 1000)), byrow = T, nrow = 1000)  
   
   nxs_cases[,i] <- rowSums((1 - rho_cases/lambda_cases)*Y_case_mat, na.rm = TRUE)
-  nxs_deaths[,i] <- rowSums((1 - rho_deaths/lambda_deaths)*Y_death_mat, na.rm = TRUE)
+  nxs_deaths <- rowSums((1 - rho_deaths/lambda_deaths)*Y_death_mat, na.rm = TRUE)
+  
+  cbind(c(Y_deaths[i,-1]), c(colMeans(rho_deaths/lambda_deaths)))
   
 }
 

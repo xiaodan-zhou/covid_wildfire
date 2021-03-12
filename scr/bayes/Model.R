@@ -18,7 +18,8 @@ pm_model <- function(dff, df.date = 6, df.tmmx = 2, df.rmax = 2, lags = 0:14, mo
   dff$log.pop <- log(dff[,offset])
   
   ### formula
-  f <- substitute(~ smooth(tmmx, df.tmmx) + smooth(rmax, df.rmax) + smooth(date_num, df.date) + dayofweek,
+  f <- substitute(~ smooth(tmmx, df.tmmx) + smooth(rmax, df.rmax) +
+                    smooth(date_num, df.date) + dayofweek,
                   list(df.date = df.date, df.tmmx = df.tmmx, df.rmax = df.rmax, smooth = as.name(smooth)))
     
   rhs = as.character(f)
@@ -85,7 +86,8 @@ pm_model <- function(dff, df.date = 6, df.tmmx = 2, df.rmax = 2, lags = 0:14, mo
     
     mu.init <- c(fit$coefficients$count[1])
     beta.init <- c(fit$coefficients$count[c(grep("tmmx", names(fit$coefficients$count)),
-                                          grep("rmax", names(fit$coefficients$count)), 
+                                          grep("rmax", names(fit$coefficients$count)),
+                                          grep("relative", names(fit$coefficients$count)),
                                           grep("dayof", names(fit$coefficients$count)))])
     xi.init <- c(fit$coefficients$count[grep("date_num", names(fit$coefficients$count))])
     delta.init <- c(fit$coefficients$count[grep("lagpm", names(fit$coefficients$count))])
@@ -99,7 +101,8 @@ pm_model <- function(dff, df.date = 6, df.tmmx = 2, df.rmax = 2, lags = 0:14, mo
     
     mu.init <- fit$coefficients$count[1]
     beta.init <- fit$coefficients$count[c(grep("tmmx", names(fit$coefficients$count)),
-                                          grep("rmax", names(fit$coefficients$count)), 
+                                          grep("rmax", names(fit$coefficients$count)),
+                                          grep("relative", names(fit$coefficients$count)),
                                           grep("dayof", names(fit$coefficients$count)))]
     xi.init <- fit$coefficients$count[grep("date_num", names(fit$coefficients$count))]
     eta.init <- fit$coefficients$count[grep("lagpm", names(fit$coefficients$count))]
