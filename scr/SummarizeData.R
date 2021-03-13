@@ -122,28 +122,104 @@ print(paste0("Total & ",
              round(quantile(subset$pm25, .75, na.rm=T), 1), ")"))
 
 
+######################## Table in Results #####################################
+### number of wildfire/non-wildfire days
+tb1 = data.frame(dff %>% group_by(FIPS) %>% 
+                   summarise(sum=sum(wildfire==T)))
+tb2 = data.frame(dff %>% group_by(FIPS) %>% 
+                   summarise(sum=sum(wildfire==F)))
+round(quantile(tb1$sum, c(.50, .25, .75), na.rm=T), 1)
+round(quantile(tb2$sum, c(.50, .25, .75), na.rm=T), 1)
+rm(tb1, tb2)
 
-######################## Table: #####################################
-### number of wildfire days by county
-subset = dff[!is.na(dff$hazardmap), ]
-temp = data.frame(subset %>% group_by(FIPS) %>% summarise(count=sum(hazardmap==27)))
-paste(sum(temp$count), "wildfire days in the analysis/")
-summary(temp$count)
-summary(temp$count) / 277
+### Daily PM2.5
+round(quantile(dff$pm25, c(.50, .05, .95), na.rm=T), 1)
+round(quantile(dff$pm25[dff$wildfire==T], c(.50, .05, .95), na.rm=T), 1)
+round(quantile(dff$pm25[dff$wildfire==F], c(.50, .05, .95), na.rm=T), 1)
 
-### total cases and deaths
-paste(sum(dff$cases, na.rm=T), "cases")
-paste(sum(dff$deaths, na.rm=T), "deaths")
+### Percent of Days with zero COVID19 case
+tb0 = data.frame(dff %>% group_by(FIPS) %>% 
+                   summarise(sum=sum(cases==0, na.rm=T), n=n()))
+round(quantile(tb0$sum/tb0$n*100, c(.50, .25, .75), na.rm=T), 1)
 
+subset1 = dff[dff$wildfire==T, ]
+tb1 = data.frame(subset1 %>% group_by(FIPS) %>% 
+                   summarise(sum=sum(cases==0, na.rm=T), n=n()))
+round(quantile(tb1$sum/tb1$n*100, c(.50, .25, .75), na.rm=T), 1)
+
+subset2 = dff[dff$wildfire==F, ]
+tb2 = data.frame(subset2 %>% group_by(FIPS) %>% 
+                   summarise(sum=sum(cases==0, na.rm=T), n=n()))
+round(quantile(tb2$sum/tb2$n*100, c(.50, .25, .75), na.rm=T), 1)
+
+rm(tb0, subset1, tb1, subset2, tb2)
+
+### Percent of Days with zero COVID19 death
+tb0 = data.frame(dff %>% group_by(FIPS) %>% 
+                   summarise(sum=sum(deaths==0, na.rm=T), n=n()))
+round(quantile(tb0$sum/tb0$n*100, c(.50, .25, .75), na.rm=T), 1)
+
+subset1 = dff[dff$wildfire==T, ]
+tb1 = data.frame(subset1 %>% group_by(FIPS) %>% 
+                   summarise(sum=sum(deaths==0, na.rm=T), n=n()))
+round(quantile(tb1$sum/tb1$n*100, c(.50, .25, .75), na.rm=T), 1)
+
+subset2 = dff[dff$wildfire==F, ]
+tb2 = data.frame(subset2 %>% group_by(FIPS) %>% 
+                   summarise(sum=sum(deaths==0, na.rm=T), n=n()))
+round(quantile(tb2$sum/tb2$n*100, c(.50, .25, .75), na.rm=T), 1)
+
+rm(tb0, subset1, tb1, subset2, tb2)
+
+### Daily Cases Rate (per 10,000)
+dff$cases_rate = dff$cases / dff$population
+tb0 = data.frame(dff %>% group_by(FIPS) %>% 
+                   summarise(mean=mean(cases_rate, na.rm=T)*100*1000))
+round(quantile(tb0$mean, c(.50, .25, .75), na.rm=T), 1)
+
+tb1 = data.frame(dff[dff$wildfire==T,] %>% group_by(FIPS) %>% 
+                   summarise(mean=mean(cases_rate, na.rm=T)*100*1000))
+round(quantile(tb1$mean, c(.50, .25, .75), na.rm=T), 1)
+
+tb2 = data.frame(dff[dff$wildfire==F,] %>% group_by(FIPS) %>% 
+                   summarise(mean=mean(cases_rate, na.rm=T)*100*1000))
+round(quantile(tb2$mean, c(.50, .25, .75), na.rm=T), 1)
+
+rm(tb0, tb1, tb2)
+
+### Daily Deaths Rate (per million)
+dff$deaths_rate = dff$deaths / dff$population
+tb0 = data.frame(dff %>% group_by(FIPS) %>% 
+                   summarise(mean=mean(deaths_rate, na.rm=T)*1000*1000))
+round(quantile(tb0$mean, c(.50, .05, .95), na.rm=T), 2)
+
+tb1 = data.frame(dff[dff$wildfire==T,] %>% group_by(FIPS) %>% 
+                   summarise(mean=mean(deaths_rate, na.rm=T)*1000*1000))
+round(quantile(tb1$mean, c(.50, .05, .95), na.rm=T), 2)
+
+tb2 = data.frame(dff[dff$wildfire==F,] %>% group_by(FIPS) %>% 
+                   summarise(mean=mean(deaths_rate, na.rm=T)*1000*1000))
+round(quantile(tb2$mean, c(.50, .05, .95), na.rm=T), 2)
+
+rm(tb0, tb1, tb2)
+
+######################## Table in Results #####################################
 ### percentage of cases and deaths during wildfire days 
 case_fire = sum(dff$cases[dff$wildfire==T], na.rm=T)
 death_fire = sum(dff$deaths[dff$wildfire==T], na.rm=T)
-
 case_pct = round(case_fire / sum(dff$cases, na.rm=T) * 100)
 death_pct = round(death_fire / sum(dff$deaths, na.rm=T) * 100)
-
 paste(case_fire, "cases during wildfire (", case_pct, "%)")
 paste(death_fire, "deaths during wildfire (", death_pct, "%)")
+
+sum(dff$cases[dff$wildfire==T], na.rm=T) / sum(dff$wildfire==T)
+sum(dff$deaths[dff$wildfire==T], na.rm=T) / sum(dff$wildfire==T)
+
+sum(dff$cases[dff$wildfire==F], na.rm=T) / sum(dff$wildfire==F)
+sum(dff$deaths[dff$wildfire==F], na.rm=T) / sum(dff$wildfire==F)
+
+sum(dff$cases, na.rm=T) / sum(!is.na(dff$cases))
+sum(dff$deaths, na.rm=T) / sum(!is.na(dff$deaths))
 
 ### pm2.5 in wildfire days
 summary(dff$pm25)
@@ -151,12 +227,49 @@ summary(dff$pm25[dff$wildfire==T])
 summary(dff$pm25[dff$wildfire==F])
 # summary(dff$pm25[(dff$wildfire==F)&(dff$date<="2020-11-26")])
 
+### days count 
+wc = data.frame(dff %>% group_by(FIPS) %>% 
+             summarise(sum=sum(wildfire==T)))
+summary(wc$sum)
+summary(wc$sum) / 277
+
+wc = data.frame(dff %>% group_by(FIPS) %>% 
+                  summarise(sum=sum(wildfire==F)))
+summary(wc$sum)
+summary(wc$sum) / 277
+
+### daily cases
+wc = data.frame(dff %>% group_by(FIPS) %>% 
+                  summarise(mean=mean(cases,na.rm=T)))
+summary(wc$mean)
+
+wc = data.frame(dff[dff$wildfire==T,] %>% group_by(FIPS) %>% 
+                  summarise(mean=mean(cases,na.rm=T)))
+summary(wc$mean)
+
+wc = data.frame(dff[dff$wildfire==F,] %>% group_by(FIPS) %>% 
+                  summarise(mean=mean(cases,na.rm=T)))
+summary(wc$mean)
+
+## 
+wc = data.frame(dff %>% group_by(FIPS) %>% 
+                  summarise(mean=mean(deaths,na.rm=T)))
+summary(wc$mean)
+
+wc = data.frame(dff[dff$wildfire==T,] %>% group_by(FIPS) %>% 
+                  summarise(mean=mean(deaths,na.rm=T)))
+summary(wc$mean)
+
+wc = data.frame(dff[dff$wildfire==F,] %>% group_by(FIPS) %>% 
+                  summarise(mean=mean(deaths,na.rm=T)))
+summary(wc$mean)
 #############################################################
 ### pm2.5 the ambient level in wildfire days
 summary(dff$pm25[(dff$wildfire==T)])
+summary(dff$pm25[(dff$wildfire==F)])
 summary(dff$pm_wildfire[(dff$wildfire==T)])
 summary(dff$pm_ambient[(dff$wildfire==T)])
-summary(dff$pm25[(dff$wildfire==F)])
+
 
 for (istate in unique(dff$State)) {
   subset = dff[dff$State == istate, ]
@@ -166,3 +279,8 @@ for (istate in unique(dff$State)) {
   print(summary(subset$pm_ambient[(subset$wildfire==T)]))
   print(summary(subset$pm25[(subset$wildfire==F)]))
 }
+### total cases and deaths
+paste(sum(dff$cases, na.rm=T), "cases")
+paste(sum(dff$deaths, na.rm=T), "deaths")
+
+

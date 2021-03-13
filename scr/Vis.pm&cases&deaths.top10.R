@@ -51,7 +51,7 @@ for (ifips in fips.unique) {
           panel.grid.minor = element_blank(),
           axis.title.x = element_blank(),
           axis.title.y = element_blank(), 
-          plot.title = element_text(hjust = 0.5, size = 8)) +  # , face = "bold" 
+          plot.title = element_text(hjust = 0.5, size = 8)) +  
     scale_color_manual(name="", values=c(PM25="blue")) +
     xlab("Date") + ggtitle(paste0(df.selected$County[1], ", ", df.selected$State[1]))
  

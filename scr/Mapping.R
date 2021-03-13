@@ -7,21 +7,24 @@ library(viridis)
 
 dff = load.data()
 df = df[df$date <= "2020-11-26", ]
-dff = dff %>% group_by(FIPS) %>% summarise(pm25.high = sum(pm25>=12, na.rm=T), 
+dff = dff %>% group_by(FIPS) %>% summarise(pm25.high = sum(pm25>=35, na.rm=T), 
                                            hazard = sum(hazardmap>=27, na.rm=T))
+ndays = 277 
+dff$pm25.high = dff$pm25.high / ndays * 100
 
 cty = read_sf('data/cb_2018_us_county_5m', 'cb_2018_us_county_5m') %>%
   filter(STATEFP %in% c('06', '41', '53'))
 cty$FIPS = as.numeric(as.character(cty$GEOID))
 
 cty.selected = merge(cty, dff, by="FIPS", all.x=T)
+cty.selected$hazard_pct = cty.selected$hazard / ndays * 100
 
 palette = "viridis"
 
 ###############################################################
 ### set up 
 n.col.grid = 3
-file.name = paste0("output/vis.map_pm_above12.pdf")
+file.name = paste0("output/vis.map_pm_above35.pdf")
 plot.list = list()
 
 vis = "pm25.high"
@@ -49,7 +52,7 @@ p2 = ggplot(cty.selected[cty.selected$STATEFP == "06", ]) + ggtitle("California"
   geom_sf(aes_string(fill=vis), color=NA) + 
   theme_void() + 
   scale_fill_gradient(low="blue", high="red", na.value = "lightgrey", limits=ylim, 
-                      name = "Number of days")
+                      name = "Percent of days")
 plot.list[[3]] = p2
 
 ### 
@@ -65,11 +68,18 @@ dev.off()
 ###############################################################
 ### set up 
 n.col.grid = 3
-file.name = paste0("output/vis.map_hazard27.pdf")
 plot.list = list()
 
-vis = "hazard"
-ylim = c(0, max(dff$hazard))
+# file.name = paste0("output/vis.map_hazard27.pdf")
+# vis = "hazard"
+# ylim = c(0, max(dff$hazard))
+# legand.lab = "Number of days"
+
+file.name = paste0("output/vis.map_hazard27_pct2.pdf")
+vis = "hazard_pct"
+ylim = c(0, max(cty.selected$hazard_pct, na.rm=T))
+legand.lab = "% of wildfire days"
+
 
 ### WA 
 p0 = 
@@ -93,7 +103,7 @@ p2 = ggplot(cty.selected[cty.selected$STATEFP == "06", ]) + ggtitle("California"
   geom_sf(aes_string(fill=vis), color=NA) + 
   theme_void() + 
   scale_fill_gradient(low="blue", high="red", na.value = "lightgrey", limits=ylim, 
-                      name = "Number of days")
+                      name = legand.lab)
 plot.list[[3]] = p2
 
 ### 
