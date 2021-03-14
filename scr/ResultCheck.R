@@ -4,6 +4,11 @@ setwd(project.dir)
 source("scr/Utilities.R")
 dff = load.data()
 
+dff$CountyShort = as.character(dff$County)
+for (i in 1:dim(dff)[1])
+  dff$CountyShort[i] = strsplit(as.character(dff$County[i]), ' County')[[1]][1]
+
+
 ### 6009 Calaveras ### 
 aa = dff$pm25[dff$County == "Calaveras County"] 
 bb = 10*dff$deaths[dff$County == "Calaveras County"]
@@ -14,9 +19,6 @@ ggplot() +
 mean(aa[bb!=0], na.rm=T)
 mean(aa[bb==0], na.rm=T)
 
-dff$CountyShort = as.character(dff$County)
-for (i in 1:dim(dff)[1])
-  dff$CountyShort[i] = strsplit(as.character(dff$County[i]), ' County')[[1]][1]
 
 dff$has_death = dff$deaths>0
 tb0 = data.frame(dff %>% group_by(FIPS, CountyShort) %>% 
@@ -58,10 +60,3 @@ ggplot(tb1, aes(log_cases_sum, pm)) +
 rm(tb1)
 ##################
 
-
-
-tb1 = data.frame(dff %>% group_by(FIPS, CountyShort) %>% summarise(cases=sum(cases,na.rm=T)))
-tb1[order(tb1$cases), ]
-
-tb2 = data.frame(dff %>% group_by(FIPS, CountyShort) %>% summarise(deaths=sum(deaths,na.rm=T)))
-tb2[order(tb2$deaths), ]

@@ -53,3 +53,19 @@ dev.off()
 # pdf(file.name, width = 10, height = 4)
 # do.call('grid.arrange',c(plot.list, ncol = 1))
 # dev.off()
+
+
+#### pm_wildfire compare
+df$pm_wildfire_vis = df$pm_wildfire
+df$pm_wildfire_vis[df$pm_wildfire==0] = NA
+
+tb0 = data.frame(df %>% group_by(FIPS) %>% 
+             summarise(pm_wildfire_median=median(pm_wildfire_vis, na.rm=T)))
+df = merge(df, tb0, by="FIPS")
+df = df[order(df$pm_wildfire_median), ]
+
+### [!is.na(df$pm_wildfire_vis),]
+ggplot(df) + 
+  geom_boxplot(aes(y=reorder(County, pm_wildfire_vis, FUN = median), 
+                   x=pm_wildfire_vis)) + 
+  scale_x_log10()
