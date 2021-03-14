@@ -1,4 +1,7 @@
-setwd("/Users/mac/Documents/GitHub/covid_wildfire")
+library(rstudioapi)
+project.dir = dirname(dirname(rstudioapi::getActiveDocumentContext()$path))
+setwd(project.dir)
+
 source("scr/Utilities.R")
 source("scr/Model.R")
 dff = load.data()
@@ -13,7 +16,7 @@ dff = load.data()
 pollutants = 1
 causes = c("cases", "deaths")
 max.lag = 21
-mobility = T # NA F
+mobility = F # NA F
 df.combo = list(c(3,1), c(4,1), c(5,2), c(6,2), c(7,2),
                 c(8, 2), c(9,3), c(10,3), c(11,3), c(12,3)) 
 
@@ -53,6 +56,6 @@ for (cause in causes) {
 }
 
 result.rbind = data.frame(result.rbind)
-result.rbind$mobility=1-is.na(mobility)
+result.rbind$mobility=1-(!is.na(mobility)&(mobility==T))
 write.csv(result.rbind, file.csv, row.names=FALSE)
 

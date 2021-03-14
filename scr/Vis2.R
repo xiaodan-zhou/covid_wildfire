@@ -1,5 +1,7 @@
 ### output name example df_sensitivity_(un)constrained_lag14_cases_mobility.pdf
-setwd("/Users/mac/Documents/GitHub/covid_wildfire")
+library(rstudioapi)
+project.dir = dirname(dirname(rstudioapi::getActiveDocumentContext()$path))
+setwd(project.dir)
 source("scr/Utilities.R")
 
 input.file.lists = list()

@@ -1,4 +1,5 @@
-setwd("/Users/mac/Documents/GitHub/covid_wildfire")
+project.dir = dirname(dirname(rstudioapi::getActiveDocumentContext()$path))
+setwd(project.dir)
 source("scr/Utilities.R")
 source("scr/Model.R")
 dff = load.data()
