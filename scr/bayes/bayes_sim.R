@@ -225,7 +225,7 @@ eta_plot <- ggplot() +
   labs(title = "Combined Counties", x = "Lag Days", y = "Coefficient Value", color = "Model") +
   scale_color_manual(values = c("Unconstrained" = "blue", "Constrained" = "red", "True Value" = "black"))
 
-png(filename = "D:/Dropbox (Personal)/Projects/Wildfires/Output/simulation/sim_fit.png", width = 700, height = 700)  
+pdf("D:/Dropbox (Personal)/Projects/Wildfires/Output/simulation/sim_fit.pdf")  
 ggarrange(plot_list[[1]], plot_list[[2]], plot_list[[3]], plot_list[[4]], plot_list[[5]], eta_plot, ncol=2, nrow=3, common.legend = TRUE, legend="bottom")
 dev.off()
 

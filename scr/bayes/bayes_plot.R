@@ -3,14 +3,15 @@ library(viridis)
 library(reshape2)
 library(ggpubr)
 library(forcats)
+library(dplyr)
 
 rm(list = ls())
 
 ### Load Data
-
-setwd("D:/Github/covid_wildfire")
+setwd("D:/GitHub/covid_wildfire")
 source("scr/Utilities.R")
 source("scr/bayes/bayes_fun.R")
+
 dff <- load.data()
 dff$FIPS <- as.numeric(as.character(dff$FIPS))
 FIPS <- unique(dff$FIPS)[order(unique(dff$FIPS))]
@@ -31,17 +32,16 @@ pop_long <- data.frame(FIPS = dff$FIPS, pop = dff$population)
 pop_tmp <- pop_long[!duplicated(pop_long$FIPS),]
 pop <- pop_tmp[order(pop_tmp$FIPS),]
 
-cty <- read_sf('data/cb_2018_us_county_5m', 'cb_2018_us_county_5m') %>%
-  filter(STATEFP %in% c('06', '41', '53'))
+cty = read_sf('data/cb_2018_us_county_5m', 'cb_2018_us_county_5m')
+cty = cty[cty$STATEFP %in% c('06', '41', '53'), ]
 cty$FIPS <- as.numeric(as.character(cty$GEOID))
 cty.selected <- cty[which(cty$FIPS %in% Y_deaths[,1]),]
 cty.selected$STATE <- with(cty.selected, ifelse(STATEFP == "06", "CA", ifelse(STATEFP == "41", "OR", "WA")))
 cty.selected$county <- paste(cty.selected$NAME, ", ", cty.selected$STATE, sep = "")
 
 county <- cty.selected$county[order(cty.selected$FIPS)]
-  
-## MCMC
 
+## MCMC
 load("D:/Dropbox (Personal)/Projects/Wildfires/Output/bayes/mcmc_cases.RData")
 load("D:/Dropbox (Personal)/Projects/Wildfires/Output/bayes/mcmc_deaths.RData")
 lags <- 14:0
@@ -87,27 +87,65 @@ out_deaths$county <- factor(out_deaths$county, levels = c(rev(county), "Combined
 out_cases <- merge(out_cases, aggregate(out_cases$cum, by = list(out_cases$county), mean), by.x = "county", by.y = "Group.1")
 out_deaths <- merge(out_deaths, aggregate(out_deaths$cum, by = list(out_deaths$county), mean), by.x = "county", by.y = "Group.1")
 
-cum_cases <- mutate(subset(out_cases, county != "Combined"), county = fct_reorder(county, desc(x))) %>% 
-  ggplot(aes(x = county, y = cum)) +
-  geom_boxplot() +
-  ylim(-120,120) +
-  theme(plot.title = element_text(hjust = 0.5)) +
-  geom_hline(yintercept = 0, color = "blue") + 
-  coord_flip() +
-  labs(title = "Cases", x = "County", y = "Percentage Change in COVID-19 Cumulative Cases\nAfter a 10 Unit Increase in PM25\nConsecutively for 14 Days")
 
-cum_deaths <- mutate(subset(out_deaths, county != "Combined"), county = fct_reorder(county, desc(x))) %>% 
-  ggplot(aes(x = county, y = cum)) +
-  geom_boxplot() +
-  ylim(-120,120) +
-  theme(plot.title = element_text(hjust = 0.5)) +
-  geom_hline(yintercept = 0, color = "blue") + 
-  coord_flip() +
-  labs(title = "Deaths", x = "County", y = "Percentage Change in COVID-19 Cumulative Deaths\nAfter a 10 Unit Increase in PM25\nConsecutively for 14 Days")
+### boxplot with wildfire days 
+dff = dff %>% group_by(FIPS) %>% 
+  mutate(pm_wildfire_days=sum(wildfire==T, na.rm=T)) %>% 
+  ungroup()
 
-png(filename = "D:/Dropbox (Personal)/Projects/Wildfires/Output/bayes/county_cumulative.png", width = 1000, height = 1000)  
-ggarrange(cum_cases, cum_deaths, ncol = 2, nrow = 1,common.legend = TRUE, legend="bottom")
+dff$county = as.character(dff$County)
+for (i in 1:dim(dff)[1])
+  dff$county[i] = paste0(strsplit(as.character(dff$County[i]), ' County')[[1]][1], ", ", dff$State[i])
+
+levels(out_cases$county) = c(levels(out_cases$county), "Pooled")
+levels(out_cases$county)[match("Combined",levels(out_cases$county))] = "Pooled"
+
+levels(out_deaths$county) = c(levels(out_deaths$county), "Pooled")
+levels(out_deaths$county)[match("Combined",levels(out_deaths$county))] = "Pooled"
+
+# dff = subset(dff, select = -x)
+dff = merge(dff, unique(out_cases[c("county", "x")]), by="county")
+label_colors = ifelse(levels(reorder(out_cases$county, -out_cases$x)) == "Pooled", "red", "black")
+
+cum_cases <- ggplot() + 
+  geom_boxplot(data=mutate(out_cases, county = reorder(county, -x), box_col = county=="Pooled"), 
+               aes(x = county, y = cum, fill=box_col), lwd=0.4, width=0.8, outlier.size=0.6) + 
+  geom_point(data=mutate(dff, county = reorder(county, -x)), aes(x = county, y = (pm_wildfire_days/277*100-35/3)*30/7), color="orange", shape=17) + 
+  geom_hline(yintercept = 0, color = "blue") + 
+  theme_bw() + 
+  coord_flip() + 
+  theme(plot.title = element_text(hjust = 0.5),
+        axis.title.y = element_blank(), 
+        axis.text.y = element_text(colour = label_colors),
+        legend.position = "none") + 
+  scale_fill_manual(values = c("#00BA38", "red")) + 
+  scale_y_continuous("Percentage Increase", limits = c(-60, 105), sec.axis = sec_axis(~.*7/30+35/3, name = "% of Wildfire Days"))
+
+dff = subset(dff, select = -x)
+dff = merge(dff, unique(out_deaths[c("county", "x")]), by="county")
+label_colors = ifelse(levels(reorder(out_deaths$county, -out_deaths$x)) == "Pooled", "red", "black")
+
+cum_deaths <- ggplot() + 
+  geom_boxplot(data=mutate(out_deaths, county = reorder(county, -x), box_col = county=="Pooled"),
+               aes(x = county, y = cum, fill=box_col), lwd=0.4, width=0.8, outlier.size=0.6) + 
+  geom_point(data=mutate(dff, county = reorder(county, -x)), aes(x = county, y = (pm_wildfire_days/277*100-35/3)*30/7), color="orange", shape=17) + 
+  geom_hline(yintercept = 0, color = "blue") + 
+  theme_bw() + 
+  coord_flip() + 
+  theme(plot.title = element_text(hjust = 0.5),
+        axis.title.y=element_blank(),
+        axis.text.y = element_text(colour = label_colors),
+        legend.position = "none") + 
+  scale_fill_manual(values = c("#00BA38", "red")) +
+  scale_y_continuous("Percentage Increase", limits = c(-60, 105), sec.axis = sec_axis(~.*7/30+35/3, name = "% of Wildfire Days"))
+
+plot.list = list()
+plot.list[[1]] = cum_cases
+plot.list[[2]] = cum_deaths
+pdf("D:/Dropbox (Personal)/Projects/Wildfires/Output/bayes/county_cumulative_days.pdf", width = 10, height = 10)
+do.call('grid.arrange', c(plot.list, ncol = 2))
 dev.off()
+
 
 ## By Lag Day
 
@@ -118,12 +156,12 @@ cases_lag_coefs <- melt(eta_cases, value.name = "val")
 colnames(cases_lag_coefs)[2] <- "lags"
 cases_lag_coefs$lags <- factor(cases_lag_coefs$lags, levels = c(0:14))
 
-lag_cases <- ggplot(aes(x = lags, y = val), data = cases_lag_coefs) +
+lag_cases <- ggplot(aes(x = lags, y = val), data = cases_lag_coefs) + theme_bw() + 
   geom_boxplot() +
   ylim(-2,3.5) +
   theme(plot.title = element_text(hjust = 0.5)) +
   geom_hline(yintercept = 0, color = "blue") + 
-  labs(title = "Cases", x = "Lag Days", y = "Average Percent Change in Cases\nper 10 Unit Increase in PM2.5")
+  labs(x = "Lag Days", y = "Effect")  
 
 # deaths
 eta_deaths <- as.matrix(eta_deaths)
@@ -132,15 +170,18 @@ deaths_lag_coefs <- melt(eta_deaths, value.name = "val")
 colnames(deaths_lag_coefs)[2] <- "lags"
 deaths_lag_coefs$lags <- factor(deaths_lag_coefs$lags, levels = c(0:14))
 
-lag_deaths <- ggplot(aes(x = lags, y = val), data = deaths_lag_coefs) +
+lag_deaths <- ggplot(aes(x = lags, y = val), data = deaths_lag_coefs) + theme_bw() + 
   geom_boxplot() +
   ylim(-2,3.5) +
   theme(plot.title = element_text(hjust = 0.5)) +
   geom_hline(yintercept = 0, color = "blue") + 
-  labs(title = "Deaths", x = "Lag Days", y = " Average Percent Change in Deaths\nper 10 Unit Increase in PM2.5")
+  labs(x = "Lag Days", y = "Effect")  
 
-png(filename = "D:/Dropbox (Personal)/Projects/Wildfires/Output/bayes/pct_increases.png", width = 600, height = 400)  
-ggarrange(lag_cases, lag_deaths, ncol = 2, nrow = 1,common.legend = TRUE, legend="bottom")
+plot.list = list()
+plot.list[[1]] = lag_cases
+plot.list[[2]] = lag_deaths
+pdf("D:/Dropbox (Personal)/Projects/Wildfires/Output/bayes/pct_increases.pdf", width = 10, height = 5)
+do.call('grid.arrange',c(plot.list, ncol = 2))
 dev.off()
 
 ### Total Deaths and Cases by county
@@ -159,7 +200,7 @@ for (i in 1:92) {
   Y_death_mat <- matrix(as.numeric(rep(Y_deaths[i,-1], 1000)), byrow = T, nrow = 1000)  
   
   nxs_cases[,i] <- rowSums((1 - rho_cases/lambda_cases)*Y_case_mat, na.rm = TRUE)
-  nxs_deaths <- rowSums((1 - rho_deaths/lambda_deaths)*Y_death_mat, na.rm = TRUE)
+  nxs_deaths[,i] <- rowSums((1 - rho_deaths/lambda_deaths)*Y_death_mat, na.rm = TRUE)
   
   cbind(c(Y_deaths[i,-1]), c(colMeans(rho_deaths/lambda_deaths)))
   
@@ -187,96 +228,125 @@ pct_cases <- pct_deaths <- matrix(NA, nrow = 1000, ncol = 92)
 colnames(pct_cases) <- colnames(pct_deaths) <- FIPS
 
 for (i in 1:92) {
-
+  
   pct_cases[,i] <- 100*nxs_cases[,i]/(total_cases[i] - nxs_cases[,i])
   pct_deaths[,i] <- 100*nxs_deaths[,i]/(total_deaths[i] - nxs_deaths[,i])
   
 }
 
 pct_dat <- data.frame(excess_cases = colMeans(pct_cases, na.rm = TRUE), 
-                        excess_cases_l = apply(pct_cases,2,hpd)[1,],
-                        excess_cases_u = apply(pct_cases,2,hpd)[2,], 
-                        excess_deaths = colMeans(pct_deaths, na.rm = TRUE), 
-                        excess_deaths_l = apply(pct_deaths, 2, hpd)[1,],
-                        excess_deaths_u = apply(pct_deaths, 2, hpd)[2,],  FIPS = FIPS)
+                      excess_cases_l = apply(pct_cases,2,hpd)[1,],
+                      excess_cases_u = apply(pct_cases,2,hpd)[2,], 
+                      excess_deaths = colMeans(pct_deaths, na.rm = TRUE), 
+                      excess_deaths_l = apply(pct_deaths, 2, hpd)[1,],
+                      excess_deaths_u = apply(pct_deaths, 2, hpd)[2,],  FIPS = FIPS)
 
 pct_dat$excess_deaths[which(is.nan(pct_dat$excess_deaths))] <- 0
 pct_dat$excess_deaths_l[which(is.na(pct_dat$excess_deaths_l))] <- 0
 pct_dat$excess_deaths_u[which(is.na(pct_dat$excess_deaths_u))] <- 0
 
-cty.pct <- merge(pct_dat, cty, by = "FIPS", all.x = T)
+cty.pct <- merge(pct_dat, cty, by = "FIPS", all.x = T) 
 cty.pct$STATE <- with(cty.pct, ifelse(STATEFP == "06", "CA", ifelse(STATEFP == "41", "OR", "WA")))
 cty.pct$county <- paste(cty.pct$NAME, ", ", cty.pct$STATE, sep = "")
 
-nxs_cases_plot <- mutate(cty.pct, county = fct_reorder(county, desc(excess_cases))) %>% 
-  ggplot(mapping = aes(y = excess_cases, x = county)) +
+nxs_cases_plot <- mutate(cty.pct, county = reorder(county, -excess_cases)) %>%  
+  ggplot(mapping = aes(y = excess_cases, x = county)) + theme_bw() + 
   geom_pointrange(aes(ymin = excess_cases_l, ymax = excess_cases_u)) +
-  geom_hline(yintercept = 0) +
+  geom_hline(yintercept = 0, color = "blue") +
   coord_flip() +
-  theme(plot.title = element_text(hjust = 0.5)) +
-  labs(title = "Excess COVID-19 Cases from Wildfire", x = "County", y = "Excess Case Percentage")
+  theme(axis.title.x=element_blank(), axis.title.y=element_blank()) 
 
-nxs_deaths_plot <- mutate(cty.pct, county = fct_reorder(county, desc(excess_deaths))) %>% 
-  ggplot(mapping = aes(y = excess_deaths, x = county)) +
+nxs_deaths_plot <- mutate(cty.pct, county = reorder(county, -excess_deaths)) %>% 
+  ggplot(mapping = aes(y = excess_deaths, x = county)) + theme_bw() + 
   geom_pointrange(aes(ymin = excess_deaths_l, ymax = excess_deaths_u)) +
-  geom_hline(yintercept = 0) +
+  geom_hline(yintercept = 0, color = "blue") +
   coord_flip() +
-  theme(plot.title = element_text(hjust = 0.5)) +
-  labs(title = "Excess COVID-19 Deaths from Wildfire", x = "County", y = "Excess Death Percentage")
+  theme(axis.title.x=element_blank(), axis.title.y=element_blank())
 
-png(filename = "D:/Dropbox (Personal)/Projects/Wildfires/Output/bayes/nxs_ranked.png", width = 1000, height = 1000)  
-ggarrange(nxs_cases_plot, nxs_deaths_plot, ncol = 2, nrow = 1, common.legend = TRUE, legend = "bottom")
+plot.list = list()
+plot.list[[1]] = nxs_cases_plot
+plot.list[[2]] = nxs_deaths_plot
+pdf("D:/Dropbox (Personal)/Projects/Wildfires/Output/bayes/nxs_ranked.pdf", width = 10, height = 10)
+do.call('grid.arrange',c(plot.list, ncol = 2))
 dev.off()
 
 ## Excess Events Mapped
+cty.pct <- merge(pct_dat, cty, by = "FIPS", all.x = T, all.y = T)
+cty.pct$STATE <- with(cty.pct, ifelse(STATEFP == "06", "CA", ifelse(STATEFP == "41", "OR", "WA")))
+cty.pct$county <- paste(cty.pct$NAME, ", ", cty.pct$STATE, sep = "")
 
 ### WA 
 wa_cases <- ggplot(data = cty.pct[cty.pct$STATEFP == "53", ]) + 
-  ggtitle("Washington Excess Cases") + 
+  ggtitle("Washington") + 
   geom_sf(aes_string(geometry = "geometry", fill = "excess_cases"), color = NA) + 
   theme_void() + 
-  scale_fill_viridis()+
-  labs(fill = "Excess Event Percentage") +
-  theme(plot.title = element_text(hjust = 0.5))
+  labs(fill = "Percentage of COVID19 cases") +
+  theme(plot.title = element_text(hjust = 0.5)) + 
+  scale_fill_gradient2(low = 'blue', mid = 'beige', high = 'red', 
+                       na.value = "lightgrey", limits=c(-6, 18)) + 
+  theme(legend.position = "None")
 
 wa_deaths <- ggplot(cty.pct[cty.pct$STATEFP == "53", ]) + 
-  ggtitle("Washington Excess Deaths") + 
+  ggtitle("Washington") + 
   geom_sf(aes_string(geometry = "geometry", fill = "excess_deaths"), color=NA) + 
   theme_void() + 
-  scale_fill_viridis()+
-  labs(fill = "Excess Event Percentage")+
-  theme(plot.title = element_text(hjust = 0.5))
+  labs(fill = "Percentage of COVID19 deaths")+
+  theme(plot.title = element_text(hjust = 0.5)) + 
+  scale_fill_gradient2(low = 'blue', mid = 'beige', high = 'red', 
+                       na.value = "lightgrey", limits=c(-8, 50)) +
+  theme(legend.position = "None")
 
 ### OR 
-or_cases <- ggplot(cty.pct[cty.pct$STATEFP == "41", ]) + ggtitle("Oregon Excess Cases") + 
+or_cases <- ggplot(cty.pct[cty.pct$STATEFP == "41", ]) + ggtitle("Oregon") + 
   geom_sf(aes_string(geometry = "geometry", fill = "excess_cases"), color=NA) + 
   theme_void() + 
-  scale_fill_viridis()+
-  labs(fill = "Excess Event Percentage")+
-  theme(plot.title = element_text(hjust = 0.5))
+  labs(fill = "Percentage of COVID19 cases")+
+  theme(plot.title = element_text(hjust = 0.5)) + 
+  scale_fill_gradient2(low = 'blue', mid = 'beige', high = 'red', 
+                       na.value = "lightgrey", limits=c(-6, 18)) + 
+  theme(legend.position = "bottom")
 
-or_deaths <- ggplot(cty.pct[cty.pct$STATEFP == "41", ]) + ggtitle("Oregon Excess Deaths") + 
+or_deaths <- ggplot(cty.pct[cty.pct$STATEFP == "41", ]) + ggtitle("Oregon") + 
   geom_sf(aes_string(geometry = "geometry", fill = "excess_deaths"), color=NA) + 
   theme_void() + 
-  scale_fill_viridis()+
-  labs(fill = "Excess Event Percentage")+
-  theme(plot.title = element_text(hjust = 0.5))
+  labs(fill = "Percentage of COVID19 deaths")+
+  theme(plot.title = element_text(hjust = 0.5)) + 
+  scale_fill_gradient2(low = 'blue', mid = 'beige', high = 'red', 
+                       na.value = "lightgrey", limits=c(-8, 50)) + 
+  theme(legend.position = "bottom")
 
 ### CA
-ca_cases <- ggplot(cty.pct[cty.pct$STATEFP == "06", ]) + ggtitle("California Excess Cases") + 
+ca_cases <- ggplot(cty.pct[cty.pct$STATEFP == "06", ]) + ggtitle("California") + 
   geom_sf(aes_string(geometry = "geometry", fill= "excess_cases"), color=NA) + 
   theme_void() + 
-  scale_fill_viridis()+
-  labs(fill = "Excess Event Percentage")+
-  theme(plot.title = element_text(hjust = 0.5))
+  labs(fill = "Percentage of COVID19 cases")+
+  theme(plot.title = element_text(hjust = 0.5)) + 
+  scale_fill_gradient2(low = 'blue', mid = 'beige', high = 'red', 
+                       na.value = "lightgrey", limits=c(-6, 18)) + 
+  theme(legend.position = "None")
 
-ca_deaths <- ggplot(cty.pct[cty.pct$STATEFP == "06", ]) + ggtitle("California Excess Deaths") + 
+ca_deaths <- ggplot(cty.pct[cty.pct$STATEFP == "06", ]) + ggtitle("California") + 
   geom_sf(aes_string(geometry = "geometry", fill= "excess_deaths"), color=NA) + 
   theme_void() + 
-  scale_fill_viridis() +
-  labs(fill = "Excess Event Percentage")+
-  theme(plot.title = element_text(hjust = 0.5))
+  labs(fill = "Percentage of COVID19 deaths")+
+  theme(plot.title = element_text(hjust = 0.5)) + 
+  scale_fill_gradient2(low = 'blue', mid = 'beige', high = 'red', 
+                       na.value = "lightgrey", limits=c(-8, 50)) + 
+  theme(legend.position = "None")
 
-png(filename = "D:/Dropbox (Personal)/Projects/Wildfires/Output/bayes/nxs_mapped.png", width = 1000, height = 1000)  
-ggarrange(wa_cases, or_cases, ca_cases, wa_deaths, or_deaths, ca_deaths, ncol = 3, nrow = 2,common.legend = TRUE, legend = "bottom")
+plot.list = list()
+plot.list[[1]] = wa_cases
+plot.list[[2]] = or_cases
+plot.list[[3]] = ca_cases
+pdf("D:/Dropbox (Personal)/Projects/Wildfires/Output/bayes/nxs_mapped_cases.pdf", width = 10, height = 10)
+do.call('grid.arrange',c(plot.list, ncol = 3,  top = "", bottom="", left=""))
+dev.off()
+
+
+plot.list = list()
+plot.list[[1]] = wa_deaths
+plot.list[[2]] = or_deaths
+plot.list[[3]] = ca_deaths
+pdf("D:/Dropbox (Personal)/Projects/Wildfires/Output/bayes/nxs_mapped_deaths.pdf", width = 10, height = 10)
+do.call('grid.arrange',c(plot.list, ncol = 3, top = "", bottom="", left=""))
 dev.off()

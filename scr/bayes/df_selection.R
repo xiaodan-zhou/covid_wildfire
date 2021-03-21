@@ -22,7 +22,7 @@ dff$FIPS <- as.numeric(as.character(dff$FIPS))
 
 ### Optimal DF
 
-models = c("constrained", "unconstrained")
+models = c("Constrained", "Unconstrained")
 causes = c("cases", "deaths")
 df.combo = list(c(3,1), c(4,1), c(5,2), c(6,2), c(7,2),c(8,2), c(9,3), c(10,3)) 
 
@@ -33,7 +33,7 @@ for (model in models) {
     for (idf.combo in df.combo) {
       
       glmer_result <- pm_model(dff, lags=0:14, df.date=idf.combo[1], df.tmmx=idf.combo[2], df.rmax=idf.combo[2], cause = cause, model = model)
-      out <- c(coefs = glmer_result, cause = cause, combo = paste("(", paste(idf.combo, collapse = ","), ")", sep = ""), model = model)
+      out <- c(coefs = glmer_result, cause = cause, combo = paste("(", paste(idf.combo[1], idf.combo[2], idf.combo[2], sep = ","), ")", sep = ""), model = model)
       result <- rbind(result, out)
       
     }
@@ -41,30 +41,25 @@ for (model in models) {
 }
 
 result = data.frame(result)
-write.csv(result, file = "output/bayes/df_selection.csv", row.names = FALSE)
+write.csv(result, file = "D:/Dropbox (Personal)/Projects/Wildfires/Output/bayes/df_selection.csv", row.names = FALSE)
 
 ### Sensitivity of DF
 
-glmer_result <- read.csv("output/bayes/df_selection.csv")
+glmer_result <- read.csv("D:/Dropbox (Personal)/Projects/Wildfires/Output/bayes/df_selection.csv")
 ford <- glmer_result$combo[1:(nrow(glmer_result)/4)]
 glmer_result$combo <- factor(glmer_result$combo, levels = ford)
+glmer_result$cause <- stringr::str_to_title(glmer_result$cause)
 
-df_select_cases <- ggplot(aes(x = combo, y = coefs.pm, group = model, colour = model), data = subset(glmer_result, cause == "cases")) +
+df_select <- ggplot(aes(x = combo, y = coefs.pm, group = cause, colour = cause), 
+                          data = subset(glmer_result, model == "Constrained")) +
   geom_errorbar(aes(ymin = coefs.pm.low, ymax = coefs.pm.high), width = .2, size = 0.5, position = position_dodge(0.25)) +
   geom_line(position = position_dodge(0.25), size = 1) +
   geom_point(position = position_dodge(0.25), size = 2) +
   theme(plot.title = element_text(hjust = 0.5)) + 
   ylim(-5, 10) +
-  labs(title = "Pooled Counties - Cases", x = "DF Combinations", y = "Percent of COVID19 Cases", color = "Model Type")
+  theme_bw() +
+  labs(x = "DF Combination", y = "Cumulative Effect", color = "Event")
 
-df_select_deaths <- ggplot(aes(x = combo, y = coefs.pm, group = model, colour = model), data = subset(glmer_result, cause == "deaths")) +
-  geom_line(position = position_dodge(0.25), size = 1) +
-  geom_point(position = position_dodge(0.25), size = 2) +
-  geom_errorbar(aes(ymin = coefs.pm.low, ymax = coefs.pm.high), width = .2, size = 0.5, position = position_dodge(0.25)) +
-  theme(plot.title = element_text(hjust = 0.5)) +
-  ylim(-5, 10) +
-  labs(title = "Pooled Counties - Deaths", x = "DF Combinations", y = "Percent of COVID19 Deaths", color = "Model Type")
-
-png(filename = "output/bayes/df_selection.png", width = 600, height = 400)  
-ggarrange(df_select_cases, df_select_deaths, ncol = 2, nrow = 1,common.legend = TRUE, legend="bottom")
+pdf("D:/Dropbox (Personal)/Projects/Wildfires/Output/bayes/df_selection.pdf", width = 5, height = 5)  
+df_select
 dev.off()

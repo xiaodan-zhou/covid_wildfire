@@ -1,10 +1,11 @@
-pm_model <- function(dff, df.date = 6, df.tmmx = 2, df.rmax = 2, lags = 0:14, model = c("constrained", "unconstrained"),
+pm_model <- function(dff, df.date = 6, df.tmmx = 2, df.rmax = 2, lags = 0:14, model = c("Constrained", "Unconstrained"),
                      mobility = NA, cause = "cases", smooth = "ns", group = "FIPS", offset = "population", 
                      control = zeroinfl.control(EM = FALSE), fullDist = FALSE) {
   
   pollutants.name = "pm"
+  fullDist = FALSE
   
-  if (model == "constrained") {
+  if (model == "Constrained") {
     
     X.l <- create.lag.value(dff, value = "pm25", group = group, lags = lags)
     U <- matrix(ns(c(lags), df = 5, intercept = TRUE), nrow = length(lags), ncol = 5) # natural spline basis matrix
@@ -48,7 +49,7 @@ pm_model <- function(dff, df.date = 6, df.tmmx = 2, df.rmax = 2, lags = 0:14, mo
   if(inherits(fit, 'try-error')) { return(-1) }
   
   ### output variable names 
-  if(!fullDist & model == "constrained"){
+  if(!fullDist & model == "Constrained"){
     
     var.names <- paste0("count_lagpm", 1:5) 
     mean.dlm <- sum(U%*%(coef(fit)[var.names]))
@@ -65,7 +66,7 @@ pm_model <- function(dff, df.date = 6, df.tmmx = 2, df.rmax = 2, lags = 0:14, mo
     
     return(coefs)
     
-  } else if (!fullDist & model == "unconstrained"){
+  } else if (!fullDist & model == "Unconstrained"){
     
     var.names <- paste0("count_lagpm.l", lags) 
     mean.dlm <- sum(coef(fit)[var.names])
@@ -82,7 +83,7 @@ pm_model <- function(dff, df.date = 6, df.tmmx = 2, df.rmax = 2, lags = 0:14, mo
     
     return(coefs)
     
-  } else if (fullDist & model == "constrained") {
+  } else if (fullDist & model == "Constrained") {
     
     mu.init <- c(fit$coefficients$count[1])
     beta.init <- c(fit$coefficients$count[c(grep("tmmx", names(fit$coefficients$count)),
