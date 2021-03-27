@@ -43,6 +43,12 @@ load("D:/Dropbox (Personal)/Projects/Wildfires/Output/bayes/mcmc_deaths_21.RData
 mcmc_cases_21 <- mcmc_cases
 mcmc_deaths_21 <- mcmc_deaths
 
+load("D:/Dropbox (Personal)/Projects/Wildfires/Output/bayes/mcmc_cases_28.RData")
+load("D:/Dropbox (Personal)/Projects/Wildfires/Output/bayes/mcmc_deaths_28.RData")
+
+mcmc_cases_28 <- mcmc_cases
+mcmc_deaths_28 <- mcmc_deaths
+
 load("D:/Dropbox (Personal)/Projects/Wildfires/Output/bayes/mcmc_cases_mobility.RData")
 load("D:/Dropbox (Personal)/Projects/Wildfires/Output/bayes/mcmc_deaths_mobility.RData")
 
@@ -80,6 +86,8 @@ eta_cases_tmp <- mcmc_cases[[1]][,paste0("eta[",1:15,"]")]
 eta_cases <-  100*(exp(10*rowSums(eta_cases_tmp)) - 1)
 eta_cases_tmp  <- mcmc_cases_21[[1]][,paste0("eta[",1:22,"]")]
 eta_cases <-  cbind(eta_cases, 100*(exp(10*rowSums(eta_cases_tmp)) - 1))
+eta_cases_tmp  <- mcmc_cases_28[[1]][,paste0("eta[",1:28,"]")]
+eta_cases <-  cbind(eta_cases, 100*(exp(10*rowSums(eta_cases_tmp)) - 1))
 eta_cases_tmp <- mcmc_cases_mobility[[1]][,paste0("eta[",1:15,"]")]
 eta_cases <-  cbind(eta_cases, 100*(exp(10*rowSums(eta_cases_tmp)) - 1))
 eta_cases_tmp <- mcmc_cases_df7[[1]][,paste0("eta[",1:15,"]")]
@@ -89,7 +97,7 @@ eta_cases <-  cbind(eta_cases, 100*(exp(10*rowSums(eta_cases_tmp)) - 1))
 eta_cases_tmp <- mcmc_cases_outlier[[1]][,paste0("eta[",1:15,"]")]
 eta_cases <- cbind(eta_cases, 100*(exp(10*rowSums(eta_cases_tmp)) - 1))
 
-colnames(eta_cases) <- c("A", "B", "C", "D", "E", "F")
+colnames(eta_cases) <- c("A", "B", "C", "D", "E", "F", "G")
 cases_dat <- melt(eta_cases, value.name = "eta")
 names(cases_dat) <- c("row", "sens", "eta")
 
@@ -106,6 +114,8 @@ eta_deaths_tmp <- mcmc_deaths[[1]][,paste0("eta[",1:15,"]")]
 eta_deaths <-  100*(exp(10*rowSums(eta_deaths_tmp)) - 1)
 eta_deaths_tmp  <- mcmc_deaths_21[[1]][,paste0("eta[",1:22,"]")]
 eta_deaths <-  cbind(eta_deaths, 100*(exp(10*rowSums(eta_deaths_tmp)) - 1))
+eta_deaths_tmp  <- mcmc_deaths_28[[1]][,paste0("eta[",1:22,"]")]
+eta_deaths <-  cbind(eta_deaths, 100*(exp(10*rowSums(eta_deaths_tmp)) - 1))
 eta_deaths_tmp <- mcmc_deaths_mobility[[1]][,paste0("eta[",1:15,"]")]
 eta_deaths <-  cbind(eta_deaths, 100*(exp(10*rowSums(eta_deaths_tmp)) - 1))
 eta_deaths_tmp <- mcmc_deaths_df7[[1]][,paste0("eta[",1:15,"]")]
@@ -115,7 +125,7 @@ eta_deaths <-  cbind(eta_deaths, 100*(exp(10*rowSums(eta_deaths_tmp)) - 1))
 eta_deaths_tmp <- mcmc_deaths_outlier[[1]][,paste0("eta[",1:15,"]")]
 eta_deaths <- cbind(eta_deaths, 100*(exp(10*rowSums(eta_deaths_tmp)) - 1))
 
-colnames(eta_deaths) <- c("A", "B", "C", "D", "E", "F")
+colnames(eta_deaths) <- c("A", "B", "C", "D", "E", "F", "G")
 deaths_dat <- melt(eta_deaths, value.name = "eta")
 names(deaths_dat) <- c("row", "sens", "eta")
 

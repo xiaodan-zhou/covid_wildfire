@@ -244,7 +244,7 @@ for (name in county_names) {
 sum(sig_deaths > 0.95)
 sum(sig_cases > 0.95)
 
-## Counterfactual
+## Counterfactual Assessment
 
 nxs_cases <- nxs_deaths <- matrix(NA, nrow = 1000, ncol = 92)
 colnames(nxs_cases) <- colnames(nxs_deaths) <- FIPS

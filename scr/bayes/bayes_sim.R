@@ -29,11 +29,12 @@ q <- 5 # number of spline basis functions for lagged PM2.5
 lags <- 0:l
 time <- 0:(m - 1)
 
+# set seed for replication
 set.seed(42)
 
 pop <- floor(runif(n, 10000, 1000000)) # population offset
-X <- t(replicate(n, 8 + arima.sim(list(ma = 0.5), n = m)))
-Z <- ns(time, df = p)
+X <- t(replicate(n, 8 + arima.sim(list(ma = 0.5), n = m))) #PM2.5 measurements
+Z <- ns(time, df = p) # calendar days
 colnames(Z) <- paste("Z", 1:p, sep = "")
 
 # random effects
@@ -45,8 +46,9 @@ psi <- plogis(10 - log(pop))
 # overdispersion
 phi <- 1.5
 
-Y <- matrix(NA, n, m)
+Y <- matrix(NA, n, m) # initialize outcome matrix
 
+# generate responses
 for (j in 1:m) {
 
   lin_pred <- rep(NA, n)
@@ -126,7 +128,7 @@ save(mcmc_sim_un, file = "D:/Dropbox (Personal)/Projects/Wildfires/Output/simula
 
 ### Constrained Bayesian Model
 
-# construct new lme covariates
+# construct new covariate arrays
 X.l <- dat[,grep("l", colnames(dat))][,-1]
 U <- as.matrix(ns(c(l:0), df = q, intercept = TRUE)) # natural spline basis matrix
 
@@ -168,7 +170,7 @@ dev.off()
 
 save(mcmc_sim_c, file = "D:/Dropbox (Personal)/Projects/Wildfires/Output/simulation/mcmc_sim_c.RData")
 
-### plot some stuff
+### plot lag effects
 
 load("D:/Dropbox (Personal)/Projects/Wildfires/Output/simulation/mcmc_sim_c.RData")
 load("D:/Dropbox (Personal)/Projects/Wildfires/Output/simulation/mcmc_sim_un.RData")
@@ -229,7 +231,7 @@ pdf("D:/Dropbox (Personal)/Projects/Wildfires/Output/simulation/sim_fit.pdf")
 ggarrange(plot_list[[1]], plot_list[[2]], plot_list[[3]], plot_list[[4]], plot_list[[5]], eta_plot, ncol=2, nrow=3, common.legend = TRUE, legend="bottom")
 dev.off()
 
-### table some stuff
+### create equivalent table to the plot
 
 load("D:/Dropbox (Personal)/Projects/Wildfires/Output/simulation/mcmc_sim_un.RData")
 load("D:/Dropbox (Personal)/Projects/Wildfires/Output/simulation/mcmc_sim_c.RData")
