@@ -86,7 +86,7 @@ eta_cases_tmp <- mcmc_cases[[1]][,paste0("eta[",1:15,"]")]
 eta_cases <-  100*(exp(10*rowSums(eta_cases_tmp)) - 1)
 eta_cases_tmp  <- mcmc_cases_21[[1]][,paste0("eta[",1:22,"]")]
 eta_cases <-  cbind(eta_cases, 100*(exp(10*rowSums(eta_cases_tmp)) - 1))
-eta_cases_tmp  <- mcmc_cases_28[[1]][,paste0("eta[",1:28,"]")]
+eta_cases_tmp  <- mcmc_cases_28[[1]][,paste0("eta[",1:29,"]")]
 eta_cases <-  cbind(eta_cases, 100*(exp(10*rowSums(eta_cases_tmp)) - 1))
 eta_cases_tmp <- mcmc_cases_mobility[[1]][,paste0("eta[",1:15,"]")]
 eta_cases <-  cbind(eta_cases, 100*(exp(10*rowSums(eta_cases_tmp)) - 1))
@@ -114,7 +114,7 @@ eta_deaths_tmp <- mcmc_deaths[[1]][,paste0("eta[",1:15,"]")]
 eta_deaths <-  100*(exp(10*rowSums(eta_deaths_tmp)) - 1)
 eta_deaths_tmp  <- mcmc_deaths_21[[1]][,paste0("eta[",1:22,"]")]
 eta_deaths <-  cbind(eta_deaths, 100*(exp(10*rowSums(eta_deaths_tmp)) - 1))
-eta_deaths_tmp  <- mcmc_deaths_28[[1]][,paste0("eta[",1:22,"]")]
+eta_deaths_tmp  <- mcmc_deaths_28[[1]][,paste0("eta[",1:29,"]")]
 eta_deaths <-  cbind(eta_deaths, 100*(exp(10*rowSums(eta_deaths_tmp)) - 1))
 eta_deaths_tmp <- mcmc_deaths_mobility[[1]][,paste0("eta[",1:15,"]")]
 eta_deaths <-  cbind(eta_deaths, 100*(exp(10*rowSums(eta_deaths_tmp)) - 1))

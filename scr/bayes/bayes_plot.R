@@ -42,23 +42,23 @@ cty.selected$county <- paste(cty.selected$NAME, ", ", cty.selected$STATE, sep = 
 county <- cty.selected$county[order(cty.selected$FIPS)]
 
 ## MCMC
-load("D:/Dropbox (Personal)/Projects/Wildfires/Output/bayes/mcmc_cases_28.RData")
-load("D:/Dropbox (Personal)/Projects/Wildfires/Output/bayes/mcmc_deaths_28.RData")
-lags <- 28:0
+load("D:/Dropbox (Personal)/Projects/Wildfires/Output/bayes/mcmc_cases.RData")
+load("D:/Dropbox (Personal)/Projects/Wildfires/Output/bayes/mcmc_deaths.RData")
+lags <- 14:0
 
 ### Posterior Distributions of Cumulative Effect
 
 ## By County
 
 # cases
-eta_cases_tmp <- mcmc_cases[[1]][,sapply(1:29, function(k, ...) paste0("eta[",k,"]"))]
+eta_cases_tmp <- mcmc_cases[[1]][,sapply(1:15, function(k, ...) paste0("eta[",k,"]"))]
 eta_cases_tmp <- unname(eta_cases_tmp)
 cum_cases <- 100*(exp(10*rowSums(eta_cases_tmp)) - 1)
 eta_cases <- 100*(exp(10*eta_cases_tmp) - 1)
 out_cases <- data.frame(lag = eta_cases, cum = cum_cases, county = "Combined", estimate = "eta", pop = sum(pop[,2]))
 
 # deaths
-eta_deaths_tmp <- mcmc_deaths[[1]][,sapply(1:29, function(k, ...) paste0("eta[",k,"]"))]
+eta_deaths_tmp <- mcmc_deaths[[1]][,sapply(1:15, function(k, ...) paste0("eta[",k,"]"))]
 eta_deaths_tmp <- unname(eta_deaths_tmp)
 cum_deaths <- 100*(exp(10*rowSums(eta_deaths_tmp)) - 1)
 eta_deaths <- 100*(exp(10*eta_deaths_tmp) - 1)
@@ -66,14 +66,14 @@ out_deaths <- data.frame(lag = eta_deaths, cum = cum_deaths, county = "Combined"
 
 for (i in 1:nrow(Y_deaths)) {
   
-  theta_cases_tmp <- mcmc_cases[[1]][,sapply(1:29, function(k, ...) paste0("theta[",i,",",k,"]"))]
+  theta_cases_tmp <- mcmc_cases[[1]][,sapply(1:15, function(k, ...) paste0("theta[",i,",",k,"]"))]
   theta_cases_tmp <- unname(theta_cases_tmp)
   cum_cases <- 100*(exp(rowSums(10*theta_cases_tmp)) - 1)
   theta_cases <- 100*(exp(10*theta_cases_tmp) - 1)
   out_cases_tmp <- data.frame(lag = theta_cases, cum = cum_cases, county = county[i], estimate = "theta", pop = pop[i,2])
   out_cases <- rbind(out_cases, out_cases_tmp)
   
-  theta_deaths_tmp <- mcmc_deaths[[1]][,sapply(1:29, function(k, ...) paste0("theta[",i,",",k,"]"))]
+  theta_deaths_tmp <- mcmc_deaths[[1]][,sapply(1:15, function(k, ...) paste0("theta[",i,",",k,"]"))]
   theta_deaths_tmp <- unname(theta_deaths_tmp)
   cum_deaths <- 100*(exp(10*rowSums(theta_deaths_tmp)) - 1)
   theta_deaths <- 100*(exp(10*theta_deaths_tmp) - 1)
@@ -142,7 +142,7 @@ cum_deaths <- ggplot() +
 plot.list = list()
 plot.list[[1]] = cum_cases
 plot.list[[2]] = cum_deaths
-pdf("D:/Dropbox (Personal)/Projects/Wildfires/Output/bayes/county_cumulative_days_28.pdf", width = 10, height = 10)
+pdf("D:/Dropbox (Personal)/Projects/Wildfires/Output/bayes/county_cumulative_days.pdf", width = 10, height = 10)
 do.call('grid.arrange', c(plot.list, ncol = 2))
 dev.off()
 
@@ -154,7 +154,7 @@ eta_cases <- as.matrix(eta_cases)
 colnames(eta_cases) <- c(lags)
 cases_lag_coefs <- melt(eta_cases, value.name = "val")
 colnames(cases_lag_coefs)[2] <- "lags"
-cases_lag_coefs$lags <- factor(cases_lag_coefs$lags, levels = c(0:28))
+cases_lag_coefs$lags <- factor(cases_lag_coefs$lags, levels = c(0:14))
 
 lag_cases <- ggplot(aes(x = lags, y = val), data = cases_lag_coefs) + theme_bw() + 
   geom_boxplot() +
@@ -168,7 +168,7 @@ eta_deaths <- as.matrix(eta_deaths)
 colnames(eta_deaths) <- c(lags)
 deaths_lag_coefs <- melt(eta_deaths, value.name = "val")
 colnames(deaths_lag_coefs)[2] <- "lags"
-deaths_lag_coefs$lags <- factor(deaths_lag_coefs$lags, levels = c(0:28))
+deaths_lag_coefs$lags <- factor(deaths_lag_coefs$lags, levels = c(0:14))
 
 lag_deaths <- ggplot(aes(x = lags, y = val), data = deaths_lag_coefs) + theme_bw() + 
   geom_boxplot() +
@@ -180,7 +180,7 @@ lag_deaths <- ggplot(aes(x = lags, y = val), data = deaths_lag_coefs) + theme_bw
 plot.list = list()
 plot.list[[1]] = lag_cases
 plot.list[[2]] = lag_deaths
-pdf("D:/Dropbox (Personal)/Projects/Wildfires/Output/bayes/pct_increases_28.pdf", width = 10, height = 5)
+pdf("D:/Dropbox (Personal)/Projects/Wildfires/Output/bayes/pct_increases.pdf", width = 10, height = 5)
 do.call('grid.arrange',c(plot.list, ncol = 2))
 dev.off()
 
@@ -266,7 +266,7 @@ nxs_deaths_plot <- mutate(cty.pct, county = reorder(county, -excess_deaths)) %>%
 plot.list = list()
 plot.list[[1]] = nxs_cases_plot
 plot.list[[2]] = nxs_deaths_plot
-pdf("D:/Dropbox (Personal)/Projects/Wildfires/Output/bayes/nxs_ranked_28.pdf", width = 10, height = 10)
+pdf("D:/Dropbox (Personal)/Projects/Wildfires/Output/bayes/nxs_ranked.pdf", width = 10, height = 10)
 do.call('grid.arrange',c(plot.list, ncol = 2))
 dev.off()
 
@@ -338,7 +338,7 @@ plot.list = list()
 plot.list[[1]] = wa_cases
 plot.list[[2]] = or_cases
 plot.list[[3]] = ca_cases
-pdf("D:/Dropbox (Personal)/Projects/Wildfires/Output/bayes/nxs_mapped_cases_28.pdf", width = 10, height = 10)
+pdf("D:/Dropbox (Personal)/Projects/Wildfires/Output/bayes/nxs_mapped_cases.pdf", width = 10, height = 10)
 do.call('grid.arrange',c(plot.list, ncol = 3,  top = "", bottom="", left=""))
 dev.off()
 
@@ -347,6 +347,6 @@ plot.list = list()
 plot.list[[1]] = wa_deaths
 plot.list[[2]] = or_deaths
 plot.list[[3]] = ca_deaths
-pdf("D:/Dropbox (Personal)/Projects/Wildfires/Output/bayes/nxs_mapped_deaths_28.pdf", width = 10, height = 10)
+pdf("D:/Dropbox (Personal)/Projects/Wildfires/Output/bayes/nxs_mapped_deaths.pdf", width = 10, height = 10)
 do.call('grid.arrange',c(plot.list, ncol = 3, top = "", bottom="", left=""))
 dev.off()
