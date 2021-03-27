@@ -1,5 +1,5 @@
 Steps for fitting MCMC with JAGS
-### ================================================================================================
+================================================================================================
 
 Installing `JAGS`
 -----------------------
@@ -34,11 +34,11 @@ which provides access to additional distributions that can be fit with JAGS incl
 Directory Contents
 --------------------------
 
-`bayes_dlag.R`: Script for fitting constrained distributed lag model on PM2.5 exposure.
-`bayes_fun.R`: Additional functions necessary to fit and analayze the distributed lag model output.
-`bayes_plot.R`: Script for generating plots from the outputted distributed lag models.
-`bayes_sim.R`: Simulation code.
-`df_selection.R`: Code which aids in determining the optimal/practical degrees of freedom for the spline bases of the adjustment variables.
-`dlag_constrained`, `dlag_fit`, `dlag_unconstrained`: JAGS scripts which are inputted into `rjags` to sample posterior draws of the parameters.
-`model.R`: Contains function for fitting distributed lag model with MLE. Used by `df_selection.R`
+`bayes_dlag.R`: Script for fitting constrained distributed lag model on PM2.5 exposure.\
+`bayes_fun.R`: Additional functions necessary to fit and analayze the distributed lag model output.\
+`bayes_plot.R`: Script for generating plots from the outputted distributed lag models.\
+`bayes_sim.R`: Code for running simulation study.\
+`df_selection.R`: Code which aids in determining the optimal/practical degrees of freedom for the spline bases of the adjustment variables.\
+`dlag_constrained`, `dlag_fit`, `dlag_unconstrained`: JAGS scripts which are inputted into `rjags` to sample posterior draws of the parameters.\
+`model.R`: Contains function for fitting distributed lag model with MLE. Used by `df_selection.R`.\
 `sensitivity.R`: Constructs plots for the models considered in our sensitivity analysis. Note that to get the mcmc objects extracted by this script, you will need to modify and rerun `bayes_dlag.R` under the different sensitivity scenarios.
