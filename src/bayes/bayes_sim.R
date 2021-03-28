@@ -13,7 +13,7 @@ library(ggpubr)
 remove(list = ls())
 
 setwd("D:/Github/covid_wildfire")
-source("scr/bayes/bayes_fun.R")
+source("src/bayes/bayes_fun.R")
 
 load.module("glm")
 
@@ -112,7 +112,7 @@ xi.init <- fit_un$coefficients$count[grep("Z", names(fit_un$coefficients$count))
 eta.init <- fit_un$coefficients$count[grep("l", names(fit_un$coefficients$count))]
 phi.init <- 1
 
-jmod_un <- jags.model(file = "scr/bayes/dlag_unconstrained.jags", data = jagsDat_un, 
+jmod_un <- jags.model(file = "src/bayes/dlag_unconstrained.jags", data = jagsDat_un, 
                       n.chains = 1, n.adapt = 10000, quiet = FALSE,
                       inits = function() list("phi" = phi.init, "eta" = eta.init, 
                                               "mu" = mu.init, "xi" = xi.init))
@@ -156,7 +156,7 @@ xi.init <- fit_c$coefficients$count[grep("Z", names(fit_c$coefficients$count))]
 delta.init <- fit_c$coefficients$count[grep("U", names(fit_c$coefficients$count))]
 phi.init <- 1
 
-jmod_c <- jags.model(file = "scr/bayes/dlag_constrained.jags", data = jagsDat_c,
+jmod_c <- jags.model(file = "src/bayes/dlag_constrained.jags", data = jagsDat_c,
                      n.chains = 1, n.adapt = 10000, quiet = FALSE,
                      inits = function() list("phi" = phi.init, "delta" = delta.init, 
                                              "mu" = mu.init, "xi" = xi.init))

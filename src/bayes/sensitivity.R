@@ -9,8 +9,8 @@ rm(list = ls())
 ### Load Data
 
 setwd("D:/Github/covid_wildfire")
-source("scr/Utilities.R")
-source("scr/bayes/bayes_fun.R")
+source("src/Utilities.R")
+source("src/bayes/bayes_fun.R")
 dff <- load.data()
 dff$FIPS <- as.numeric(as.character(dff$FIPS))
 FIPS <- unique(dff$FIPS)[order(unique(dff$FIPS))]

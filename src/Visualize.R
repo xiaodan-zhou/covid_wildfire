@@ -1,7 +1,7 @@
 library(rstudioapi)
 project.dir = dirname(dirname(rstudioapi::getActiveDocumentContext()$path))
 setwd(project.dir)
-source("scr/Utilities.R")
+source("src/Utilities.R")
 library(sf)
 library(viridis)
 library(scales) 

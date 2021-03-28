@@ -12,9 +12,9 @@ load.module('glm')
 ### Data Loading
 
 setwd("D:/Github/covid_wildfire")
-source("scr/Utilities.R")
-source("scr/bayes/model.R")
-source("scr/bayes/bayes_fun.R")
+source("src/Utilities.R")
+source("src/bayes/model.R")
+source("src/bayes/bayes_fun.R")
 dff <- load.data()
 dff$FIPS <- as.numeric(as.character(dff$FIPS))
 
@@ -113,7 +113,7 @@ jagsDat_cases <- list(n = n, m = m, l = l, o = o, p = p, q = q,
                       U = U, W = W, pop = pop[,-1], X_counter = X_counter[,-1],
                       a = a, b = b, c = c, R = R, S = S, V = V, sig = sig)
 
-jmod_cases <- jags.model(file = "scr/bayes/dlag_fit.jags", data = jagsDat_cases, n.chains = 1, n.adapt = 100000, quiet = FALSE,
+jmod_cases <- jags.model(file = "src/bayes/dlag_fit.jags", data = jagsDat_cases, n.chains = 1, n.adapt = 100000, quiet = FALSE,
                          inits = function() list("mu" = gm_cases$mu.init, "xi" = gm_cases$xi.init, "phi" = 1,
                                                  "beta" = gm_cases$beta.init, "delta" = gm_cases$delta.init))
 mcmc_cases <- coda.samples(jmod_cases,n.iter = 100000, thin = 100, na.rm = TRUE,
@@ -141,7 +141,7 @@ jagsDat_deaths <- list(n = n, m = m, l = l, o = o, p = p, q = q,
                       U = U, W = W, pop = pop[,-1], X_counter = X_counter[,-1], 
                       a = a, b = b, c = c, R = R, S = S, V = V, sig = sig)
 
-jmod_deaths <- jags.model(file = "scr/bayes/dlag_fit.jags", data = jagsDat_deaths, n.chains = 1, n.adapt = 100000, quiet = FALSE,
+jmod_deaths <- jags.model(file = "src/bayes/dlag_fit.jags", data = jagsDat_deaths, n.chains = 1, n.adapt = 100000, quiet = FALSE,
                           inits = function() list("mu" = gm_deaths$mu.init, "xi" = gm_deaths$xi.init, "phi" = 1,
                                                   "beta" = gm_deaths$beta.init, "delta" = gm_deaths$delta.init))
 mcmc_deaths <- coda.samples(jmod_deaths, n.iter = 100000, thin = 100, na.rm = TRUE,

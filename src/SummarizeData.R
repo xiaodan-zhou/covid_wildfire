@@ -1,7 +1,7 @@
 library(rstudioapi)
 project.dir = dirname(dirname(rstudioapi::getActiveDocumentContext()$path))
 setwd(project.dir)
-source("scr/Utilities.R")
+source("src/Utilities.R")
 dff = load.data()
 
 TOTAL.POP = 51344853

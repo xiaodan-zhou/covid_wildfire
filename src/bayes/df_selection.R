@@ -11,9 +11,9 @@ remove(list = ls())
 ### Data Loading
 
 setwd("D:/Github/covid_wildfire")
-source("scr/Utilities.R")
-source("scr/bayes/model.R")
-source("scr/bayes/bayes_fun.R")
+source("src/Utilities.R")
+source("src/bayes/model.R")
+source("src/bayes/bayes_fun.R")
 dff <- load.data()
 dff$FIPS <- as.numeric(as.character(dff$FIPS))
 dff$pm_counter <- dff$pm25
