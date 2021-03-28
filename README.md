@@ -6,10 +6,12 @@ This is the repository for public available code and data to reproduce our analy
 Posterior distribution of percentage increase in COVID-19 cases (left) and COVID-19 deaths (right) associated with a daily increase of 10μg/m3 in PM2.5 separately for lag 0 up to lag 14, averaged across 92 counties in California, Oregan and Washington. 
 
 #### Data
-We acquired and linked publicly available daily data on PM2.5, COVID-19 cases and deaths, and other confounding factors for 92 western U.S. counties that were affected by the 2020 wildfires. All data for analyses were cleaned and stored in [/data/moddat_Feb2021.csv](https://github.com/xiaodan-zhou/covid_wildfire/blob/master/data/moddat_Feb2021.csv). 
+We acquired and linked publicly available daily data on PM2.5, COVID-19 cases and deaths, and other confounding factors for 92 western U.S. counties that were affected by the 2020 wildfires. All data for analyses in [/data](https://github.com/xiaodan-zhou/covid_wildfire/blob/master/data) was merged into [/data/moddat_Feb2021.csv](https://github.com/xiaodan-zhou/covid_wildfire/blob/master/data/moddat_Feb2021.csv). 
 
 #### Code
-We developed and implemented a Bayesian hierarchical zero-inflated negative-binomial distributed lag (BH-ZINB-DL) model to estimate the association between daily changes in PM2.5 and the percentage increase in the risk of COVID-19 cases and deaths days after exposure. The core model is in the [src/bayes](https://github.com/xiaodan-zhou/covid_wildfire/tree/master/src/bayes) folder. 
+We developed and implemented a Bayesian hierarchical zero-inflated negative-binomial distributed lag (BH-ZINB-DL) model to estimate the association between daily changes in PM2.5 and the percentage increase in the risk of COVID-19 cases and deaths days after exposure. 
+
+[`src/bayes`](https://github.com/xiaodan-zhou/covid_wildfire/tree/master/src/bayes) include the BH-ZINB-DL model. 
 
 [`src/combine.R`](https://github.com/xiaodan-zhou/covid_wildfire/blob/master/src/combine.R) pull data from all sources into [/data/moddat_Feb2021.csv](https://github.com/xiaodan-zhou/covid_wildfire/blob/master/data/moddat_Feb2021.csv). 
 
