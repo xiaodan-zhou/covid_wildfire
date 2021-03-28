@@ -10,3 +10,11 @@ We acquired and linked publicly available daily data on PM2.5, COVID-19 cases an
 
 #### Code
 We developed and implemented a Bayesian hierarchical zero-inflated negative-binomial distributed lag (BH-ZINB-DL) model to estimate the association between daily changes in PM2.5 and the percentage increase in the risk of COVID-19 cases and deaths days after exposure. The core model is in the [src/bayes](https://github.com/xiaodan-zhou/covid_wildfire/tree/master/src/bayes) folder. 
+
+[`combine.R`](https://github.com/xiaodan-zhou/covid_wildfire/blob/master/src/combine.R) pull data from all sources into [/data/moddat_Feb2021.csv](https://github.com/xiaodan-zhou/covid_wildfire/blob/master/data/moddat_Feb2021.csv). 
+
+[`SummarizeData.R`](https://github.com/xiaodan-zhou/covid_wildfire/blob/master/src/SummarizeData.R) create all summary statistics in the main script. 
+
+[`Visaulize.R`](https://github.com/xiaodan-zhou/covid_wildfire/blob/master/src/Visaulize.R) create all summary Figures in the main script. 
+
+[`Utilities.R`](https://github.com/xiaodan-zhou/covid_wildfire/blob/master/src/Visaulize.R) utility functions to facilite the Bayes model in the [src/bayes](https://github.com/xiaodan-zhou/covid_wildfire/tree/master/src/bayes) folder. 
