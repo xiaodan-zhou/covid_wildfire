@@ -11,7 +11,7 @@ library(rstudioapi)
 
 ############################################################################
 load.data = function() {
-  project.dir = dirname(dirname(rstudioapi::getActiveDocumentContext()$path))
+  project.dir = "D:/Github/covid_wildfire"
   setwd(project.dir)
   in.path = "data/moddat_Feb2021.csv"
   df = read.csv(in.path)
@@ -32,6 +32,7 @@ load.data = function() {
   
   return(df)
 }
+
 
 
 ############################################################################

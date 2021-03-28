@@ -1,12 +1,12 @@
 library(abind)
 library(tidyr)
+library(MASS)
 library(imputeTS)
-library(splines)
+library(pscl)
 library(rjags)
 library(mvtnorm)
 library(smooth)
 library(splines)
-library(lme4)
 library(reshape2)
 library(ggpubr)
 
@@ -15,6 +15,8 @@ remove(list = ls())
 setwd("D:/Github/covid_wildfire")
 source("scr/bayes/bayes_fun.R")
 
+load.module("glm")
+
 ### Data Creation
 
 # dimensions
@@ -22,49 +24,54 @@ n <- 100 # number of counties
 m <- 250 # days
 l <- 14 # lag days
 p <- 4 # number of spline basis functions for calendar days
-q <- 4 # number of spline basis functions for lagged PM2.5
-
-set.seed(42)
+q <- 5 # number of spline basis functions for lagged PM2.5
 
 lags <- 0:l
 time <- 0:(m - 1)
 
-pop <- floor(runif(n, 100, 1000000)) # population offset
+# set seed for replication
+set.seed(42)
 
-X <- t(replicate(n, 8 + arima.sim(list(ma = 0.5), n = m)))
-Z <- ns(time, df = p)
+pop <- floor(runif(n, 10000, 1000000)) # population offset
+X <- t(replicate(n, 8 + arima.sim(list(ma = 0.5), n = m))) #PM2.5 measurements
+Z <- ns(time, df = p) # calendar days
 colnames(Z) <- paste("Z", 1:p, sep = "")
 
 # random effects
-alpha <- rnorm(n, -10, 2) # random intercept
-eta <- log(lags + 1)*sin(lags*pi/4)/10
+alpha <- rnorm(n, -10, 1.3) # random intercept
+eta <- log((l - lags) + 1)*sin((l - lags)*pi/4)/10
 theta <- t(replicate(n, rnorm(l + 1, eta, sqrt(0.01)))) # lagged PM2.5 coefficients
+psi <- plogis(10 - log(pop))
 
-Y <- matrix(NA, n, m)
+# overdispersion
+phi <- 1.5
 
+Y <- matrix(NA, n, m) # initialize outcome matrix
+
+# generate responses
 for (j in 1:m) {
-  
-  lin_pred <- rep(NA, n)
-  
-  for(i in 1:n)
-    lin_pred[i] <- c(X[i,max(1,j-l):j, drop = FALSE]%*%theta[i,max(1,l-j+2):(l+1)])
-  
-  
-  lambda <- exp(alpha + time[j]*sin(pi*time[j]/100)/1000 + log(pop) + lin_pred)
-  
-  Y[,j] <- rpois(n, lambda)
-  
-}
 
-save(theta, file = "output/theta_sim.RData")
+  lin_pred <- rep(NA, n)
+
+  for (i in 1:n)
+    lin_pred[i] <- c(X[i,max(1,j-l):j, drop = FALSE]%*%theta[i,max(1,l-j+2):(l+1)])
+
+  A <- rbinom(n, 1, psi)
+  lambda <- exp(alpha + time[j]*sin(pi*time[j]/100)/1000 + log(pop) + lin_pred)
+  pi <- phi/(phi + (1 - A)*lambda)
+
+  Y[,j] <- rnbinom(n, phi, pi)
+
+}
 
 # hyperparameters
 a <- rep(0, l+1)
 b <- rep(0, p)
-R <- diag(1e-6, l+1)
-S <- diag(1e-6, p)
+R <- diag(1e-10, l+1)
+S <- diag(1e-10, p)
+sig <- rep(1e5, l+1)
 
-### Unconstrained LME4 (fixed lags)
+### Unconstrained Bayesian Model
 
 Y.long <- melt(data.frame(id = 1:n, Y), variable.name = "time", value.name = "Y", id.vars = "id")
 Y.long$time <- as.numeric(sub('.', '', Y.long$time))
@@ -89,155 +96,151 @@ for (i in l:0) {
   long <- data.frame(long)
 }
 
-dat.lme <- long[order(long$time, long$id),]
-fmla <- paste("Y ~ ", paste("Z", 1:p, collapse = " + ", sep = ""), " + ", 
-              paste("l", l:0, collapse = " + ", sep = ""), " + (1|id) + offset(log.pop)", sep = "")
+dat <- long[order(long$time, long$id),]
+fmla_un <- paste("Y ~ ", paste("Z", 1:p, collapse = " + ", sep = ""), " + ", 
+                 paste("l", l:0, collapse = " + ", sep = ""), " | 1", sep = "")
 
-fit <- glmer(fmla, family = poisson, data = dat.lme)
-
-### Unconstrained Bayesian Model
+fit_un <- zeroinfl(as.formula(fmla_un), dist = "negbin", link = "logit", data = dat, offset = log.pop, na.action = na.exclude)
 
 # JAGS call
 jagsDat_un <- list(n = n, m = m, l = l, p = p, 
                    X = X, Y = Y, Z = Z, pop = pop, 
-                   a = a, b = b, R = R, S = S)
+                   a = a, b = b, R = R, S = S, sig = sig)
 
-mu.init <- colMeans(coef(fit)$id)[1]
-beta.init <- colMeans(coef(fit)$id)[2:5]
-eta.init <- colMeans(coef(fit)$id)[6:20]
-tau.init <- 1/summary(fit)$varcor$id[1]
+mu.init <- fit_un$coefficients$count[1]
+xi.init <- fit_un$coefficients$count[grep("Z", names(fit_un$coefficients$count))]
+eta.init <- fit_un$coefficients$count[grep("l", names(fit_un$coefficients$count))]
+phi.init <- 1
 
 jmod_un <- jags.model(file = "scr/bayes/dlag_unconstrained.jags", data = jagsDat_un, 
-                      n.chains = 1, n.adapt = 20000, quiet = FALSE,
-                      inits = function() list("tau" = tau.init, "eta" = eta.init, 
-                                              "mu" = mu.init, "beta" = beta.init))
-mcmc_sim_un <- coda.samples(jmod_un, variable.names = c("theta", "eta", "sigma", "mu", "tau", "test"), 
-                        n.iter = 100000, thin = 100, na.rm = TRUE)
+                      n.chains = 1, n.adapt = 10000, quiet = FALSE,
+                      inits = function() list("phi" = phi.init, "eta" = eta.init, 
+                                              "mu" = mu.init, "xi" = xi.init))
+mcmc_sim_un <- coda.samples(jmod_un, variable.names = c("theta", "eta", "sigma", "xi", "mu", "tau", "phi", "psi"), 
+                            n.iter = 50000, thin = 50, na.rm = TRUE)
 
 # check mixing
-pdf(file = "output/sim_trace_un.pdf")
+pdf(file = "D:/Dropbox (Personal)/Projects/Wildfires/Output/simulation/sim_trace_un.pdf")
 plot(mcmc_sim_un)
 dev.off()
 
-save(mcmc_sim_un, file = "output/mcmc_sim_un.RData")
-
-### Constrained LME4 (fixed lags)
-
-# construct new lme covariates
-X.l <- dat.lme[,grep("l", colnames(dat.lme))][,-1]
-U <- cbind(c(rep(0,l), 1), ns(c(l:0), df = q)) # natural spline basis matrix
-
-spmat <- as.matrix(X.l) %*% as.matrix(U)
-colnames(spmat) <- paste("U", 1:(q+1), sep = "")
-dat.lme.s <- data.frame(dat.lme, spmat)
-
-fmla <- paste("Y ~ ", paste("Z", 1:p, collapse = " + ", sep = ""), " + ", 
-              paste("U", 1:(q+1), collapse = " + ", sep = ""), " + (1|id) + offset(log.pop)", sep = "")
-
-fit.s <- glmer(fmla, family = poisson, data = dat.lme.s)
+save(mcmc_sim_un, file = "D:/Dropbox (Personal)/Projects/Wildfires/Output/simulation/mcmc_sim_un.RData")
 
 ### Constrained Bayesian Model
 
-# hyperparameter change
-a <- rep(0, q+1)
-R <- diag(1e-6, q+1)
+# construct new covariate arrays
+X.l <- dat[,grep("l", colnames(dat))][,-1]
+U <- as.matrix(ns(c(l:0), df = q, intercept = TRUE)) # natural spline basis matrix
 
-# penalty matrix for p-spline
-# D <- diff(diag(1e-3, q), differences = 2)
-# Q <- t(D) %*% D + diag(1e-6, q)
+spmat <- as.matrix(X.l) %*% as.matrix(U)
+colnames(spmat) <- paste("U", 1:q, sep = "")
+dat_c <- data.frame(dat, spmat)
+
+fmla_c <- paste("Y ~ ", paste("Z", 1:p, collapse = " + ", sep = ""), " + ", 
+                paste("U", 1:q, collapse = " + ", sep = ""), " | 1", sep = "")
+
+fit_c <- zeroinfl(as.formula(fmla_c), dist = "negbin", link = "logit", data = dat_c, offset = log.pop, na.action = na.exclude)
+
+# hyperparameter change
+a <- rep(0, q)
+R <- diag(1e-10, q)
+sig <- rep(1e5, q)
 
 # JAGS call
 jagsDat_c <- list(n = n, m = m, l = l, p = p, q = q,
                   X = X, Y = Y, Z = Z, U = U, pop = pop,
-                  a = a, b = b, R = R, S = S)
+                  a = a, b = b, R = R, S = S, sig = sig)
 
-mu.init <- colMeans(coef(fit.s)$id)[1]
-beta.init <- colMeans(coef(fit.s)$id)[2:5]
-delta.init <- colMeans(coef(fit.s)$id)[6:10]
-tau.init <- 1/summary(fit.s)$varcor$id[1]
+mu.init <- fit_c$coefficients$count[1]
+xi.init <- fit_c$coefficients$count[grep("Z", names(fit_c$coefficients$count))]
+delta.init <- fit_c$coefficients$count[grep("U", names(fit_c$coefficients$count))]
+phi.init <- 1
 
 jmod_c <- jags.model(file = "scr/bayes/dlag_constrained.jags", data = jagsDat_c,
-                     n.chains = 1, n.adapt = 20000, quiet = FALSE,
-                     inits = function() list("tau" = tau.init, "delta" = delta.init, 
-                                             "mu" = mu.init, "beta" = beta.init))
-mcmc_sim_c <- coda.samples(jmod_c, variable.names = c("theta", "eta", "delta", "mu", "sigma", "tau", "H"), 
-                       n.iter = 100000, thin = 100, na.rm = TRUE)
+                     n.chains = 1, n.adapt = 10000, quiet = FALSE,
+                     inits = function() list("phi" = phi.init, "delta" = delta.init, 
+                                             "mu" = mu.init, "xi" = xi.init))
+mcmc_sim_c <- coda.samples(jmod_c, variable.names = c("theta", "eta", "delta", "sigma", "xi", "mu", "tau", "phi", "psi"), 
+                           n.iter = 50000, thin = 100, na.rm = TRUE)
 
 # check mixing
-pdf(file = "output/sim_trace_c.pdf")
+pdf(file = "D:/Dropbox (Personal)/Projects/Wildfires/Output/simulation/sim_trace_c.pdf")
 plot(mcmc_sim_c)
 dev.off()
 
-save(mcmc_sim_c, file = "output/mcmc_sim_c.RData")
+save(mcmc_sim_c, file = "D:/Dropbox (Personal)/Projects/Wildfires/Output/simulation/mcmc_sim_c.RData")
 
-### plot some stuff
+### plot lag effects
 
-plot_list <- list()
-j <- 1
+load("D:/Dropbox (Personal)/Projects/Wildfires/Output/simulation/mcmc_sim_c.RData")
+load("D:/Dropbox (Personal)/Projects/Wildfires/Output/simulation/mcmc_sim_un.RData")
 
 plot_list <- lapply(c(1,25,50,75,100), function(i, ...){
-
+  
   theta.c <- mcmc_sim_c[[1]][,grep(paste0("theta\\[",i,","), colnames(mcmc_sim_c[[1]]))]
   theta.c.mu <- colMeans(theta.c)
   theta.c.cp <- apply(theta.c, 2, hpd)
-  gmat.c <- data.frame(theta.c.mu, t(theta.c.cp), l - lags)
-  names(gmat.c) <- c("theta", "hpd_l", "hpd_u", "lags")
+  gmat.c <- data.frame(theta.c.mu, t(theta.c.cp), l - lags, model = "Constrained")
+  names(gmat.c) <- c("theta", "hpd_l", "hpd_u", "lags", "model")
   
   theta.un <- mcmc_sim_un[[1]][,grep(paste0("theta\\[",i,","), colnames(mcmc_sim_un[[1]]))]
   theta.un.mu <- colMeans(theta.un)
   theta.un.cp <- apply(theta.un, 2, hpd)
-  gmat.un <- data.frame(theta.un.mu, t(theta.un.cp), x = l - lags)
-  names(gmat.un) <- c("theta", "hpd_l", "hpd_u", "lags")
+  gmat.un <- data.frame(theta.un.mu, t(theta.un.cp), x = l - lags, model = "Unconstrained")
+  names(gmat.un) <- names(gmat.c)
   
-  ggplot() + 
-    geom_pointrange(aes(x = lags, y = theta, color = "Constrained", ymax = hpd_u, ymin = hpd_l), data = gmat.c) + 
-    geom_pointrange(aes(x = lags, y = theta, color = "Unconstrained", ymax = hpd_u, ymin = hpd_l), data = gmat.un) +
-    geom_point(aes(x = l - lags, y = theta[i,]), inherit.aes = FALSE) +
-    labs(title = paste("County", i), x = "Lag Days", y = "Coefficient Value") +
-    scale_color_manual(name = "Model",
-                       breaks = c("Constrained", "Unconstrained"),
-                       values = c("Constrained" = "blue", "Unconstrained" = "red") )
+  gmat.tru <- data.frame(theta[i,], theta[i,], theta[i,], x = l - lags, model = "True Value")
+  names(gmat.tru) <- names(gmat.c)
+  
+  gmat <- rbind(gmat.c, gmat.un, gmat.tru)
+  gmat$model <- factor(gmat$model, levels = c("Unconstrained", "Constrained", "True Value"))
+  
+  ggplot(aes(x = lags, y = theta, color = model, ymax = hpd_u, ymin = hpd_l), data = gmat) + 
+    geom_pointrange(position = position_dodge(width = 0.5)) +
+    labs(title = paste("County", i), x = "Lag Days", y = "Coefficient Value", color = "Model") + 
+    scale_color_manual(values = c("Unconstrained" = "blue", "Constrained" = "red", "True Value" = "black"))
   
 })
 
-eta.c <- mcmc_sim_c[[1]][,sapply(1:15, function(z, ...) grep(paste0("eta\\[",z,"\\]"), colnames(mcmc_sim_c[[1]])))]
+eta.c <- mcmc_sim_c[[1]][,paste("eta[",1:15,"]", sep = "")]
 eta.c.mu <- colMeans(eta.c)
 eta.c.cp <- apply(eta.c, 2, hpd)
 
-gmat.c <- data.frame(eta.c.mu, t(eta.c.cp), l - lags)
-names(gmat.c) <- c("eta", "hpd_l", "hpd_u", "lags")
+gmat.c <- data.frame(eta.c.mu, t(eta.c.cp), l - lags, model = "Constrained")
+names(gmat.c) <- c("eta", "hpd_l", "hpd_u", "lags", "model")
 
-eta.un <- mcmc_sim_un[[1]][,sapply(1:15, function(z, ...) grep(paste0("eta\\[",z,"\\]"), colnames(mcmc_sim_un[[1]])))]
+eta.un <- mcmc_sim_un[[1]][,paste0("eta[",1:15,"]")]
 eta.un.mu <- colMeans(eta.un)
 eta.un.cp <- apply(eta.un, 2, hpd)
 
-gmat.un <- data.frame(eta.un.mu, t(eta.un.cp), l - lags)
-names(gmat.un) <- c("eta", "hpd_l", "hpd_u", "lags")
+gmat.un <- data.frame(eta.un.mu, t(eta.un.cp), l - lags, model = "Unconstrained")
+names(gmat.un) <- names(gmat.c)
+
+gmat.tru <- data.frame(eta, eta, eta, x = l - lags, model = "True Value")
+names(gmat.tru) <- names(gmat.c)
+
+gmat <- rbind(gmat.c, gmat.un, gmat.tru)
+gmat$model <- factor(gmat$model, levels = c("Unconstrained", "Constrained", "True Value"))
 
 eta_plot <- ggplot() + 
-  geom_pointrange(aes(x = lags, y = eta, color = "Constrained", ymax = hpd_u, ymin = hpd_l), data = gmat.c) + 
-  geom_pointrange(aes(x = lags, y = eta, color = "Unconstrained", ymax = hpd_u, ymin = hpd_l), data = gmat.un) +
-  geom_point(aes(x = l - lags, y = eta), inherit.aes = FALSE) +
-  labs(title = "Combined Counties", x = "Lag Days", y = "Coefficient Value") +
-  scale_color_manual(name = "Model",
-                     breaks = c("Constrained", "Unconstrained"),
-                     values = c("Constrained" = "blue", "Unconstrained" = "red") )
+  geom_pointrange(aes(x = lags, y = eta, color = model, ymax = hpd_u, ymin = hpd_l), data = gmat, position = position_dodge(width=0.5)) +
+  labs(title = "Combined Counties", x = "Lag Days", y = "Coefficient Value", color = "Model") +
+  scale_color_manual(values = c("Unconstrained" = "blue", "Constrained" = "red", "True Value" = "black"))
 
-pdf(file = "output/sim_fit.pdf")  
+pdf("D:/Dropbox (Personal)/Projects/Wildfires/Output/simulation/sim_fit.pdf")  
 ggarrange(plot_list[[1]], plot_list[[2]], plot_list[[3]], plot_list[[4]], plot_list[[5]], eta_plot, ncol=2, nrow=3, common.legend = TRUE, legend="bottom")
 dev.off()
 
-### table some stuff
+### create equivalent table to the plot
 
-load("output/mcmc_sim_un.RData")
-load("output/mcmc_sim_c.RData")
+load("D:/Dropbox (Personal)/Projects/Wildfires/Output/simulation/mcmc_sim_un.RData")
+load("D:/Dropbox (Personal)/Projects/Wildfires/Output/simulation/mcmc_sim_c.RData")
 
-eta.un <- mcmc_sim_un[[1]][,sapply(1:15, function(z, ...) grep(paste0("eta\\[",z,"\\]"), colnames(mcmc_sim_un[[1]])))]
-eta.c <- mcmc_sim_c[[1]][,sapply(1:15, function(z, ...) grep(paste0("eta\\[",z,"\\]"), colnames(mcmc_sim_c[[1]])))]
-omega.un <- mcmc_sim_un[[1]][,sapply(1:15, function(z, ...) grep(paste0("test\\[",z,"\\]"), colnames(mcmc_sim_un[[1]])))]
-sigma <- colMeans(sqrt(1/omega.un))
+eta.un <- mcmc_sim_un[[1]][,paste0("eta[",1:15,"]")]
+eta.c <- mcmc_sim_c[[1]][,paste0("eta[",1:15,"]")]
+sigma <- mcmc_sim_un[[1]][,paste0("sigma[",1:15,"]")]
 
-est_out <- round(rbind(rev(eta), rev(eta.init), rev(colMeans(eta.un)), rev(c(U%*%delta.init)), rev(colMeans(eta.c)), rev(sigma)), 3)
-rownames(est_out) <- c("Truth", "Unconstrained REML", "Unconstrained Bayes", "Constrained REML", "Constrained Bayes", "Theta Variance")
+est_out <- round(rbind(rev(eta), rev(colMeans(eta.un)), rev(colMeans(eta.c)), rev(colMeans(sigma))), 3)
+rownames(est_out) <- c("Truth", "Unconstrained Bayes", "Constrained Bayes", "Theta Variance")
 
-write.csv(est_out, file = "output/sim_out.csv")
+write.csv(est_out, file = "D:/Dropbox (Personal)/Projects/Wildfires/Output/simulation/sim_out.csv")
