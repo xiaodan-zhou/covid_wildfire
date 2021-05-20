@@ -10,10 +10,11 @@ remove(list = ls())
 
 ### Data Loading
 
-setwd("D:/Github/covid_wildfire")
+setwd("~/Github/covid_wildfire")
 source("src/Utilities.R")
 source("src/bayes/model.R")
 source("src/bayes/bayes_fun.R")
+
 dff <- load.data()
 dff$FIPS <- as.numeric(as.character(dff$FIPS))
 dff$pm_counter <- dff$pm25
@@ -32,7 +33,7 @@ for (model in models) {
   for (cause in causes) {
     for (idf.combo in df.combo) {
       
-      glmer_result <- pm_model(dff, lags=0:14, df.date=idf.combo[1], df.tmmx=idf.combo[2], df.rmax=idf.combo[2], cause = cause, model = model)
+      glmer_result <- pm_model(dff, lags=0:28, df.date=idf.combo[1], df.tmmx=idf.combo[2], df.rmax=idf.combo[2], cause = cause, model = model)
       out <- c(coefs = glmer_result, cause = cause, combo = paste("(", paste(idf.combo[1], idf.combo[2], idf.combo[2], sep = ","), ")", sep = ""), model = model)
       result <- rbind(result, out)
       
@@ -41,11 +42,11 @@ for (model in models) {
 }
 
 result = data.frame(result)
-write.csv(result, file = "D:/Dropbox (Personal)/Projects/Wildfires/Output/bayes/df_selection.csv", row.names = FALSE)
+write.csv(result, file = "~/Dropbox/Projects/Wildfires/Output/bayes/df_selection.csv", row.names = FALSE)
 
 ### Sensitivity of DF
 
-glmer_result <- read.csv("D:/Dropbox (Personal)/Projects/Wildfires/Output/bayes/df_selection.csv")
+glmer_result <- read.csv("~/Dropbox/Projects/Wildfires/Output/bayes/df_selection.csv")
 ford <- glmer_result$combo[1:(nrow(glmer_result)/4)]
 glmer_result$combo <- factor(glmer_result$combo, levels = ford)
 glmer_result$cause <- stringr::str_to_title(glmer_result$cause)
@@ -56,10 +57,10 @@ df_select <- ggplot(aes(x = combo, y = coefs.pm, group = cause, colour = cause),
   geom_line(position = position_dodge(0.25), size = 1) +
   geom_point(position = position_dodge(0.25), size = 2) +
   theme(plot.title = element_text(hjust = 0.5)) + 
-  ylim(-5, 10) +
+  ylim(-10, 10) +
   theme_bw() +
   labs(x = "DF Combination", y = "Cumulative Effect", color = "Event")
 
-pdf("D:/Dropbox (Personal)/Projects/Wildfires/Output/bayes/df_selection.pdf", width = 5, height = 5)  
+pdf("~/Dropbox/Projects/Wildfires/Output/bayes/df_selection.pdf", width = 5, height = 5)  
 df_select
 dev.off()

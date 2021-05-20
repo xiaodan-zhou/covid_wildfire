@@ -11,7 +11,7 @@ library(rstudioapi)
 
 ############################################################################
 load.data = function() {
-  project.dir = "D:/Github/covid_wildfire"
+  project.dir = "~/Github/covid_wildfire"
   setwd(project.dir)
   in.path = "data/moddat_Feb2021.csv"
   df = read.csv(in.path)
