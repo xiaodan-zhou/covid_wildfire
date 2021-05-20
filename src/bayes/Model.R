@@ -1,4 +1,4 @@
-pm_model <- function(dff, df.date = 6, df.tmmx = 2, df.rmax = 2, lags = 0:14, model = c("Constrained", "Unconstrained"),
+pm_model <- function(dff, df.pm = 7, df.date = 6, df.tmmx = 2, df.rmax = 2, lags = 0:14, model = c("Constrained", "Unconstrained"),
                      mobility = NA, cause = "cases", smooth = "ns", group = "FIPS", offset = "population", 
                      control = zeroinfl.control(EM = FALSE), fullDist = FALSE) {
   
@@ -7,7 +7,7 @@ pm_model <- function(dff, df.date = 6, df.tmmx = 2, df.rmax = 2, lags = 0:14, mo
   if (model == "Constrained") {
     
     X.l <- create.lag.value(dff, value = "pm25", group = group, lags = lags)
-    U <- matrix(ns(c(lags), df = 7, intercept = TRUE), nrow = length(lags), ncol = 7) # natural spline basis matrix
+    U <- matrix(ns(c(lags), df = df.pm, intercept = TRUE), nrow = length(lags), ncol = df.pm) # natural spline basis matrix
     lagpm <- as.matrix(X.l) %*% as.matrix(U)
     
   } else
@@ -49,7 +49,7 @@ pm_model <- function(dff, df.date = 6, df.tmmx = 2, df.rmax = 2, lags = 0:14, mo
   ### output variable names 
   if(!fullDist & model == "Constrained"){
     
-    var.names <- paste0("count_lagpm", 1:7) 
+    var.names <- paste0("count_lagpm", 1:df.pm) 
     mean.dlm <- sum(U%*%(coef(fit)[var.names]))
     lincomb <- rep(1, length(lags))
     std.dlm <- as.vector(sqrt(t(lincomb) %*% U %*% vcov(fit)[var.names, var.names] %*% t(U) %*% lincomb))

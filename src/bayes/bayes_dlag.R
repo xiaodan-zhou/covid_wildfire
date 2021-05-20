@@ -22,7 +22,7 @@ dff$pm_counter <- dff$pm25
 dff$pm_counter[dff$pm_wildfire != 0] <- dff$pm25_history[dff$pm_wildfire != 0]
 
 # for mobility
-dff <- subset(dff, !(FIPS %in% c(6051, 41023, 41025, 41037, 41063, 53013)))
+# dff <- subset(dff, !(FIPS %in% c(6051, 41023, 41025, 41037, 41063, 53013)))
 
 # for outliers_
 # dff <- subset(dff, !(FIPS %in% c(6009, 6051)))
@@ -54,14 +54,12 @@ Y_tmp_death <- tidyr::spread(Y_long_death, date_num, death)
 Y_deaths <- Y_tmp_death[order(Y_tmp_death$FIPS),]
 
 # Create Covariate Array
-Z_long <- data.frame(FIPS = dff$FIPS, date_num = dff$date_num, tmmx = dff$tmmx, rmax = dff$rmax, 
-                     mobility = dff$relative_change_feb, dayofweek = dff$dayofweek)
+Z_long <- data.frame(FIPS = dff$FIPS, date_num = dff$date_num, tmmx = dff$tmmx, rmax = dff$rmax)
 Z_long <- Z_long[order(Z_long$date_num, Z_long$FIPS),]
 
 # calendar day, tmmx, and rmax are fitted with natural spline basis
 Z_bs <- with(Z_long, data.frame(FIPS = FIPS, date_num = date_num, 
-                                tmmx = ns(tmmx, 2), rmax = ns(rmax, 2), 
-                                mobility = mobility, model.matrix(~ dayofweek)[,-1]))
+                                tmmx = ns(tmmx, 2), rmax = ns(rmax, 2)))
 
 Z_tmp <- Z_bs[Z_bs$date_num == min(dff$date_num),]
 Z <- Z_tmp[order(Z_tmp$FIPS),]
@@ -102,8 +100,8 @@ U <- matrix(ns(c(l:0), df = q, intercept = TRUE), nrow = l+1, ncol = q)  # natur
 W <- matrix(ns(min(dff$date_num):max(dff$date_num), df = o), ncol = o)
 
 # get initial values for MCMC
-gm_cases <- pm_model(dff, lags=0:l, df.date=o, df.tmmx=2, df.rmax=2, cause = "cases", fullDist = TRUE, model = "Constrained", mobility = TRUE)
-gm_deaths <- pm_model(dff, lags=0:l, df.date=o, df.tmmx=2, df.rmax=2, cause = "deaths", fullDist = TRUE, model = "Constrained", mobility = TRUE)
+gm_cases <- pm_model(dff, lags=0:l, df.pm = q, df.date=o, df.tmmx=2, df.rmax=2, cause = "cases", fullDist = TRUE, model = "Constrained", mobility = FALSE)
+gm_deaths <- pm_model(dff, lags=0:l, df.pm = q, df.date=o, df.tmmx=2, df.rmax=2, cause = "deaths", fullDist = TRUE, model = "Constrained", mobility = FALSE)
 
 ### Cases Model
   
@@ -115,23 +113,23 @@ jagsDat_cases <- list(n = n, m = m, l = l, o = o, p = p, q = q,
 
 jmod_cases <- jags.model(file = "src/bayes/dlag_fit.jags", data = jagsDat_cases, n.chains = 1, n.adapt = 20000, quiet = FALSE,
                          inits = function() list("mu" = gm_cases$mu.init, "xi" = gm_cases$xi.init, "phi" = 1,
-                                                 "beta" = gm_cases$beta.init, "delta" = gm_cases$delta.init))
+                                                 "beta" = gm_cases$beta.init[1:4], "delta" = gm_cases$delta.init))
 mcmc_cases <- coda.samples(jmod_cases,n.iter = 100000, thin = 100, na.rm = TRUE,
                            variable.names = c("beta",  "xi", "mu", "tau", "theta", "eta", 
                                               "phi", "psi", "sigma", "lambda", "rho"))
 
 # check mixing
-pdf(file = "~/Dropbox/Projects/Wildfires/Output/bayes/trace_cases_mobility.pdf")
+pdf(file = "~/Dropbox/Projects/Wildfires/Output/bayes/trace_cases_dow.pdf")
 plot(mcmc_cases)
 dev.off()
 
 # check autocorrelation
-pdf(file = "~/Dropbox/Projects/Wildfires/Output/bayes/acf_cases_mobility.pdf")
+pdf(file = "~/Dropbox/Projects/Wildfires/Output/bayes/acf_cases_dow.pdf")
 for(i in 1:ncol(mcmc_cases[[1]]))
   acf(mcmc_cases[[1]][,i], main = colnames(mcmc_cases[[1]])[i])
 dev.off()
 
-save(mcmc_cases, file = "~/Dropbox/Projects/Wildfires/Output/bayes/mcmc_cases_mobility.RData")
+save(mcmc_cases, file = "~/Dropbox/Projects/Wildfires/Output/bayes/mcmc_cases_dow.RData")
   
 ### Deaths Model
 
@@ -143,28 +141,28 @@ jagsDat_deaths <- list(n = n, m = m, l = l, o = o, p = p, q = q,
 
 jmod_deaths <- jags.model(file = "src/bayes/dlag_fit.jags", data = jagsDat_deaths, n.chains = 1, n.adapt = 100000, quiet = FALSE,
                           inits = function() list("mu" = gm_deaths$mu.init, "xi" = gm_deaths$xi.init, "phi" = 1,
-                                                  "beta" = gm_deaths$beta.init, "delta" = gm_deaths$delta.init))
+                                                  "beta" = gm_deaths$beta.init[1:4], "delta" = gm_deaths$delta.init))
 mcmc_deaths <- coda.samples(jmod_deaths, n.iter = 100000, thin = 100, na.rm = TRUE,
                             variable.names = c("beta",  "xi", "mu", "tau", "theta", "eta",
                                                "phi", "psi", "sigma", "lambda", "rho"))
 
 # check mixing
-pdf(file = "~/Dropbox/Projects/Wildfires/Output/bayes/trace_deaths_mobility.pdf")
+pdf(file = "~/Dropbox/Projects/Wildfires/Output/bayes/trace_deaths_dow.pdf")
 plot(mcmc_deaths)
 dev.off()
 
 # check autocorrelation
-pdf(file = "~/Dropbox/Projects/Wildfires/Output/bayes/acf_deaths_mobility.pdf")
+pdf(file = "~/Dropbox/Projects/Wildfires/Output/bayes/acf_deaths_dow.pdf")
 for(i in 1:ncol(mcmc_deaths[[1]]))
   acf(mcmc_deaths[[1]][,i], main = colnames(mcmc_deaths[[1]])[i])
 dev.off()
 
-save(mcmc_deaths, file = "~/Dropbox/Projects/Wildfires/Output/bayes/mcmc_deaths_mobility.RData")
+save(mcmc_deaths, file = "~/Dropbox/Projects/Wildfires/Output/bayes/mcmc_deaths_dow.RData")
 
 ### Hypothesis Testing
 
-load("~/Dropbox/Projects/Wildfires/Output/bayes/mcmc_cases_mobility.RData")
-load("~/Dropbox/Projects/Wildfires/Output/bayes/mcmc_deaths_mobility.RData")
+load("~/Dropbox/Projects/Wildfires/Output/bayes/mcmc_cases_dow.RData")
+load("~/Dropbox/Projects/Wildfires/Output/bayes/mcmc_deaths_dow.RData")
 lags <- 28:0
 FIPS <- Y_deaths[,1]
 
