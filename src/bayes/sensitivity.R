@@ -8,7 +8,7 @@ rm(list = ls())
 
 ### Load Data
 
-setwd("D:/Github/covid_wildfire")
+setwd("~/Github/covid_wildfire")
 source("src/Utilities.R")
 source("src/bayes/bayes_fun.R")
 dff <- load.data()
@@ -37,107 +37,120 @@ cty$FIPS <- as.numeric(as.character(cty$GEOID))
 
 ## MCMC
 
-load("D:/Dropbox (Personal)/Projects/Wildfires/Output/bayes/mcmc_cases_21.RData")
-load("D:/Dropbox (Personal)/Projects/Wildfires/Output/bayes/mcmc_deaths_21.RData")
+load("~/Dropbox/Projects/Wildfires/Output/bayes/mcmc_cases_14.RData")
+load("~/Dropbox/Projects/Wildfires/Output/bayes/mcmc_deaths_14.RData")
+
+mcmc_cases_14 <- mcmc_cases
+mcmc_deaths_14 <- mcmc_deaths
+
+load("~/Dropbox/Projects/Wildfires/Output/bayes/mcmc_cases_21.RData")
+load("~/Dropbox/Projects/Wildfires/Output/bayes/mcmc_deaths_21.RData")
 
 mcmc_cases_21 <- mcmc_cases
 mcmc_deaths_21 <- mcmc_deaths
 
-load("D:/Dropbox (Personal)/Projects/Wildfires/Output/bayes/mcmc_cases_28.RData")
-load("D:/Dropbox (Personal)/Projects/Wildfires/Output/bayes/mcmc_deaths_28.RData")
+load("~/Dropbox/Projects/Wildfires/Output/bayes/mcmc_cases_28.RData")
+load("~/Dropbox/Projects/Wildfires/Output/bayes/mcmc_deaths_28.RData")
 
 mcmc_cases_28 <- mcmc_cases
 mcmc_deaths_28 <- mcmc_deaths
 
-load("D:/Dropbox (Personal)/Projects/Wildfires/Output/bayes/mcmc_cases_mobility.RData")
-load("D:/Dropbox (Personal)/Projects/Wildfires/Output/bayes/mcmc_deaths_mobility.RData")
+load("~/Dropbox/Projects/Wildfires/Output/bayes/mcmc_cases_mobility.RData")
+load("~/Dropbox/Projects/Wildfires/Output/bayes/mcmc_deaths_mobility.RData")
 
 mcmc_cases_mobility <- mcmc_cases
 mcmc_deaths_mobility <- mcmc_deaths
 
-load("D:/Dropbox (Personal)/Projects/Wildfires/Output/bayes/mcmc_cases_df7.RData")
-load("D:/Dropbox (Personal)/Projects/Wildfires/Output/bayes/mcmc_deaths_df7.RData")
+load("~/Dropbox/Projects/Wildfires/Output/bayes/mcmc_cases_flexible.RData")
+load("~/Dropbox/Projects/Wildfires/Output/bayes/mcmc_deaths_flexible.RData")
 
-mcmc_cases_df7 <- mcmc_cases
-mcmc_deaths_df7 <- mcmc_deaths
+mcmc_cases_flexible <- mcmc_cases
+mcmc_deaths_flexible <- mcmc_deaths
 
-load("D:/Dropbox (Personal)/Projects/Wildfires/Output/bayes/mcmc_cases_aggresive.RData")
-load("D:/Dropbox (Personal)/Projects/Wildfires/Output/bayes/mcmc_deaths_aggresive.RData")
+load("~/Dropbox/Projects/Wildfires/Output/bayes/mcmc_cases_aggressive.RData")
+load("~/Dropbox/Projects/Wildfires/Output/bayes/mcmc_deaths_aggressive.RData")
 
 mcmc_cases_aggressive <- mcmc_cases
 mcmc_deaths_aggressive <- mcmc_deaths
 
-load("D:/Dropbox (Personal)/Projects/Wildfires/Output/bayes/mcmc_cases_outlier.RData")
-load("D:/Dropbox (Personal)/Projects/Wildfires/Output/bayes/mcmc_deaths_outlier.RData")
+load("~/Dropbox/Projects/Wildfires/Output/bayes/mcmc_cases_outliers.RData")
+load("~/Dropbox/Projects/Wildfires/Output/bayes/mcmc_deaths_outliers.RData")
 
-mcmc_cases_outlier <- mcmc_cases
-mcmc_deaths_outlier <- mcmc_deaths
+mcmc_cases_outliers <- mcmc_cases
+mcmc_deaths_outliers <- mcmc_deaths
 
-load("D:/Dropbox (Personal)/Projects/Wildfires/Output/bayes/mcmc_cases.RData")
-load("D:/Dropbox (Personal)/Projects/Wildfires/Output/bayes/mcmc_deaths.RData")
+load("~/Dropbox/Projects/Wildfires/Output/bayes/mcmc_cases_dow.RData")
+load("~/Dropbox/Projects/Wildfires/Output/bayes/mcmc_deaths_dow.RData")
 
-lags <- 14:0
+mcmc_cases_dow <- mcmc_cases
+mcmc_deaths_dow <- mcmc_deaths
+
+lags <- 28:0
 
 ### Posterior Distributions of Cumulative Effect
 
 # cases
 
-eta_cases_tmp <- mcmc_cases[[1]][,paste0("eta[",1:15,"]")]
+eta_cases_tmp  <- mcmc_cases_28[[1]][,paste0("eta[",1:29,"]")]
 eta_cases <-  100*(exp(10*rowSums(eta_cases_tmp)) - 1)
 eta_cases_tmp  <- mcmc_cases_21[[1]][,paste0("eta[",1:22,"]")]
 eta_cases <-  cbind(eta_cases, 100*(exp(10*rowSums(eta_cases_tmp)) - 1))
-eta_cases_tmp  <- mcmc_cases_28[[1]][,paste0("eta[",1:29,"]")]
+eta_cases_tmp <- mcmc_cases_14[[1]][,paste0("eta[",1:15,"]")]
 eta_cases <-  cbind(eta_cases, 100*(exp(10*rowSums(eta_cases_tmp)) - 1))
-eta_cases_tmp <- mcmc_cases_mobility[[1]][,paste0("eta[",1:15,"]")]
+eta_cases_tmp <- mcmc_cases_mobility[[1]][,paste0("eta[",1:29,"]")]
 eta_cases <-  cbind(eta_cases, 100*(exp(10*rowSums(eta_cases_tmp)) - 1))
-eta_cases_tmp <- mcmc_cases_df7[[1]][,paste0("eta[",1:15,"]")]
+eta_cases_tmp <- mcmc_cases_flexible[[1]][,paste0("eta[",1:29,"]")]
 eta_cases <-  cbind(eta_cases, 100*(exp(10*rowSums(eta_cases_tmp)) - 1))
-eta_cases_tmp <- mcmc_cases_aggressive[[1]][,paste0("eta[",1:15,"]")]
+eta_cases_tmp <- mcmc_cases_aggressive[[1]][,paste0("eta[",1:29,"]")]
 eta_cases <-  cbind(eta_cases, 100*(exp(10*rowSums(eta_cases_tmp)) - 1))
-eta_cases_tmp <- mcmc_cases_outlier[[1]][,paste0("eta[",1:15,"]")]
+eta_cases_tmp <- mcmc_cases_outliers[[1]][,paste0("eta[",1:29,"]")]
+eta_cases <- cbind(eta_cases, 100*(exp(10*rowSums(eta_cases_tmp)) - 1))
+eta_cases_tmp <- mcmc_cases_dow[[1]][,paste0("eta[",1:29,"]")]
 eta_cases <- cbind(eta_cases, 100*(exp(10*rowSums(eta_cases_tmp)) - 1))
 
-colnames(eta_cases) <- c("A", "B", "C", "D", "E", "F", "G")
+colnames(eta_cases) <- c("A", "B", "C", "D", "E", "F", "G", "H")
 cases_dat <- melt(eta_cases, value.name = "eta")
 names(cases_dat) <- c("row", "sens", "eta")
 
 lag_cases <- ggplot(aes(x = sens, y = eta), data = cases_dat) +
   geom_boxplot() +
-  ylim(-10,15) +
+  ylim(-10,20) +
   theme(plot.title = element_text(hjust = 0.5)) +
   theme_bw() +
   geom_hline(yintercept = 0, color = "blue") + 
   labs(title = "", x = "", y = "Cumulative Effect")
 
 # deaths
-eta_deaths_tmp <- mcmc_deaths[[1]][,paste0("eta[",1:15,"]")]
+eta_deaths_tmp  <- mcmc_deaths_28[[1]][,paste0("eta[",1:29,"]")]
 eta_deaths <-  100*(exp(10*rowSums(eta_deaths_tmp)) - 1)
 eta_deaths_tmp  <- mcmc_deaths_21[[1]][,paste0("eta[",1:22,"]")]
 eta_deaths <-  cbind(eta_deaths, 100*(exp(10*rowSums(eta_deaths_tmp)) - 1))
-eta_deaths_tmp  <- mcmc_deaths_28[[1]][,paste0("eta[",1:29,"]")]
+eta_deaths_tmp <- mcmc_deaths_14[[1]][,paste0("eta[",1:15,"]")]
 eta_deaths <-  cbind(eta_deaths, 100*(exp(10*rowSums(eta_deaths_tmp)) - 1))
-eta_deaths_tmp <- mcmc_deaths_mobility[[1]][,paste0("eta[",1:15,"]")]
+eta_deaths_tmp <- mcmc_deaths_mobility[[1]][,paste0("eta[",1:29,"]")]
 eta_deaths <-  cbind(eta_deaths, 100*(exp(10*rowSums(eta_deaths_tmp)) - 1))
-eta_deaths_tmp <- mcmc_deaths_df7[[1]][,paste0("eta[",1:15,"]")]
+eta_deaths_tmp <- mcmc_deaths_flexible[[1]][,paste0("eta[",1:29,"]")]
 eta_deaths <-  cbind(eta_deaths, 100*(exp(10*rowSums(eta_deaths_tmp)) - 1))
-eta_deaths_tmp <- mcmc_deaths_aggressive[[1]][,paste0("eta[",1:15,"]")]
+eta_deaths_tmp <- mcmc_deaths_aggressive[[1]][,paste0("eta[",1:29,"]")]
 eta_deaths <-  cbind(eta_deaths, 100*(exp(10*rowSums(eta_deaths_tmp)) - 1))
-eta_deaths_tmp <- mcmc_deaths_outlier[[1]][,paste0("eta[",1:15,"]")]
+eta_deaths_tmp <- mcmc_deaths_outliers[[1]][,paste0("eta[",1:29,"]")]
+eta_deaths <- cbind(eta_deaths, 100*(exp(10*rowSums(eta_deaths_tmp)) - 1))
+eta_deaths_tmp <- mcmc_deaths_dow[[1]][,paste0("eta[",1:29,"]")]
 eta_deaths <- cbind(eta_deaths, 100*(exp(10*rowSums(eta_deaths_tmp)) - 1))
 
-colnames(eta_deaths) <- c("A", "B", "C", "D", "E", "F", "G")
+colnames(eta_deaths) <- c("A", "B", "C", "D", "E", "F", "G", "H")
 deaths_dat <- melt(eta_deaths, value.name = "eta")
 names(deaths_dat) <- c("row", "sens", "eta")
 
 lag_deaths <- ggplot(aes(x = sens, y = eta), data = deaths_dat) +
   geom_boxplot() +
-  ylim(-10,15) +
+  ylim(-10,20) +
   theme(plot.title = element_text(hjust = 0.5)) +
   theme_bw() +
   geom_hline(yintercept = 0, color = "blue") + 
   labs(title = "", x = "", y = "Cumulative Effect")
 
-pdf("D:/Dropbox (Personal)/Projects/Wildfires/Output/bayes/sensitivity.pdf", width = 10, height = 5)
+pdf("~/Dropbox/Projects/Wildfires/Output/bayes/sensitivity.pdf", width = 10, height = 5)
 ggarrange(lag_cases, lag_deaths, ncol = 2, nrow = 1)
 dev.off()
 
@@ -153,5 +166,5 @@ pool_dat <- data.frame(pool_cases = colMeans(eta_cases, na.rm = TRUE),
                         pool_deaths_u = apply(eta_deaths, 2, hpd)[2,],
                         sig_deaths = sig_deaths)
 
-write.csv(pool_dat, file = "D:/Dropbox (Personal)/Projects/Wildfires/Output/bayes/pooled_summary.csv")
+write.csv(pool_dat, file = "~/Dropbox/Projects/Wildfires/Output/bayes/pooled_summary.csv")
 
