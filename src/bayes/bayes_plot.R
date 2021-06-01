@@ -88,7 +88,8 @@ out_cases <- merge(out_cases, aggregate(out_cases$cum, by = list(out_cases$count
 out_deaths <- merge(out_deaths, aggregate(out_deaths$cum, by = list(out_deaths$county), mean), by.x = "county", by.y = "Group.1")
 
 
-### boxplot with wildfire days 
+### Boxplot with Wildfire Days
+
 dff = dff %>% group_by(FIPS) %>% 
   mutate(pm_wildfire_days=sum(wildfire==T, na.rm=T)) %>% 
   ungroup()
@@ -108,8 +109,10 @@ dff = merge(dff, unique(out_cases[c("county", "x")]), by="county")
 label_colors = ifelse(levels(reorder(out_cases$county, -out_cases$x)) == "Pooled", "red", "black")
 
 cum_cases <- ggplot() + 
-  geom_boxplot(data=mutate(out_cases, county = reorder(county, -x), box_col = county=="Pooled"), 
-               aes(x = county, y = cum, fill=box_col), lwd=0.4, width=0.8, outlier.size=0.6) + 
+  stat_summary(fun.data = boxxy, geom = "boxplot", data = mutate(out_cases, county = reorder(county, -x), box_col = county=="Pooled"),
+               mapping = aes(x = county, y = cum, fill = box_col), lwd = 0.4, width = 0.8) + 
+  stat_summary(fun = outside, geom = "point", data = mutate(out_cases, county = reorder(county, -x), box_col = county=="Pooled"),
+               mapping = aes(x = county, y = cum, fill = box_col), size = 0.6) +
   geom_point(data=mutate(dff, county = reorder(county, -x)), aes(x = county, y = (pm_wildfire_days/277*100-35/3)*30/7), color="orange", shape=17) + 
   geom_hline(yintercept = 0, color = "blue") + 
   theme_bw() + 
@@ -126,8 +129,10 @@ dff = merge(dff, unique(out_deaths[c("county", "x")]), by="county")
 label_colors = ifelse(levels(reorder(out_deaths$county, -out_deaths$x)) == "Pooled", "red", "black")
 
 cum_deaths <- ggplot() + 
-  geom_boxplot(data=mutate(out_deaths, county = reorder(county, -x), box_col = county=="Pooled"),
-               aes(x = county, y = cum, fill=box_col), lwd=0.4, width=0.8, outlier.size=0.6) + 
+  stat_summary(fun.data = boxxy, geom = "boxplot", data = mutate(out_deaths, county = reorder(county, -x), box_col = county=="Pooled"),
+               mapping = aes(x = county, y = cum, fill = box_col), lwd = 0.4, width = 0.8) + 
+  stat_summary(fun = outside, geom = "point", data = mutate(out_deaths, county = reorder(county, -x), box_col = county=="Pooled"),
+               mapping = aes(x = county, y = cum, fill = box_col), size = 0.6) +
   geom_point(data=mutate(dff, county = reorder(county, -x)), aes(x = county, y = (pm_wildfire_days/277*100-35/3)*30/7), color="orange", shape=17) + 
   geom_hline(yintercept = 0, color = "blue") + 
   theme_bw() + 
@@ -156,7 +161,8 @@ colnames(cases_lag_coefs)[2] <- "lags"
 cases_lag_coefs$lags <- factor(cases_lag_coefs$lags, levels = c(0:28))
 
 lag_cases <- ggplot(aes(x = lags, y = val), data = cases_lag_coefs) + theme_bw() + 
-  geom_boxplot() +
+  stat_summary(fun.data = boxxy, geom = "boxplot", lwd = 0.4, width = 0.8) + 
+  stat_summary(fun = outside, geom = "point", size = 0.6) +
   ylim(-2,3.5) +
   theme(plot.title = element_text(hjust = 0.5)) +
   geom_hline(yintercept = 0, color = "blue") + 
@@ -170,8 +176,8 @@ colnames(deaths_lag_coefs)[2] <- "lags"
 deaths_lag_coefs$lags <- factor(deaths_lag_coefs$lags, levels = c(0:28))
 
 lag_deaths <- ggplot(aes(x = lags, y = val), data = deaths_lag_coefs) + theme_bw() + 
-  geom_boxplot() +
-  ylim(-2,3.5) +
+  stat_summary(fun.data = boxxy, geom = "boxplot", lwd = 0.4, width = 0.8) + 
+  stat_summary(fun = outside, geom = "point", size = 0.6) +
   theme(plot.title = element_text(hjust = 0.5)) +
   geom_hline(yintercept = 0, color = "blue") + 
   labs(x = "Lag Days", y = "Effect")  
@@ -183,7 +189,7 @@ pdf("~/Dropbox/Projects/Wildfires/Output/bayes/pct_increases_28.pdf", width = 10
 do.call('grid.arrange',c(plot.list, ncol = 2))
 dev.off()
 
-### Total Deaths and Cases by county
+### Total Deaths and Cases by County
 
 nxs_cases <- nxs_deaths <- matrix(NA, nrow = 1000, ncol = 92)
 colnames(nxs_cases) <- colnames(nxs_deaths) <- FIPS
