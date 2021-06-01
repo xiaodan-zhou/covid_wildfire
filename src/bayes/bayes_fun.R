@@ -52,5 +52,5 @@ boxxy <- function(x) {
 }
 
 outside <- function(x) {
-  subset(x, x <= hpd(x)[1] | x >= hpd(x)[2])
+  subset(x, x < hpd(x)[1] | x > hpd(x)[2])
 }

@@ -57,7 +57,7 @@ df_select <- ggplot(aes(x = combo, y = coefs.pm, group = cause, colour = cause),
   geom_line(position = position_dodge(0.25), size = 1) +
   geom_point(position = position_dodge(0.25), size = 2) +
   theme(plot.title = element_text(hjust = 0.5)) + 
-  ylim(-10, 10) +
+  ylim(-10, 15) +
   theme_bw() +
   labs(x = "DF Combination", y = "Cumulative Effect", color = "Event")
 

@@ -128,14 +128,16 @@ i <- 1
 
 for (name in county_names) {
   
-  sig_cases[i] <- mean(out_cases$cum[out_cases$county == name] > 0)
-  sig_deaths[i] <- mean(out_deaths$cum[out_deaths$county == name] > 0)
+  hpd_cases <- hpd(out_cases$cum[out_cases$county == name])
+  hpd_deaths <- hpd(out_deaths$cum[out_deaths$county == name])
+  sig_cases[i] <- hpd_cases[1] > 0
+  sig_deaths[i] <- hpd_deaths[1] > 0
   i <- i + 1
   
 }
 
-sum(sig_deaths > 0.95)
-sum(sig_cases > 0.95)
+sum(sig_deaths)
+sum(sig_cases)
 
 ## Counterfactual Assessment
 
@@ -169,11 +171,11 @@ for (i in 1:92) {
   
 }
 
-sig_cases <- apply(pct_cases, 2, function(x, ...) mean(x > 0, na.rm = TRUE))
-sig_deaths <- apply(pct_deaths, 2, function(x, ...) mean(x > 0, na.rm = TRUE))
+sig_cases <- apply(pct_cases, 2, function(x, ...) hpd(x)[1] > 0)
+sig_deaths <- apply(pct_deaths, 2, function(x, ...) hpd(x)[1] > 0)
 
-sum(sig_deaths > 0.975, na.rm = T)
-sum(sig_cases > 0.975, na.rm = T)
+sum(sig_deaths, na.rm = TRUE)
+sum(sig_cases)
 
 mean(pct_cases[,which(colnames(pct_cases) == 53075)]) # Whitman, WA
 mean(pct_cases[,which(colnames(pct_cases) == 6007)]) # Butte, CA
@@ -184,3 +186,9 @@ hpd(pct_cases[,which(colnames(pct_cases) == 53075)]) # Whitman, WA
 hpd(pct_cases[,which(colnames(pct_cases) == 6007)]) # Butte, CA
 hpd(pct_deaths[,which(colnames(pct_deaths) == 6009)]) # Calaveras, CA
 hpd(pct_deaths[,which(colnames(pct_deaths) == 6007)]) # Butte, CA
+
+### Overall Excess Cases and Deaths
+mean(rowSums(nxs_cases))
+hpd(rowSums(nxs_cases))
+mean(rowSums(nxs_deaths))
+hpd(rowSums(nxs_deaths))

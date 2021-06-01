@@ -112,8 +112,9 @@ colnames(eta_cases) <- c("A", "B", "C", "D", "E", "F", "G", "H")
 cases_dat <- melt(eta_cases, value.name = "eta")
 names(cases_dat) <- c("row", "sens", "eta")
 
-lag_cases <- ggplot(aes(x = sens, y = eta), data = cases_dat) +
-  geom_boxplot() +
+lag_cases <- ggplot(aes(x = sens, y = eta), data = cases_dat) +  
+  stat_summary(fun.data = boxxy, geom = "boxplot", lwd = 0.4, width = 0.8) + 
+  stat_summary(fun = outside, geom = "point", size = 0.6) +
   ylim(-10,20) +
   theme(plot.title = element_text(hjust = 0.5)) +
   theme_bw() +
@@ -143,7 +144,8 @@ deaths_dat <- melt(eta_deaths, value.name = "eta")
 names(deaths_dat) <- c("row", "sens", "eta")
 
 lag_deaths <- ggplot(aes(x = sens, y = eta), data = deaths_dat) +
-  geom_boxplot() +
+  stat_summary(fun.data = boxxy, geom = "boxplot", lwd = 0.4, width = 0.8) + 
+  stat_summary(fun = outside, geom = "point", size = 0.6) +
   ylim(-10,20) +
   theme(plot.title = element_text(hjust = 0.5)) +
   theme_bw() +
@@ -167,4 +169,3 @@ pool_dat <- data.frame(pool_cases = colMeans(eta_cases, na.rm = TRUE),
                         sig_deaths = sig_deaths)
 
 write.csv(pool_dat, file = "~/Dropbox/Projects/Wildfires/Output/bayes/pooled_summary.csv")
-
