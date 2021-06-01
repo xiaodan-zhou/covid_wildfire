@@ -43,3 +43,15 @@ hpd <- function(x, alpha = 0.05){
   c(x[k], x[n - m + k])
   
 }
+
+# custom boxplot limits
+
+boxxy <- function(x) {
+  r <- quantile(x, probs = c(0.05, 0.25, 0.5, 0.75, 0.95))
+  names(r) <- c("ymin", "lower", "middle", "upper", "ymax")
+  return(r)
+}
+
+outside <- function(x) {
+  subset(x, x <= quantile(x, 0.025) | x >= quantile(x, 0.975))
+}

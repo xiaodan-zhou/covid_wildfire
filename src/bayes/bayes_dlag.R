@@ -54,12 +54,14 @@ Y_tmp_death <- tidyr::spread(Y_long_death, date_num, death)
 Y_deaths <- Y_tmp_death[order(Y_tmp_death$FIPS),]
 
 # Create Covariate Array
-Z_long <- data.frame(FIPS = dff$FIPS, date_num = dff$date_num, tmmx = dff$tmmx, rmax = dff$rmax)
+Z_long <- data.frame(FIPS = dff$FIPS, date_num = dff$date_num, tmmx = dff$tmmx, 
+                     rmax = dff$rmax, dayofweek = dff$dayofweek)
 Z_long <- Z_long[order(Z_long$date_num, Z_long$FIPS),]
 
 # calendar day, tmmx, and rmax are fitted with natural spline basis
 Z_bs <- with(Z_long, data.frame(FIPS = FIPS, date_num = date_num, 
-                                tmmx = ns(tmmx, 2), rmax = ns(rmax, 2)))
+                                tmmx = ns(tmmx, 2), rmax = ns(rmax, 2),
+                                model.matrix(~ dayofweek)[,-1]))
 
 Z_tmp <- Z_bs[Z_bs$date_num == min(dff$date_num),]
 Z <- Z_tmp[order(Z_tmp$FIPS),]
@@ -85,7 +87,7 @@ n <- nrow(X)
 m <- ncol(X) - 1
 o <- 6
 p <- dim(Z)[2] - 2 # covariate dimension
-q <- 7 # number of spline basis functions for PM2.5 + 1 for intercept
+q <- 6 # number of spline basis functions for PM2.5 + 1 for intercept
 
 # hyperparameters
 a <- rep(0, q)
@@ -113,23 +115,23 @@ jagsDat_cases <- list(n = n, m = m, l = l, o = o, p = p, q = q,
 
 jmod_cases <- jags.model(file = "src/bayes/dlag_fit.jags", data = jagsDat_cases, n.chains = 1, n.adapt = 20000, quiet = FALSE,
                          inits = function() list("mu" = gm_cases$mu.init, "xi" = gm_cases$xi.init, "phi" = 1,
-                                                 "beta" = gm_cases$beta.init[1:4], "delta" = gm_cases$delta.init))
+                                                 "beta" = gm_cases$beta.init, "delta" = gm_cases$delta.init))
 mcmc_cases <- coda.samples(jmod_cases,n.iter = 100000, thin = 100, na.rm = TRUE,
                            variable.names = c("beta",  "xi", "mu", "tau", "theta", "eta", 
                                               "phi", "psi", "sigma", "lambda", "rho"))
 
 # check mixing
-pdf(file = "~/Dropbox/Projects/Wildfires/Output/bayes/trace_cases_dow.pdf")
+pdf(file = "~/Dropbox/Projects/Wildfires/Output/bayes/trace_cases_28.pdf")
 plot(mcmc_cases)
 dev.off()
 
 # check autocorrelation
-pdf(file = "~/Dropbox/Projects/Wildfires/Output/bayes/acf_cases_dow.pdf")
+pdf(file = "~/Dropbox/Projects/Wildfires/Output/bayes/acf_cases_28.pdf")
 for(i in 1:ncol(mcmc_cases[[1]]))
   acf(mcmc_cases[[1]][,i], main = colnames(mcmc_cases[[1]])[i])
 dev.off()
 
-save(mcmc_cases, file = "~/Dropbox/Projects/Wildfires/Output/bayes/mcmc_cases_dow.RData")
+save(mcmc_cases, file = "~/Dropbox/Projects/Wildfires/Output/bayes/mcmc_cases_28.RData")
   
 ### Deaths Model
 
@@ -141,28 +143,28 @@ jagsDat_deaths <- list(n = n, m = m, l = l, o = o, p = p, q = q,
 
 jmod_deaths <- jags.model(file = "src/bayes/dlag_fit.jags", data = jagsDat_deaths, n.chains = 1, n.adapt = 100000, quiet = FALSE,
                           inits = function() list("mu" = gm_deaths$mu.init, "xi" = gm_deaths$xi.init, "phi" = 1,
-                                                  "beta" = gm_deaths$beta.init[1:4], "delta" = gm_deaths$delta.init))
+                                                  "beta" = gm_deaths$beta.init, "delta" = gm_deaths$delta.init))
 mcmc_deaths <- coda.samples(jmod_deaths, n.iter = 100000, thin = 100, na.rm = TRUE,
                             variable.names = c("beta",  "xi", "mu", "tau", "theta", "eta",
                                                "phi", "psi", "sigma", "lambda", "rho"))
 
 # check mixing
-pdf(file = "~/Dropbox/Projects/Wildfires/Output/bayes/trace_deaths_dow.pdf")
+pdf(file = "~/Dropbox/Projects/Wildfires/Output/bayes/trace_deaths_28.pdf")
 plot(mcmc_deaths)
 dev.off()
 
 # check autocorrelation
-pdf(file = "~/Dropbox/Projects/Wildfires/Output/bayes/acf_deaths_dow.pdf")
+pdf(file = "~/Dropbox/Projects/Wildfires/Output/bayes/acf_deaths_28.pdf")
 for(i in 1:ncol(mcmc_deaths[[1]]))
   acf(mcmc_deaths[[1]][,i], main = colnames(mcmc_deaths[[1]])[i])
 dev.off()
 
-save(mcmc_deaths, file = "~/Dropbox/Projects/Wildfires/Output/bayes/mcmc_deaths_dow.RData")
+save(mcmc_deaths, file = "~/Dropbox/Projects/Wildfires/Output/bayes/mcmc_deaths_28.RData")
 
 ### Hypothesis Testing
 
-load("~/Dropbox/Projects/Wildfires/Output/bayes/mcmc_cases_dow.RData")
-load("~/Dropbox/Projects/Wildfires/Output/bayes/mcmc_deaths_dow.RData")
+load("~/Dropbox/Projects/Wildfires/Output/bayes/mcmc_cases_28.RData")
+load("~/Dropbox/Projects/Wildfires/Output/bayes/mcmc_deaths_28.RData")
 lags <- 28:0
 FIPS <- Y_deaths[,1]
 
@@ -216,12 +218,12 @@ for (i in 1:nrow(Y_deaths)) {
   
 }
 
-mean(out_cases$cum[out_cases$county == "Monterey, CA"])
+mean(out_cases$cum[out_cases$county == "Whitman, WA"])
 mean(out_cases$cum[out_cases$county == "Sonoma, CA"])
 mean(out_deaths$cum[out_deaths$county == "San Bernardino, CA"])
 mean(out_deaths$cum[out_deaths$county == "Calaveras, CA"])
 
-hpd(out_cases$cum[out_cases$county == "Monterey, CA"])
+hpd(out_cases$cum[out_cases$county == "Whitman, WA"])
 hpd(out_cases$cum[out_cases$county == "Sonoma, CA"])
 hpd(out_deaths$cum[out_deaths$county == "San Bernardino, CA"])
 hpd(out_deaths$cum[out_deaths$county == "Calaveras, CA"])
@@ -280,12 +282,12 @@ sig_deaths <- apply(pct_deaths, 2, function(x, ...) mean(x > 0, na.rm = TRUE))
 sum(sig_deaths > 0.95, na.rm = T)
 sum(sig_cases > 0.95, na.rm = T)
 
-mean(pct_cases[,which(colnames(pct_cases) == 6101)])
+mean(pct_cases[,which(colnames(pct_cases) == 53075)])
 mean(pct_cases[,which(colnames(pct_cases) == 6007)])
 mean(pct_deaths[,which(colnames(pct_deaths) == 6009)])
 mean(pct_deaths[,which(colnames(pct_deaths) == 6007)])
 
-hpd(pct_cases[,which(colnames(pct_cases) == 6101)])
+hpd(pct_cases[,which(colnames(pct_cases) == 53075)])
 hpd(pct_cases[,which(colnames(pct_cases) == 6007)])
 hpd(pct_deaths[,which(colnames(pct_deaths) == 6009)])
 hpd(pct_deaths[,which(colnames(pct_deaths) == 6007)])

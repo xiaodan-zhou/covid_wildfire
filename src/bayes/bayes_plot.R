@@ -278,6 +278,8 @@ cty$FIPS = as.numeric(as.character(cty$GEOID))
 cty.pct <- merge(cty, pct_dat, by="FIPS", all.x=T)
 cty.pct$STATE <- with(cty.pct, ifelse(STATEFP == "06", "CA", ifelse(STATEFP == "41", "OR", "WA")))
 cty.pct$county <- paste(cty.pct$NAME, ", ", cty.pct$STATE, sep = "")
+cty.pct$excess_deaths[cty.pct$excess_deaths > 50] <- 49.9
+cty.pct$excess_deaths[cty.pct$excess_deaths < -10] <- -9.9
 
 ### WA 
 wa_cases <- ggplot(data = cty.pct[cty.pct$STATEFP == "53", ]) + 
@@ -287,7 +289,7 @@ wa_cases <- ggplot(data = cty.pct[cty.pct$STATEFP == "53", ]) +
   labs(fill = "Percentage of COVID19 cases") +
   theme(plot.title = element_text(hjust = 0.5)) + 
   scale_fill_gradient2(low = 'blue', mid = 'beige', high = 'red', 
-                       na.value = "lightgrey", limits=c(-6, 18)) + 
+                       na.value = "lightgrey", limits=c(-10, 20)) + 
   theme(legend.position = "None")
 
 wa_deaths <- ggplot(cty.pct[cty.pct$STATEFP == "53", ]) + 
@@ -297,7 +299,7 @@ wa_deaths <- ggplot(cty.pct[cty.pct$STATEFP == "53", ]) +
   labs(fill = "Percentage of COVID19 deaths")+
   theme(plot.title = element_text(hjust = 0.5)) + 
   scale_fill_gradient2(low = 'blue', mid = 'beige', high = 'red', 
-                       na.value = "lightgrey", limits=c(-8, 50)) +
+                       na.value = "lightgrey", limits=c(-10, 50)) +
   theme(legend.position = "None")
 
 ### OR 
@@ -307,7 +309,7 @@ or_cases <- ggplot(cty.pct[cty.pct$STATEFP == "41", ]) + ggtitle("Oregon") +
   labs(fill = "Percentage of COVID19 cases")+
   theme(plot.title = element_text(hjust = 0.5)) + 
   scale_fill_gradient2(low = 'blue', mid = 'beige', high = 'red', 
-                       na.value = "lightgrey", limits=c(-6, 18)) + 
+                       na.value = "lightgrey", limits=c(-10, 20)) + 
   theme(legend.position = "bottom")
 
 or_deaths <- ggplot(cty.pct[cty.pct$STATEFP == "41", ]) + ggtitle("Oregon") + 
@@ -316,7 +318,7 @@ or_deaths <- ggplot(cty.pct[cty.pct$STATEFP == "41", ]) + ggtitle("Oregon") +
   labs(fill = "Percentage of COVID19 deaths")+
   theme(plot.title = element_text(hjust = 0.5)) + 
   scale_fill_gradient2(low = 'blue', mid = 'beige', high = 'red', 
-                       na.value = "lightgrey", limits=c(-8, 50)) + 
+                       na.value = "lightgrey", limits=c(-10, 50)) + 
   theme(legend.position = "bottom")
 
 ### CA
@@ -326,7 +328,7 @@ ca_cases <- ggplot(cty.pct[cty.pct$STATEFP == "06", ]) + ggtitle("California") +
   labs(fill = "Percentage of COVID19 cases")+
   theme(plot.title = element_text(hjust = 0.5)) + 
   scale_fill_gradient2(low = 'blue', mid = 'beige', high = 'red', 
-                       na.value = "lightgrey", limits=c(-6, 18)) + 
+                       na.value = "lightgrey", limits=c(-10, 20)) + 
   theme(legend.position = "None")
 
 ca_deaths <- ggplot(cty.pct[cty.pct$STATEFP == "06", ]) + ggtitle("California") + 
@@ -335,7 +337,7 @@ ca_deaths <- ggplot(cty.pct[cty.pct$STATEFP == "06", ]) + ggtitle("California") 
   labs(fill = "Percentage of COVID19 deaths")+
   theme(plot.title = element_text(hjust = 0.5)) + 
   scale_fill_gradient2(low = 'blue', mid = 'beige', high = 'red', 
-                       na.value = "lightgrey", limits=c(-8, 50)) + 
+                       na.value = "lightgrey", limits=c(-10, 50)) + 
   theme(legend.position = "None")
 
 plot.list = list()
@@ -345,7 +347,6 @@ plot.list[[3]] = ca_cases
 pdf("~/Dropbox/Projects/Wildfires/Output/bayes/nxs_mapped_cases_28.pdf", width = 10, height = 10)
 do.call('grid.arrange',c(plot.list, ncol = 3,  top = "", bottom="", left=""))
 dev.off()
-
 
 plot.list = list()
 plot.list[[1]] = wa_deaths
