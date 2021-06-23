@@ -66,9 +66,10 @@ dev.off()
 
 ########################### pm_cases_deaths_top6counties ####################################
 ### set up 
-n.col.grid = 6
-file.name = paste0("output/pm_cases_deaths_top6counties_v4.pdf")
+n.col.grid = 3
+file.name = paste0("output/pm_cases_deaths_top6counties_v5.pdf")
 fips.unique = unique(dff$FIPS[order(dff$population, decreasing=TRUE)])[1:6]
+col.labels = letters[1:18]
 point.size = 0.6
 
 plot.list = list()
@@ -92,9 +93,12 @@ for (ifips in fips.unique) {
           axis.text.x = element_text(size=6), 
           axis.text.y = element_text(size=6), 
           plot.margin = unit(c(0,0,0,0), "cm"), 
-          plot.title = element_text(hjust = 0.5, size = 8)) +  
+          plot.title = element_text(hjust = 0.5, size = 6)) +  
     scale_color_manual(name="", values=c(PM25="blue")) +
-    xlab("Date") + ggtitle(paste0(df.selected$County[1], ", ", df.selected$State[1]))
+    xlab("Date") + ggtitle(paste0(df.selected$County[1], ", ", df.selected$State[1])) + 
+    annotate(geom="text",x=as.Date("2020-03-20"), 
+             y=max(df.selected$pm25, na.rm=T)*0.9, label=col.labels[iplot],
+             fontface="bold")
   
   p1 = p1 + theme(legend.position = "none")
   
@@ -115,8 +119,10 @@ for (ifips in fips.unique) {
           plot.margin = unit(c(0,0,0,0), "cm"), 
           plot.title = element_text(hjust = 0.5, size = 8)) +
     scale_color_manual(name="", values=c(Cases="red")) +
-    xlab("Date") + ggtitle(" ")
-  
+    xlab("Date") + ggtitle(" ") + 
+    annotate(geom="text",x=as.Date("2020-03-20"), 
+             y=max(df.selected$cases, na.rm=T)*0.9, label=col.labels[iplot],
+             fontface="bold")
   p2 = p2 + theme(legend.position = "none")
   plot.list[[iplot]] = p2
   iplot = iplot + 1
@@ -135,21 +141,23 @@ for (ifips in fips.unique) {
           plot.margin = unit(c(0,0,0,0), "cm"), 
           plot.title = element_text(hjust = 0.5, size = 8)) +
     scale_color_manual(name="", values=c(Deaths="black")) +
-    xlab("Date") + ggtitle("")
+    xlab("Date") + ggtitle("") + 
+    annotate(geom="text",x=as.Date("2020-03-20"), 
+             y=max(df.selected$deaths, na.rm=T)*0.9, label=col.labels[iplot],
+             fontface="bold", size=5)
   p3 = p3 + theme(legend.position = "none")
   
   plot.list[[iplot]] = p3
   iplot = iplot + 1
 }
-### 
-pdf(file.name, width = 10, height = iplot/n.col.grid * 4/3)
+pdf(file.name, width = 6, height = 7.5)
 do.call('grid.arrange',c(plot.list, ncol = n.col.grid))
 dev.off()
 
 
 ############################# pm_vs_historical_LA ##################################
 ### set up 
-file.name = paste0("output/pm_vs_historical_LA_.pdf")
+file.name = paste0("output/pm_vs_historical_LA_v2.pdf")
 fips.unique = c("6037")
 point.size = 1.5
 line.size = 0.8
@@ -177,9 +185,10 @@ for (ifips in fips.unique) {
           panel.grid.minor = element_blank(),
           axis.title.x = element_blank(),
           axis.title.y = element_blank(), 
+          axis.text = element_text(size = 20), 
           plot.title = element_text(hjust = 0.5, size = 8)) +
     scale_color_manual(name="", values=c(PM25="blue", PMHIST="black")) +
-    xlab("Date") + ggtitle(paste0(df.selected$County[1], ", ", df.selected$State[1]))
+    xlab("Date") # + ggtitle(paste0(df.selected$County[1], ", ", df.selected$State[1]))
   
   p1 = p1 + theme(legend.position = "none")
   
@@ -211,14 +220,18 @@ df$flag[df$flag==0] = NA
 x.lab = unique(reorder(df$weeks, df$date))
 x.lab = paste0(month(x.lab), "/", day(x.lab))
 x.lab[!((1:length(x.lab))%%2)] = ""
-cols <- c("Wildfire Frequency"="orange")
+state.lab = c("a  California", "b  Oregon", "c  Washington")
+names(state.lab) = c("CA", "OR", "WA")
+
+cols = c("Wildfire Frequency"="orange")
 
 p0 = ggplot(data=df) + 
   geom_boxplot(aes(x=reorder(weeks, date), y=value, fill=Year), 
                lwd=0.1, width=0.8, outlier.shape = NA) + 
   geom_point(aes(x=reorder(weeks, date), y=flag, colour="Wildfire Frequency"), 
              shape=17, size=2) +
-  facet_wrap(. ~ State, scales='free', ncol = 1) + 
+  facet_wrap(. ~ State, scales='free', ncol = 1, 
+             labeller = labeller(State = state.lab)) + 
   theme_bw() + 
   scale_x_discrete("Date", labels = x.lab) + 
   scale_y_continuous(sec.axis = sec_axis(~ log10(.),
@@ -228,14 +241,16 @@ p0 = ggplot(data=df) +
   scale_y_log10(limits = c(1,1e3), minor_breaks = c(1, 10, 100, 1000)) + 
   theme(axis.title.x = element_blank(),
         axis.title.y = element_blank(), 
+        text = element_text(size = 12),  
         panel.grid.major = element_blank(),
-        legend.title = element_blank()) + 
+        legend.title = element_blank(), 
+        strip.text = element_text(face="bold", size=12), 
+        strip.background = element_blank()) + 
   scale_colour_manual(name="Points", values=cols)
-p0
-  # ylab(TeX("$PM_{2.5}$ ($\\mu g/m^3$ log scaled)")) +
-  # xlab("Date")
 
-file.pdf = "output/pm_by_states_2.pdf"
+p0
+
+file.pdf = "output/pm_by_states_v2.pdf"
 pdf(file.pdf, width = 10, height = 8)
 do.call('grid.arrange',c(list(p0), top = ""))
 dev.off()
