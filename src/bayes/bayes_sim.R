@@ -12,7 +12,7 @@ library(ggpubr)
 
 remove(list = ls())
 
-setwd("D:/Github/covid_wildfire")
+setwd("~/Github/covid_wildfire")
 source("src/bayes/bayes_fun.R")
 
 load.module("glm")
@@ -42,6 +42,8 @@ alpha <- rnorm(n, -10, 1.3) # random intercept
 eta <- log((l - lags) + 1)*sin((l - lags)*pi/4)/10
 theta <- t(replicate(n, rnorm(l + 1, eta, sqrt(0.01)))) # lagged PM2.5 coefficients
 psi <- plogis(10 - log(pop))
+
+save(theta, "~/Dropbox/Projects/Wildfires/Output/simulation/true_theta.csv")
 
 # overdispersion
 phi <- 1.5
@@ -120,11 +122,11 @@ mcmc_sim_un <- coda.samples(jmod_un, variable.names = c("theta", "eta", "sigma",
                             n.iter = 50000, thin = 50, na.rm = TRUE)
 
 # check mixing
-pdf(file = "D:/Dropbox (Personal)/Projects/Wildfires/Output/simulation/sim_trace_un.pdf")
+pdf(file = "~/Dropbox/Projects/Wildfires/Output/simulation/sim_trace_un.pdf")
 plot(mcmc_sim_un)
 dev.off()
 
-save(mcmc_sim_un, file = "D:/Dropbox (Personal)/Projects/Wildfires/Output/simulation/mcmc_sim_un.RData")
+save(mcmc_sim_un, file = "~/Dropbox/Projects/Wildfires/Output/simulation/mcmc_sim_un.RData")
 
 ### Constrained Bayesian Model
 
@@ -164,16 +166,20 @@ mcmc_sim_c <- coda.samples(jmod_c, variable.names = c("theta", "eta", "delta", "
                            n.iter = 50000, thin = 100, na.rm = TRUE)
 
 # check mixing
-pdf(file = "D:/Dropbox (Personal)/Projects/Wildfires/Output/simulation/sim_trace_c.pdf")
+pdf(file = "~/Dropbox/Projects/Wildfires/Output/simulation/sim_trace_c.pdf")
 plot(mcmc_sim_c)
 dev.off()
 
-save(mcmc_sim_c, file = "D:/Dropbox (Personal)/Projects/Wildfires/Output/simulation/mcmc_sim_c.RData")
+save(mcmc_sim_c, file = "~/Dropbox/Projects/Wildfires/Output/simulation/mcmc_sim_c.RData")
 
 ### plot lag effects
 
-load("D:/Dropbox (Personal)/Projects/Wildfires/Output/simulation/mcmc_sim_c.RData")
-load("D:/Dropbox (Personal)/Projects/Wildfires/Output/simulation/mcmc_sim_un.RData")
+load("~/Dropbox/Projects/Wildfires/Output/simulation/mcmc_sim_c.RData")
+load("~/Dropbox/Projects/Wildfires/Output/simulation/mcmc_sim_un.RData")
+load("~/Dropbox/Projects/Wildfires/Output/simulation/true_theta.RData")
+
+label <- rep(NA,100)
+label[c(1,25,50,75,100)] <- letters[1:5]
 
 plot_list <- lapply(c(1,25,50,75,100), function(i, ...){
   
@@ -197,8 +203,9 @@ plot_list <- lapply(c(1,25,50,75,100), function(i, ...){
   
   ggplot(aes(x = lags, y = theta, color = model, ymax = hpd_u, ymin = hpd_l), data = gmat) + 
     geom_pointrange(position = position_dodge(width = 0.5)) +
-    labs(title = paste("County", i), x = "Lag Days", y = "Coefficient Value", color = "Model") + 
-    scale_color_manual(values = c("Unconstrained" = "blue", "Constrained" = "red", "True Value" = "black"))
+    theme(plot.title = element_text(hjust = 0.5, face = "bold")) +
+    labs(title = paste(label[i], "County", i), x = "Lag Days", y = "Coefficient Value", color = "Model") + 
+    scale_color_manual(values = c("Unconstrained" = hue_pal()(2)[2], "Constrained" = hue_pal()(2)[1], "True Value" = "black"))
   
 })
 
@@ -224,17 +231,18 @@ gmat$model <- factor(gmat$model, levels = c("Unconstrained", "Constrained", "Tru
 
 eta_plot <- ggplot() + 
   geom_pointrange(aes(x = lags, y = eta, color = model, ymax = hpd_u, ymin = hpd_l), data = gmat, position = position_dodge(width=0.5)) +
-  labs(title = "Combined Counties", x = "Lag Days", y = "Coefficient Value", color = "Model") +
-  scale_color_manual(values = c("Unconstrained" = "blue", "Constrained" = "red", "True Value" = "black"))
+  labs(title = "f Combined Counties", x = "Lag Days", y = "Coefficient Value", color = "Model") +
+  theme(plot.title = element_text(hjust = 0.5, face = "bold")) +
+  scale_color_manual(values = c("Unconstrained" = hue_pal()(2)[2], "Constrained" = hue_pal()(2)[1], "True Value" = "black"))
 
-pdf("D:/Dropbox (Personal)/Projects/Wildfires/Output/simulation/sim_fit.pdf")  
+pdf("~/Dropbox/Projects/Wildfires/Output/simulation/sim_fit.pdf")  
 ggarrange(plot_list[[1]], plot_list[[2]], plot_list[[3]], plot_list[[4]], plot_list[[5]], eta_plot, ncol=2, nrow=3, common.legend = TRUE, legend="bottom")
 dev.off()
 
 ### create equivalent table to the plot
 
-load("D:/Dropbox (Personal)/Projects/Wildfires/Output/simulation/mcmc_sim_un.RData")
-load("D:/Dropbox (Personal)/Projects/Wildfires/Output/simulation/mcmc_sim_c.RData")
+load("~/Dropbox/Projects/Wildfires/Output/simulation/mcmc_sim_un.RData")
+load("~/Dropbox/Projects/Wildfires/Output/simulation/mcmc_sim_c.RData")
 
 eta.un <- mcmc_sim_un[[1]][,paste0("eta[",1:15,"]")]
 eta.c <- mcmc_sim_c[[1]][,paste0("eta[",1:15,"]")]
@@ -243,4 +251,4 @@ sigma <- mcmc_sim_un[[1]][,paste0("sigma[",1:15,"]")]
 est_out <- round(rbind(rev(eta), rev(colMeans(eta.un)), rev(colMeans(eta.c)), rev(colMeans(sigma))), 3)
 rownames(est_out) <- c("Truth", "Unconstrained Bayes", "Constrained Bayes", "Theta Variance")
 
-write.csv(est_out, file = "D:/Dropbox (Personal)/Projects/Wildfires/Output/simulation/sim_out.csv")
+write.csv(est_out, file = "~/Dropbox/Projects/Wildfires/Output/simulation/sim_out.csv")

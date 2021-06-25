@@ -116,10 +116,10 @@ lag_cases <- ggplot(aes(x = sens, y = eta), data = cases_dat) +
   stat_summary(fun.data = boxxy, geom = "boxplot", lwd = 0.4, width = 0.8) + 
   stat_summary(fun = outside, geom = "point", size = 0.6) +
   ylim(-10,20) +
-  theme(plot.title = element_text(hjust = 0.5)) +
   theme_bw() +
+  theme(plot.title = element_text(hjust = 0.5, face = "bold")) +
   geom_hline(yintercept = 0, color = "blue") + 
-  labs(title = "", x = "", y = "Cumulative Effect")
+  labs(title = "a Cases", x = "", y = "Cumulative Effect")
 
 # deaths
 eta_deaths_tmp  <- mcmc_deaths_28[[1]][,paste0("eta[",1:29,"]")]
@@ -147,10 +147,10 @@ lag_deaths <- ggplot(aes(x = sens, y = eta), data = deaths_dat) +
   stat_summary(fun.data = boxxy, geom = "boxplot", lwd = 0.4, width = 0.8) + 
   stat_summary(fun = outside, geom = "point", size = 0.6) +
   ylim(-10,20) +
-  theme(plot.title = element_text(hjust = 0.5)) +
   theme_bw() +
+  theme(plot.title = element_text(hjust = 0.5, face = "bold")) +
   geom_hline(yintercept = 0, color = "blue") + 
-  labs(title = "", x = "", y = "Cumulative Effect")
+  labs(title = "b Deaths", x = "", y = "Cumulative Effect")
 
 pdf("~/Dropbox/Projects/Wildfires/Output/bayes/sensitivity.pdf", width = 10, height = 5)
 ggarrange(lag_cases, lag_deaths, ncol = 2, nrow = 1)

@@ -107,6 +107,7 @@ levels(out_deaths$county)[match("Combined",levels(out_deaths$county))] = "Pooled
 # dff = subset(dff, select = -x)
 dff = merge(dff, unique(out_cases[c("county", "x")]), by="county")
 label_colors = ifelse(levels(reorder(out_cases$county, -out_cases$x)) == "Pooled", "red", "black")
+x.name <- mutate(out_cases, county = reorder(county, -x))
 
 cum_cases <- ggplot() + 
   stat_summary(fun.data = boxxy, geom = "boxplot", data = mutate(out_cases, county = reorder(county, -x), box_col = county=="Pooled"),
@@ -117,12 +118,13 @@ cum_cases <- ggplot() +
   geom_hline(yintercept = 0, color = "blue") + 
   theme_bw() + 
   coord_flip() + 
-  theme(plot.title = element_text(hjust = 0.5),
+  theme(plot.title = element_text(hjust = 0.5, face = "bold"),
         axis.title.y = element_blank(), 
         axis.text.y = element_text(colour = label_colors),
         legend.position = "none") + 
   scale_fill_manual(values = c("#00BA38", "red")) + 
-  scale_y_continuous("Percentage Increase", limits = c(-60, 105), sec.axis = sec_axis(~.*7/30+35/3, name = "% of Wildfire Days"))
+  scale_y_continuous("Percentage Increase", limits = c(-60, 105), sec.axis = sec_axis(~.*7/30+35/3, name = "% of Wildfire Days")) +
+  ggtitle("a Cases")
 
 dff = subset(dff, select = -x)
 dff = merge(dff, unique(out_deaths[c("county", "x")]), by="county")
@@ -137,12 +139,13 @@ cum_deaths <- ggplot() +
   geom_hline(yintercept = 0, color = "blue") + 
   theme_bw() + 
   coord_flip() + 
-  theme(plot.title = element_text(hjust = 0.5),
+  theme(plot.title = element_text(hjust = 0.5, face = "bold"),
         axis.title.y=element_blank(),
         axis.text.y = element_text(colour = label_colors),
         legend.position = "none") + 
   scale_fill_manual(values = c("#00BA38", "red")) +
-  scale_y_continuous("Percentage Increase", limits = c(-60, 105), sec.axis = sec_axis(~.*7/30+35/3, name = "% of Wildfire Days"))
+  scale_y_continuous("Percentage Increase", limits = c(-60, 105), sec.axis = sec_axis(~.*7/30+35/3, name = "% of Wildfire Days")) +
+  ggtitle("b Deaths")
 
 plot.list = list()
 plot.list[[1]] = cum_cases
@@ -164,9 +167,9 @@ lag_cases <- ggplot(aes(x = lags, y = val), data = cases_lag_coefs) + theme_bw()
   stat_summary(fun.data = boxxy, geom = "boxplot", lwd = 0.4, width = 0.8) + 
   stat_summary(fun = outside, geom = "point", size = 0.6) +
   ylim(-2,3.5) +
-  theme(plot.title = element_text(hjust = 0.5)) +
+  theme(plot.title = element_text(hjust = 0.5, face = "bold")) +
   geom_hline(yintercept = 0, color = "blue") + 
-  labs(x = "Lag Days", y = "Effect")  
+  labs(x = "Lag Days", y = "Effect", title = "a Cases")
 
 # deaths
 eta_deaths <- as.matrix(eta_deaths)
@@ -178,9 +181,9 @@ deaths_lag_coefs$lags <- factor(deaths_lag_coefs$lags, levels = c(0:28))
 lag_deaths <- ggplot(aes(x = lags, y = val), data = deaths_lag_coefs) + theme_bw() + 
   stat_summary(fun.data = boxxy, geom = "boxplot", lwd = 0.4, width = 0.8) + 
   stat_summary(fun = outside, geom = "point", size = 0.6) +
-  theme(plot.title = element_text(hjust = 0.5)) +
+  theme(plot.title = element_text(hjust = 0.5, face = "bold")) +
   geom_hline(yintercept = 0, color = "blue") + 
-  labs(x = "Lag Days", y = "Effect")  
+  labs(x = "Lag Days", y = "Effect", title = "b Deaths")
 
 plot.list = list()
 plot.list[[1]] = lag_cases
@@ -259,14 +262,18 @@ nxs_cases_plot <- mutate(cty.pct, county = reorder(county, -excess_cases)) %>%
   geom_pointrange(aes(ymin = excess_cases_l, ymax = excess_cases_u)) +
   geom_hline(yintercept = 0, color = "blue") +
   coord_flip() +
-  theme(axis.title.x=element_blank(), axis.title.y=element_blank()) 
+  ggtitle("a Cases") +
+  theme(axis.title.x=element_blank(), axis.title.y=element_blank(),
+        plot.title = element_text(hjust = 0.5, face = "bold"))
 
 nxs_deaths_plot <- mutate(cty.pct, county = reorder(county, -excess_deaths)) %>% 
   ggplot(mapping = aes(y = excess_deaths, x = county)) + theme_bw() + 
   geom_pointrange(aes(ymin = excess_deaths_l, ymax = excess_deaths_u)) +
   geom_hline(yintercept = 0, color = "blue") +
   coord_flip() +
-  theme(axis.title.x=element_blank(), axis.title.y=element_blank())
+  ggtitle("b Deaths") +
+  theme(axis.title.x=element_blank(), axis.title.y=element_blank(),
+        plot.title = element_text(hjust = 0.5, face = "bold"))
 
 plot.list = list()
 plot.list[[1]] = nxs_cases_plot
@@ -293,7 +300,6 @@ wa_cases <- ggplot(data = cty.pct[cty.pct$STATEFP == "53", ]) +
   geom_sf(aes_string(geometry = "geometry", fill = "excess_cases"), color = NA) + 
   theme_void() + 
   labs(fill = "Percentage of COVID19 cases") +
-  theme(plot.title = element_text(hjust = 0.5)) + 
   scale_fill_gradient2(low = 'blue', mid = 'beige', high = 'red', 
                        na.value = "lightgrey", limits=c(-10, 20)) + 
   theme(legend.position = "None")
@@ -302,8 +308,7 @@ wa_deaths <- ggplot(cty.pct[cty.pct$STATEFP == "53", ]) +
   ggtitle("Washington") + 
   geom_sf(aes_string(geometry = "geometry", fill = "excess_deaths"), color=NA) + 
   theme_void() + 
-  labs(fill = "Percentage of COVID19 deaths")+
-  theme(plot.title = element_text(hjust = 0.5)) + 
+  labs(fill = "Percentage of COVID19 deaths")+ 
   scale_fill_gradient2(low = 'blue', mid = 'beige', high = 'red', 
                        na.value = "lightgrey", limits=c(-10, 50)) +
   theme(legend.position = "None")
@@ -313,7 +318,6 @@ or_cases <- ggplot(cty.pct[cty.pct$STATEFP == "41", ]) + ggtitle("Oregon") +
   geom_sf(aes_string(geometry = "geometry", fill = "excess_cases"), color=NA) + 
   theme_void() + 
   labs(fill = "Percentage of COVID19 cases")+
-  theme(plot.title = element_text(hjust = 0.5)) + 
   scale_fill_gradient2(low = 'blue', mid = 'beige', high = 'red', 
                        na.value = "lightgrey", limits=c(-10, 20)) + 
   theme(legend.position = "bottom")
@@ -322,7 +326,6 @@ or_deaths <- ggplot(cty.pct[cty.pct$STATEFP == "41", ]) + ggtitle("Oregon") +
   geom_sf(aes_string(geometry = "geometry", fill = "excess_deaths"), color=NA) + 
   theme_void() + 
   labs(fill = "Percentage of COVID19 deaths")+
-  theme(plot.title = element_text(hjust = 0.5)) + 
   scale_fill_gradient2(low = 'blue', mid = 'beige', high = 'red', 
                        na.value = "lightgrey", limits=c(-10, 50)) + 
   theme(legend.position = "bottom")
@@ -332,7 +335,6 @@ ca_cases <- ggplot(cty.pct[cty.pct$STATEFP == "06", ]) + ggtitle("California") +
   geom_sf(aes_string(geometry = "geometry", fill= "excess_cases"), color=NA) + 
   theme_void() + 
   labs(fill = "Percentage of COVID19 cases")+
-  theme(plot.title = element_text(hjust = 0.5)) + 
   scale_fill_gradient2(low = 'blue', mid = 'beige', high = 'red', 
                        na.value = "lightgrey", limits=c(-10, 20)) + 
   theme(legend.position = "None")
@@ -341,7 +343,6 @@ ca_deaths <- ggplot(cty.pct[cty.pct$STATEFP == "06", ]) + ggtitle("California") 
   geom_sf(aes_string(geometry = "geometry", fill= "excess_deaths"), color=NA) + 
   theme_void() + 
   labs(fill = "Percentage of COVID19 deaths")+
-  theme(plot.title = element_text(hjust = 0.5)) + 
   scale_fill_gradient2(low = 'blue', mid = 'beige', high = 'red', 
                        na.value = "lightgrey", limits=c(-10, 50)) + 
   theme(legend.position = "None")
